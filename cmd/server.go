@@ -29,7 +29,7 @@ func serverRun(cmd *cobra.Command, args []string) error {
 
 	addr := viper.GetString(config.ServerAddress) + ":" + viper.GetString(config.ServerPort)
 	if addr == "" {
-		return errors.New("Missing server address/port")
+		return errors.New("missing server address/port")
 	}
 
 	sv := server.New(addr)

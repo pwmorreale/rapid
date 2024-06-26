@@ -16,9 +16,9 @@ import (
 )
 
 var (
-	cfgFile  string
-	tstCases []string
-	rootCmd  = &cobra.Command{
+	cfgFile       string
+	scenario_file string
+	rootCmd       = &cobra.Command{
 		Use:   "rapid",
 		Short: "rapid is an REST API diagnostic tool.",
 		Long:  `rapid enables testing of REST APIs.`,
@@ -41,9 +41,8 @@ func init() {
 
 	defaultFile := config.DefaultFile()
 
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "rapid", "", "config file (default is "+defaultFile+")")
-	rootCmd.PersistentFlags().StringArrayVarP(&tstCases, "testcase", "t", nil, "Path to testcase configs, can specify multiple times. All viper file extensions are supported.")
-
+	rootCmd.PersistentFlags().StringVarP(&cfgFile, "conf", "c", "", "config file (default is "+defaultFile+")")
+	rootCmd.Flags().StringVarP(&scenario_file, "scenario", "s", "", "Path to scenario file.")
 	rootCmd.AddCommand(serverCmd)
 }
 
@@ -71,6 +70,6 @@ func initConfig() {
 // RunRoot executes the CLI interface.
 func RunRoot(cmd *cobra.Command, args []string) error {
 
-	fmt.Println("test cases: ", tstCases)
+	fmt.Println("scenarios: ", scenario_file)
 	return nil
 }
