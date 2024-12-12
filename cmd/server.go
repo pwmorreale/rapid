@@ -1,7 +1,8 @@
-/*
-Copyright © 2023 Peter W. Morreale
+//
+//  Copyright © 2024 Peter W. Morreale. All Rights Reserved.
+//
 
-*/
+// Package cmd defines the Cobra root
 package cmd
 
 import (

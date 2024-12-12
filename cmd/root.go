@@ -1,7 +1,6 @@
-/*
-Copyright © 2023 Peter W. Morreale
-
-*/
+//
+//  Copyright © 2024 Peter W. Morreale. All Rights Reserved.
+//
 
 // Package cmd defines the Cobra root.
 package cmd
@@ -16,9 +15,9 @@ import (
 )
 
 var (
-	cfgFile       string
-	scenario_file string
-	rootCmd       = &cobra.Command{
+	cfgFile      string
+	scenarioFile string
+	rootCmd      = &cobra.Command{
 		Use:   "rapid",
 		Short: "rapid is an REST API diagnostic tool.",
 		Long:  `rapid enables testing of REST APIs.`,
@@ -42,7 +41,7 @@ func init() {
 	defaultFile := config.DefaultFile()
 
 	rootCmd.PersistentFlags().StringVarP(&cfgFile, "conf", "c", "", "config file (default is "+defaultFile+")")
-	rootCmd.Flags().StringVarP(&scenario_file, "scenario", "s", "", "Path to scenario file.")
+	rootCmd.Flags().StringVarP(&scenarioFile, "scenario", "s", "", "Path to scenario file.")
 	rootCmd.AddCommand(serverCmd)
 }
 
@@ -70,6 +69,6 @@ func initConfig() {
 // RunRoot executes the CLI interface.
 func RunRoot(cmd *cobra.Command, args []string) error {
 
-	fmt.Println("scenarios: ", scenario_file)
+	fmt.Println("scenarios: ", scenarioFile)
 	return nil
 }

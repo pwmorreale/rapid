@@ -1,3 +1,8 @@
+//
+//  Copyright © 2024 Peter W. Morreale. All Rights Reserved.
+//
+
+// Package logger defines a logger
 package logger
 
 import (
@@ -10,6 +15,7 @@ import (
 	"github.com/spf13/viper"
 )
 
+// GetLogger creates a Zero Logger instance.
 func GetLogger(label string) zerolog.Logger {
 
 	var level zerolog.Level

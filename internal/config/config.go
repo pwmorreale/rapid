@@ -1,3 +1,8 @@
+//
+//  Copyright © 2024 Peter W. Morreale. All Rights Reserved.
+//
+
+// Package config contains config variables.and utilities
 package config
 
 // Constants for various configuration parameters.
@@ -14,6 +19,9 @@ const (
 	ServerAddress = "server.address"
 
 	LogLevel = "log_level"
+
+	// Scenario configuration
+	ScenarioName = "name"
 )
 
 // DefaultFile builds a default path to the config file.
