@@ -36,15 +36,6 @@ staticcheck: ## Run staticcheck
 	@printf "\033[36m%-30s\033[0m %s\n" "### make $@"
 	@staticcheck -f stylish ./...
 
-goimports: ## Run goimports
-	@printf "\033[36m%-30s\033[0m %s\n" "### make $@"
-	$(eval goimportsdiffs = $(shell goimports -l .))
-	@if [ -n "$(goimportsdiffs)" ]; then\
-		echo "goimports shows diffs for these files:";\
-		echo "$(goimportsdiffs)";\
-		exit 1;\
-	fi
-
 build:  ## Build the midp microservice.
 	@printf "\033[36m%-30s\033[0m %s\n" "### make $@"
 	go build -o $(TARGET)/$(CMD)  ./main.go
