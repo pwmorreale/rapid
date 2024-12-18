@@ -23,8 +23,3 @@ const (
 	// Scenario configuration
 	ScenarioName = "name"
 )
-
-// DefaultFile builds a default path to the config file.
-func DefaultFile() string {
-	return ViperConfigPath + "/" + ViperConfigFileName + "." + ViperConfigFileType
-}

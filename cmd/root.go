@@ -6,12 +6,8 @@
 package cmd
 
 import (
-	"fmt"
-
-	"github.com/pwmorreale/rapid/internal/config"
-	"github.com/pwmorreale/rapid/internal/logger"
+	"github.com/pwmorreale/rapid/internal/scenario"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 var (
@@ -33,42 +29,22 @@ func Execute() error {
 	return rootCmd.Execute()
 }
 
-var log = logger.GetLogger("rapid")
-
 func init() {
-	cobra.OnInitialize(initConfig)
-
-	defaultFile := config.DefaultFile()
-
-	rootCmd.PersistentFlags().StringVarP(&cfgFile, "conf", "c", "", "config file (default is "+defaultFile+")")
 	rootCmd.Flags().StringVarP(&scenarioFile, "scenario", "s", "", "Path to scenario file.")
+	rootCmd.MarkFlagRequired("scenario")
+	rootCmd.MarkFlagFilename("scenario")
 	rootCmd.AddCommand(serverCmd)
-}
-
-func initConfig() {
-	if cfgFile != "" {
-		// Use config file from the flag.
-		viper.SetConfigFile(cfgFile)
-	} else {
-
-		// Search config in default directory with default name.
-		viper.AddConfigPath(config.ViperConfigPath)
-		viper.SetConfigType(config.ViperConfigFileType)
-		viper.SetConfigName(config.ViperConfigFileName)
-	}
-
-	viper.AutomaticEnv()
-
-	if err := viper.ReadInConfig(); err != nil {
-		log.Fatal().Err(err).Msg("Failed to read config")
-	} else {
-		log.Info().Str("Using config file:", viper.ConfigFileUsed())
-	}
 }
 
 // RunRoot executes the CLI interface.
 func RunRoot(cmd *cobra.Command, args []string) error {
 
-	fmt.Println("scenarios: ", scenarioFile)
-	return nil
+	sc := scenario.New()
+
+	err := sc.ReadInConfig(scenarioFile)
+	if err != nil {
+		return err
+	}
+
+	return sc.Execute()
 }

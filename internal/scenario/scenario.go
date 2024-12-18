@@ -29,6 +29,7 @@ type Processor interface {
 	ReadInConfig(flnm string) error
 	Get(n string) *Scenario
 	Delete(n string)
+	Execute() error
 }
 
 // Scenario defines a scenario instance.
@@ -127,4 +128,9 @@ func (s *Scenario) Get(n string) *Scenario {
 // Delete deletes a scenario from the table.
 func (s *Scenario) Delete(n string) {
 	AllScenarios.Delete(n)
+}
+
+// Execute runsa scenario.
+func (s *Scenario) Execute() error {
+	return nil
 }

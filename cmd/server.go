@@ -23,6 +23,13 @@ var serverCmd = &cobra.Command{
 	RunE:  serverRun,
 }
 
+func init() {
+	defaultFile := config.ViperConfigPath + "/" + config.ViperConfigFileName + "." + config.ViperConfigFileType
+	serverCmd.PersistentFlags().StringVarP(&cfgFile, "conf", "c", "", "config file (default is "+defaultFile+")")
+	serverCmd.MarkFlagRequired("conf")
+	serverCmd.MarkFlagFilename("conf")
+}
+
 // serverRun creates and runs a REST server instance
 func serverRun(cmd *cobra.Command, args []string) error {
 
