@@ -6,7 +6,11 @@
 package cmd
 
 import (
+	"os"
+
+	"github.com/pwmorreale/rapid/internal/reporter"
 	"github.com/pwmorreale/rapid/internal/scenario"
+	"github.com/pwmorreale/rapid/internal/sequences"
 	"github.com/spf13/cobra"
 )
 
@@ -37,14 +41,22 @@ func init() {
 }
 
 // RunRoot executes the CLI interface.
-func RunRoot(cmd *cobra.Command, args []string) error {
+func RunRoot(_ *cobra.Command, _ []string) error {
 
-	sc := scenario.New()
-
-	err := sc.ReadInConfig(scenarioFile)
+	sc, err := scenario.NewFile(scenarioFile)
 	if err != nil {
 		return err
 	}
 
-	return sc.Execute()
+	rpt := reporter.New(sc)
+
+	seq := sequences.New(sc, rpt)
+
+	// Run the sequence...
+	err = seq.Run()
+	if err != nil {
+		return err
+	}
+
+	return rpt.Generate(os.Stdout)
 }

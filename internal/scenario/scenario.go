@@ -21,20 +21,18 @@ import (
 	"github.com/spf13/viper"
 )
 
-// Processor defines interfaces for executing scenarios
+// Scenario defines interfaces for executing scenarios
 //
-//go:generate counterfeiter -o ../../test/mocks/fake_scenario.go . Processor
-type Processor interface {
-	ReadConfig(in io.Reader, contentType string) error
-	ReadInConfig(flnm string) error
-	Get(n string) *Scenario
+//go:generate counterfeiter -o ../../test/mocks/fake_scenario.go . Scenario
+type Scenario interface {
+	Get(n string) *Context
 	Delete(n string)
-	Execute() error
 }
 
-// Scenario defines a scenario instance.
-type Scenario struct {
+// Context defines a scenario context.
+type Context struct {
 	Name    string
+	Version string
 	ID      string
 	Created time.Time
 	LastRun time.Time
@@ -45,16 +43,24 @@ type Scenario struct {
 // AllScenarios contains all current scenario instances.
 var AllScenarios sync.Map
 
-// New returns a new instance of a scenario.
-func New() *Scenario {
-	return &Scenario{
+// NewFile returns a new instance of a scenario.
+func NewFile(flnm string) (*Context, error) {
+
+	sc := &Context{
 		Created: time.Now(),
 		ID:      uuid.New().String(),
 	}
+
+	err := sc.fromFile(flnm)
+	if err != nil {
+		return nil, err
+	}
+
+	return sc, nil
 }
 
-// ReadConfig parses config from a reader.
-func (s *Scenario) ReadConfig(in io.Reader, contentType string) error {
+// readReader parses config from a reader.
+func (s *Context) fromReader(in io.Reader, contentType string) error {
 
 	var b bytes.Buffer
 
@@ -88,8 +94,8 @@ func (s *Scenario) ReadConfig(in io.Reader, contentType string) error {
 	return nil
 }
 
-// ReadInConfig creates a scenario from a config file.
-func (s *Scenario) ReadInConfig(flnm string) error {
+// readFile creates a scenario from a config file.
+func (s *Context) fromFile(flnm string) error {
 
 	var contentType string
 
@@ -106,7 +112,8 @@ func (s *Scenario) ReadInConfig(flnm string) error {
 		contentType = c[1:]
 	}
 
-	err = s.ReadConfig(in, contentType)
+	// Use the reader to complete.
+	err = s.fromReader(in, contentType)
 	if err != nil {
 		return errors.Wrapf(err, "creating from file: %s", flnm)
 	}
@@ -117,20 +124,15 @@ func (s *Scenario) ReadInConfig(flnm string) error {
 }
 
 // Get returns a scenario from the table.
-func (s *Scenario) Get(n string) *Scenario {
+func (s *Context) Get(n string) *Context {
 	ss, b := AllScenarios.Load(n)
 	if !b {
 		return nil
 	}
-	return ss.(*Scenario)
+	return ss.(*Context)
 }
 
 // Delete deletes a scenario from the table.
-func (s *Scenario) Delete(n string) {
+func (s *Context) Delete(n string) {
 	AllScenarios.Delete(n)
-}
-
-// Execute runsa scenario.
-func (s *Scenario) Execute() error {
-	return nil
 }

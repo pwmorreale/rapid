@@ -17,7 +17,7 @@ generate:  ## Generate API and test mock code
 
 lint:  ## Lint the files
 	@printf "\033[36m%-30s\033[0m %s\n" "### make $@"
-	@golint -set_exit_status ./...
+	@revive -set_exit_status ./...
 
 # use bash to return proper return value from colorize pipe
 test: SHELL = /bin/bash

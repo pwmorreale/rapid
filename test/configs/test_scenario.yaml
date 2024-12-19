@@ -1,0 +1,30 @@
+name: test-scenario
+version: 1.0
+sequence:
+  loop:
+    iterations: 1
+    time_limit: 1m
+  - request:
+    name: name_of_request
+    scheme: https
+    path: some path
+    host: host
+    query:
+      key: value
+      key2: value2
+    extra_headers:
+      header1: header_value
+      header2: header2_value
+    content: some-content
+    content_type: text
+    time_limit: 1m
+    response:
+      content_save_name:  dave
+      content_regex_tests:
+        - foo
+        - [0-1]-bar*
+      content_type:  text
+      expected_status:
+        - 200
+        - 401
+        - 203

@@ -31,7 +31,7 @@ func init() {
 }
 
 // serverRun creates and runs a REST server instance
-func serverRun(cmd *cobra.Command, args []string) error {
+func serverRun(_ *cobra.Command, _ []string) error {
 
 	fmt.Println("running in SERVER")
 

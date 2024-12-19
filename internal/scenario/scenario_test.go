@@ -12,12 +12,10 @@ import (
 
 func TestReadInConfig(t *testing.T) {
 
-	s := scenario.New()
+	s, err := scenario.NewFile("../../test/configs/scenario_name.yaml")
 	assert.NotNil(t, s)
 	assert.NotEmpty(t, s.Created)
 	assert.NotEmpty(t, s.ID)
-
-	err := s.ReadInConfig("../../test/configs/scenario_name.yaml")
 	assert.Nil(t, err)
 	assert.NotNil(t, s.Viper)
 	assert.NotEmpty(t, s.Config)
@@ -29,38 +27,23 @@ func TestReadInConfig(t *testing.T) {
 
 func TestReadInConfigBadExt(t *testing.T) {
 
-	s := scenario.New()
-	assert.NotNil(t, s)
-	assert.NotEmpty(t, s.Created)
-	assert.NotEmpty(t, s.ID)
-
-	err := s.ReadInConfig("../../test/configs/scenario_name.bad_ext")
+	s, err := scenario.NewFile("../../test/configs/scenario_name.bad_ext")
 	assert.NotNil(t, err)
-	assert.Nil(t, s.Viper)
-	assert.Empty(t, s.Config)
-	assert.Empty(t, s.Name)
+	assert.Nil(t, s)
 
 }
 
 func TestReadInConfigBad(t *testing.T) {
 
-	s := scenario.New()
-	assert.NotNil(t, s)
-	assert.NotEmpty(t, s.Created)
-	assert.NotEmpty(t, s.ID)
-
-	err := s.ReadInConfig("../../test/configs/scenario_no_name.yaml")
+	s, err := scenario.NewFile("../../test/configs/scenario_no_name.yaml")
 	assert.NotNil(t, err)
-	assert.Nil(t, s.Viper)
-	assert.Empty(t, s.Config)
+	assert.Nil(t, s)
 }
 
 func TestReadInConfigTee(t *testing.T) {
 
-	s := scenario.New()
+	s, err := scenario.NewFile("../../test/configs/scenario_name.yaml")
 	assert.NotNil(t, s)
-
-	err := s.ReadInConfig("../../test/configs/scenario_name.yaml")
 	assert.Nil(t, err)
 	assert.Contains(t, s.Config, "Lurch")
 
@@ -71,8 +54,7 @@ func TestReadInConfigTee(t *testing.T) {
 
 func TestGet(t *testing.T) {
 
-	s := scenario.New()
-	err := s.ReadInConfig("../../test/configs/scenario_name.yaml")
+	s, err := scenario.NewFile("../../test/configs/scenario_name.yaml")
 	assert.Nil(t, err)
 
 	ss := s.Get(s.Name)
@@ -81,8 +63,7 @@ func TestGet(t *testing.T) {
 
 func TestDelete(t *testing.T) {
 
-	s := scenario.New()
-	err := s.ReadInConfig("../../test/configs/scenario_name.yaml")
+	s, err := scenario.NewFile("../../test/configs/scenario_name.yaml")
 	assert.Nil(t, err)
 
 	s.Delete(s.Name)
