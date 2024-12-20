@@ -37,7 +37,6 @@ func init() {
 	rootCmd.Flags().StringVarP(&scenarioFile, "scenario", "s", "", "Path to scenario file.")
 	rootCmd.MarkFlagRequired("scenario")
 	rootCmd.MarkFlagFilename("scenario")
-	rootCmd.AddCommand(serverCmd)
 }
 
 // RunRoot executes the CLI interface.
