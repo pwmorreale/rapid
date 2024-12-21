@@ -25,7 +25,7 @@ test: .SHELLFLAGS = -o pipefail -c
 
 test:  ## Run unittests
 	@printf "\033[36m%-30s\033[0m %s\n" "### make $@"
-	@go test -v -cover ./... | sed ''/PASS/s//$$(printf "\033[32mPASS\033[0m")/'' | sed ''/FAIL/s//$$(printf "\033[31mFAIL\033[0m")/''
+	@go test -v -vet=all -cover ./... | sed ''/PASS/s//$$(printf "\033[32mPASS\033[0m")/'' | sed ''/FAIL/s//$$(printf "\033[31mFAIL\033[0m")/''
 
 
 race:  ## Run data race detector
@@ -51,5 +51,5 @@ clean: ## Remove previous build
 	rm -rf $(TARGET)
 
 coverage: ## Display test coverage
-	@go test -coverprofile=/tmp/coverage.out ./...
+	@go test -vet=all -coverprofile=/tmp/coverage.out ./...
 	@go tool cover -html=/tmp/coverage.out

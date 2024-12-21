@@ -42,7 +42,9 @@ func init() {
 // RunRoot executes the CLI interface.
 func RunRoot(_ *cobra.Command, _ []string) error {
 
-	sc, err := scenario.NewFile(scenarioFile)
+	sc := scenario.New()
+
+	err := sc.ParseFile(scenarioFile)
 	if err != nil {
 		return err
 	}

@@ -8,68 +8,31 @@ import (
 )
 
 type FakeScenario struct {
-	DeleteStub        func(string)
-	deleteMutex       sync.RWMutex
-	deleteArgsForCall []struct {
+	ParseFileStub        func(string) error
+	parseFileMutex       sync.RWMutex
+	parseFileArgsForCall []struct {
 		arg1 string
 	}
-	GetStub        func(string) *scenario.Context
-	getMutex       sync.RWMutex
-	getArgsForCall []struct {
-		arg1 string
+	parseFileReturns struct {
+		result1 error
 	}
-	getReturns struct {
-		result1 *scenario.Context
-	}
-	getReturnsOnCall map[int]struct {
-		result1 *scenario.Context
+	parseFileReturnsOnCall map[int]struct {
+		result1 error
 	}
 	invocations      map[string][][]interface{}
 	invocationsMutex sync.RWMutex
 }
 
-func (fake *FakeScenario) Delete(arg1 string) {
-	fake.deleteMutex.Lock()
-	fake.deleteArgsForCall = append(fake.deleteArgsForCall, struct {
+func (fake *FakeScenario) ParseFile(arg1 string) error {
+	fake.parseFileMutex.Lock()
+	ret, specificReturn := fake.parseFileReturnsOnCall[len(fake.parseFileArgsForCall)]
+	fake.parseFileArgsForCall = append(fake.parseFileArgsForCall, struct {
 		arg1 string
 	}{arg1})
-	stub := fake.DeleteStub
-	fake.recordInvocation("Delete", []interface{}{arg1})
-	fake.deleteMutex.Unlock()
-	if stub != nil {
-		fake.DeleteStub(arg1)
-	}
-}
-
-func (fake *FakeScenario) DeleteCallCount() int {
-	fake.deleteMutex.RLock()
-	defer fake.deleteMutex.RUnlock()
-	return len(fake.deleteArgsForCall)
-}
-
-func (fake *FakeScenario) DeleteCalls(stub func(string)) {
-	fake.deleteMutex.Lock()
-	defer fake.deleteMutex.Unlock()
-	fake.DeleteStub = stub
-}
-
-func (fake *FakeScenario) DeleteArgsForCall(i int) string {
-	fake.deleteMutex.RLock()
-	defer fake.deleteMutex.RUnlock()
-	argsForCall := fake.deleteArgsForCall[i]
-	return argsForCall.arg1
-}
-
-func (fake *FakeScenario) Get(arg1 string) *scenario.Context {
-	fake.getMutex.Lock()
-	ret, specificReturn := fake.getReturnsOnCall[len(fake.getArgsForCall)]
-	fake.getArgsForCall = append(fake.getArgsForCall, struct {
-		arg1 string
-	}{arg1})
-	stub := fake.GetStub
-	fakeReturns := fake.getReturns
-	fake.recordInvocation("Get", []interface{}{arg1})
-	fake.getMutex.Unlock()
+	stub := fake.ParseFileStub
+	fakeReturns := fake.parseFileReturns
+	fake.recordInvocation("ParseFile", []interface{}{arg1})
+	fake.parseFileMutex.Unlock()
 	if stub != nil {
 		return stub(arg1)
 	}
@@ -79,55 +42,53 @@ func (fake *FakeScenario) Get(arg1 string) *scenario.Context {
 	return fakeReturns.result1
 }
 
-func (fake *FakeScenario) GetCallCount() int {
-	fake.getMutex.RLock()
-	defer fake.getMutex.RUnlock()
-	return len(fake.getArgsForCall)
+func (fake *FakeScenario) ParseFileCallCount() int {
+	fake.parseFileMutex.RLock()
+	defer fake.parseFileMutex.RUnlock()
+	return len(fake.parseFileArgsForCall)
 }
 
-func (fake *FakeScenario) GetCalls(stub func(string) *scenario.Context) {
-	fake.getMutex.Lock()
-	defer fake.getMutex.Unlock()
-	fake.GetStub = stub
+func (fake *FakeScenario) ParseFileCalls(stub func(string) error) {
+	fake.parseFileMutex.Lock()
+	defer fake.parseFileMutex.Unlock()
+	fake.ParseFileStub = stub
 }
 
-func (fake *FakeScenario) GetArgsForCall(i int) string {
-	fake.getMutex.RLock()
-	defer fake.getMutex.RUnlock()
-	argsForCall := fake.getArgsForCall[i]
+func (fake *FakeScenario) ParseFileArgsForCall(i int) string {
+	fake.parseFileMutex.RLock()
+	defer fake.parseFileMutex.RUnlock()
+	argsForCall := fake.parseFileArgsForCall[i]
 	return argsForCall.arg1
 }
 
-func (fake *FakeScenario) GetReturns(result1 *scenario.Context) {
-	fake.getMutex.Lock()
-	defer fake.getMutex.Unlock()
-	fake.GetStub = nil
-	fake.getReturns = struct {
-		result1 *scenario.Context
+func (fake *FakeScenario) ParseFileReturns(result1 error) {
+	fake.parseFileMutex.Lock()
+	defer fake.parseFileMutex.Unlock()
+	fake.ParseFileStub = nil
+	fake.parseFileReturns = struct {
+		result1 error
 	}{result1}
 }
 
-func (fake *FakeScenario) GetReturnsOnCall(i int, result1 *scenario.Context) {
-	fake.getMutex.Lock()
-	defer fake.getMutex.Unlock()
-	fake.GetStub = nil
-	if fake.getReturnsOnCall == nil {
-		fake.getReturnsOnCall = make(map[int]struct {
-			result1 *scenario.Context
+func (fake *FakeScenario) ParseFileReturnsOnCall(i int, result1 error) {
+	fake.parseFileMutex.Lock()
+	defer fake.parseFileMutex.Unlock()
+	fake.ParseFileStub = nil
+	if fake.parseFileReturnsOnCall == nil {
+		fake.parseFileReturnsOnCall = make(map[int]struct {
+			result1 error
 		})
 	}
-	fake.getReturnsOnCall[i] = struct {
-		result1 *scenario.Context
+	fake.parseFileReturnsOnCall[i] = struct {
+		result1 error
 	}{result1}
 }
 
 func (fake *FakeScenario) Invocations() map[string][][]interface{} {
 	fake.invocationsMutex.RLock()
 	defer fake.invocationsMutex.RUnlock()
-	fake.deleteMutex.RLock()
-	defer fake.deleteMutex.RUnlock()
-	fake.getMutex.RLock()
-	defer fake.getMutex.RUnlock()
+	fake.parseFileMutex.RLock()
+	defer fake.parseFileMutex.RUnlock()
 	copiedInvocations := map[string][][]interface{}{}
 	for key, value := range fake.invocations {
 		copiedInvocations[key] = value

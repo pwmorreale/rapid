@@ -12,7 +12,9 @@ import (
 
 func TestReadInConfig(t *testing.T) {
 
-	s, err := scenario.NewFile("../../test/configs/scenario_name.yaml")
+	s := scenario.New()
+
+	err := s.ParseFile("../../test/configs/scenario_name.yaml")
 	assert.NotNil(t, s)
 	assert.NotEmpty(t, s.Created)
 	assert.NotEmpty(t, s.ID)
@@ -20,29 +22,27 @@ func TestReadInConfig(t *testing.T) {
 	assert.NotNil(t, s.Viper)
 	assert.NotEmpty(t, s.Config)
 	assert.NotEmpty(t, s.Name)
-
-	_, b := scenario.AllScenarios.Load(s.Name)
-	assert.True(t, b)
 }
 
 func TestReadInConfigBadExt(t *testing.T) {
 
-	s, err := scenario.NewFile("../../test/configs/scenario_name.bad_ext")
+	s := scenario.New()
+	err := s.ParseFile("../../test/configs/scenario_name.bad_ext")
 	assert.NotNil(t, err)
-	assert.Nil(t, s)
 
 }
 
 func TestReadInConfigBad(t *testing.T) {
 
-	s, err := scenario.NewFile("../../test/configs/scenario_no_name.yaml")
+	s := scenario.New()
+	err := s.ParseFile("../../test/configs/scenario_no_name.yaml")
 	assert.NotNil(t, err)
-	assert.Nil(t, s)
 }
 
 func TestReadInConfigTee(t *testing.T) {
 
-	s, err := scenario.NewFile("../../test/configs/scenario_name.yaml")
+	s := scenario.New()
+	err := s.ParseFile("../../test/configs/scenario_name.yaml")
 	assert.NotNil(t, s)
 	assert.Nil(t, err)
 	assert.Contains(t, s.Config, "Lurch")
@@ -50,24 +50,4 @@ func TestReadInConfigTee(t *testing.T) {
 	b, err := os.ReadFile("../../test/configs/scenario_name.yaml")
 	assert.Nil(t, err)
 	assert.Equal(t, s.Config, string(b[:]))
-}
-
-func TestGet(t *testing.T) {
-
-	s, err := scenario.NewFile("../../test/configs/scenario_name.yaml")
-	assert.Nil(t, err)
-
-	ss := s.Get(s.Name)
-	assert.NotNil(t, ss)
-}
-
-func TestDelete(t *testing.T) {
-
-	s, err := scenario.NewFile("../../test/configs/scenario_name.yaml")
-	assert.Nil(t, err)
-
-	s.Delete(s.Name)
-
-	ss := s.Get(s.Name)
-	assert.Nil(t, ss)
 }
