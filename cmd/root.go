@@ -15,32 +15,27 @@ import (
 )
 
 var (
-	cfgFile      string
 	scenarioFile string
 	rootCmd      = &cobra.Command{
 		Use:   "rapid",
 		Short: "rapid is an REST API diagnostic tool.",
 		Long:  `rapid enables testing of REST APIs.`,
-		RunE:  RunRoot,
+		RunE:  RunCli,
 	}
 )
 
-// rootCmd represents the base command when called without any subcommands
+// Start starts the application.
+func Start() error {
 
-// Execute adds all child commands to the root command and sets flags appropriately.
-// This is called by main.main(). It only needs to happen once to the rootCmd.
-func Execute() error {
-	return rootCmd.Execute()
-}
-
-func init() {
 	rootCmd.Flags().StringVarP(&scenarioFile, "scenario", "s", "", "Path to scenario file.")
 	rootCmd.MarkFlagRequired("scenario")
 	rootCmd.MarkFlagFilename("scenario")
+
+	return rootCmd.Execute()
 }
 
-// RunRoot executes the CLI interface.
-func RunRoot(_ *cobra.Command, _ []string) error {
+// RunCli executes the CLI interface.
+func RunCli(_ *cobra.Command, _ []string) error {
 
 	sc := scenario.New()
 

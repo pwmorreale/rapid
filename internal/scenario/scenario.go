@@ -111,7 +111,7 @@ func (c *Context) fromFile(flnm string) error {
 	// Use the reader to complete.
 	err = c.fromReader(in, contentType)
 	if err != nil {
-		return errors.Wrapf(err, "creating from file: %s", flnm)
+		return err
 	}
 
 	log.Info().Str("Using config file:", flnm)
