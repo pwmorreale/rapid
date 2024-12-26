@@ -5,9 +5,20 @@ import (
 	"sync"
 
 	"github.com/pwmorreale/rapid/internal/scenario"
+	"github.com/spf13/viper"
 )
 
 type FakeScenario struct {
+	ConfigStub        func() string
+	configMutex       sync.RWMutex
+	configArgsForCall []struct {
+	}
+	configReturns struct {
+		result1 string
+	}
+	configReturnsOnCall map[int]struct {
+		result1 string
+	}
 	ParseFileStub        func(string) error
 	parseFileMutex       sync.RWMutex
 	parseFileArgsForCall []struct {
@@ -19,8 +30,71 @@ type FakeScenario struct {
 	parseFileReturnsOnCall map[int]struct {
 		result1 error
 	}
+	ViperStub        func() *viper.Viper
+	viperMutex       sync.RWMutex
+	viperArgsForCall []struct {
+	}
+	viperReturns struct {
+		result1 *viper.Viper
+	}
+	viperReturnsOnCall map[int]struct {
+		result1 *viper.Viper
+	}
 	invocations      map[string][][]interface{}
 	invocationsMutex sync.RWMutex
+}
+
+func (fake *FakeScenario) Config() string {
+	fake.configMutex.Lock()
+	ret, specificReturn := fake.configReturnsOnCall[len(fake.configArgsForCall)]
+	fake.configArgsForCall = append(fake.configArgsForCall, struct {
+	}{})
+	stub := fake.ConfigStub
+	fakeReturns := fake.configReturns
+	fake.recordInvocation("Config", []interface{}{})
+	fake.configMutex.Unlock()
+	if stub != nil {
+		return stub()
+	}
+	if specificReturn {
+		return ret.result1
+	}
+	return fakeReturns.result1
+}
+
+func (fake *FakeScenario) ConfigCallCount() int {
+	fake.configMutex.RLock()
+	defer fake.configMutex.RUnlock()
+	return len(fake.configArgsForCall)
+}
+
+func (fake *FakeScenario) ConfigCalls(stub func() string) {
+	fake.configMutex.Lock()
+	defer fake.configMutex.Unlock()
+	fake.ConfigStub = stub
+}
+
+func (fake *FakeScenario) ConfigReturns(result1 string) {
+	fake.configMutex.Lock()
+	defer fake.configMutex.Unlock()
+	fake.ConfigStub = nil
+	fake.configReturns = struct {
+		result1 string
+	}{result1}
+}
+
+func (fake *FakeScenario) ConfigReturnsOnCall(i int, result1 string) {
+	fake.configMutex.Lock()
+	defer fake.configMutex.Unlock()
+	fake.ConfigStub = nil
+	if fake.configReturnsOnCall == nil {
+		fake.configReturnsOnCall = make(map[int]struct {
+			result1 string
+		})
+	}
+	fake.configReturnsOnCall[i] = struct {
+		result1 string
+	}{result1}
 }
 
 func (fake *FakeScenario) ParseFile(arg1 string) error {
@@ -84,11 +158,68 @@ func (fake *FakeScenario) ParseFileReturnsOnCall(i int, result1 error) {
 	}{result1}
 }
 
+func (fake *FakeScenario) Viper() *viper.Viper {
+	fake.viperMutex.Lock()
+	ret, specificReturn := fake.viperReturnsOnCall[len(fake.viperArgsForCall)]
+	fake.viperArgsForCall = append(fake.viperArgsForCall, struct {
+	}{})
+	stub := fake.ViperStub
+	fakeReturns := fake.viperReturns
+	fake.recordInvocation("Viper", []interface{}{})
+	fake.viperMutex.Unlock()
+	if stub != nil {
+		return stub()
+	}
+	if specificReturn {
+		return ret.result1
+	}
+	return fakeReturns.result1
+}
+
+func (fake *FakeScenario) ViperCallCount() int {
+	fake.viperMutex.RLock()
+	defer fake.viperMutex.RUnlock()
+	return len(fake.viperArgsForCall)
+}
+
+func (fake *FakeScenario) ViperCalls(stub func() *viper.Viper) {
+	fake.viperMutex.Lock()
+	defer fake.viperMutex.Unlock()
+	fake.ViperStub = stub
+}
+
+func (fake *FakeScenario) ViperReturns(result1 *viper.Viper) {
+	fake.viperMutex.Lock()
+	defer fake.viperMutex.Unlock()
+	fake.ViperStub = nil
+	fake.viperReturns = struct {
+		result1 *viper.Viper
+	}{result1}
+}
+
+func (fake *FakeScenario) ViperReturnsOnCall(i int, result1 *viper.Viper) {
+	fake.viperMutex.Lock()
+	defer fake.viperMutex.Unlock()
+	fake.ViperStub = nil
+	if fake.viperReturnsOnCall == nil {
+		fake.viperReturnsOnCall = make(map[int]struct {
+			result1 *viper.Viper
+		})
+	}
+	fake.viperReturnsOnCall[i] = struct {
+		result1 *viper.Viper
+	}{result1}
+}
+
 func (fake *FakeScenario) Invocations() map[string][][]interface{} {
 	fake.invocationsMutex.RLock()
 	defer fake.invocationsMutex.RUnlock()
+	fake.configMutex.RLock()
+	defer fake.configMutex.RUnlock()
 	fake.parseFileMutex.RLock()
 	defer fake.parseFileMutex.RUnlock()
+	fake.viperMutex.RLock()
+	defer fake.viperMutex.RUnlock()
 	copiedInvocations := map[string][][]interface{}{}
 	for key, value := range fake.invocations {
 		copiedInvocations[key] = value
