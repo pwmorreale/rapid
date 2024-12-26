@@ -11,7 +11,6 @@ import (
 	"os"
 	"path"
 	"slices"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
@@ -25,17 +24,17 @@ import (
 //go:generate counterfeiter -o ../../test/mocks/fake_scenario.go . Scenario
 type Scenario interface {
 	ParseFile(f string) error
+	Viper() *viper.Viper
+	Config() string
 }
 
 // Context defines a scenario context.
 type Context struct {
-	Name    string
-	Version string
-	ID      string
-	Created time.Time
-	LastRun time.Time
-	Viper   *viper.Viper
-	Config  string
+	name    string
+	version string
+	id      string
+	v       *viper.Viper
+	conf    string
 }
 
 // New returns a context.
@@ -46,13 +45,12 @@ func New() *Context {
 // ParseFile parse a scenario configuration
 func (c *Context) ParseFile(flnm string) error {
 
-	c.Created = time.Now()
-	c.ID = uuid.New().String()
-
 	err := c.fromFile(flnm)
 	if err != nil {
 		return err
 	}
+
+	c.id = uuid.New().String()
 
 	return nil
 }
@@ -82,10 +80,15 @@ func (c *Context) fromReader(in io.Reader, contentType string) error {
 	if n == "" {
 		return errors.New("Missing scenario name")
 	}
+	// Must have the name of this scenario.
+	if n == "" {
+		return errors.New("Missing scenario name")
+	}
 
-	c.Name = n
-	c.Viper = v
-	c.Config = b.String()
+	c.name = n
+	c.version = v.GetString(config.ScenarioVersion)
+	c.v = v
+	c.conf = b.String()
 
 	return nil
 }
@@ -117,4 +120,14 @@ func (c *Context) fromFile(flnm string) error {
 	log.Info().Str("Using config file:", flnm)
 
 	return nil
+}
+
+// Viper returns the viper handle
+func (c *Context) Viper() *viper.Viper {
+	return c.v
+}
+
+// Config returns the original configuration as a string
+func (c *Context) Config() string {
+	return c.conf
 }

@@ -21,5 +21,6 @@ const (
 	LogLevel = "log_level"
 
 	// Scenario configuration
-	ScenarioName = "name"
+	ScenarioName    = "name"
+	ScenarioVersion = "version"
 )

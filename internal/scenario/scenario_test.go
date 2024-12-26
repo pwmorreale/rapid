@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/pwmorreale/rapid/internal/scenario"
-	"github.com/test-go/testify/assert"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestReadInConfig(t *testing.T) {
@@ -16,12 +16,7 @@ func TestReadInConfig(t *testing.T) {
 
 	err := s.ParseFile("../../test/configs/scenario_name.yaml")
 	assert.NotNil(t, s)
-	assert.NotEmpty(t, s.Created)
-	assert.NotEmpty(t, s.ID)
 	assert.Nil(t, err)
-	assert.NotNil(t, s.Viper)
-	assert.NotEmpty(t, s.Config)
-	assert.NotEmpty(t, s.Name)
 }
 
 func TestReadInConfigBadExt(t *testing.T) {
@@ -42,12 +37,11 @@ func TestReadInConfigBad(t *testing.T) {
 func TestReadInConfigTee(t *testing.T) {
 
 	s := scenario.New()
-	err := s.ParseFile("../../test/configs/scenario_name.yaml")
+	err := s.ParseFile("../../test/configs/test_scenario.yaml")
 	assert.NotNil(t, s)
 	assert.Nil(t, err)
-	assert.Contains(t, s.Config, "Lurch")
 
-	b, err := os.ReadFile("../../test/configs/scenario_name.yaml")
+	b, err := os.ReadFile("../../test/configs/test_scenario.yaml")
 	assert.Nil(t, err)
-	assert.Equal(t, s.Config, string(b[:]))
+	assert.Equal(t, s.Config(), string(b[:]))
 }
