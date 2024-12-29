@@ -8,29 +8,26 @@ package reporter
 import (
 	"io"
 
-	"github.com/pwmorreale/rapid/internal/scenario"
+	"github.com/pwmorreale/rapid/internal/config"
 )
 
 // Report defines interfaces for executing scenarios
 //
 //go:generate counterfeiter -o ../../test/mocks/fake_reporter.go . Report
 type Report interface {
-	Generate(io.Writer) error
+	Generate(*config.Scenario, io.Writer) error
 }
 
 // Context defines a sequence
 type Context struct {
-	sc scenario.Scenario
 }
 
 // New creates a new context instance
-func New(sc scenario.Scenario) *Context {
-	return &Context{
-		sc: sc,
-	}
+func New() *Context {
+	return &Context{}
 }
 
 // Generate creates and sends the report to the specified writer
-func (ctx *Context) Generate(_ io.Writer) error {
+func (ctx *Context) Generate(_ *config.Scenario, _ io.Writer) error {
 	return nil
 }

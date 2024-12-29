@@ -5,14 +5,16 @@ import (
 	"io"
 	"sync"
 
+	"github.com/pwmorreale/rapid/internal/config"
 	"github.com/pwmorreale/rapid/internal/reporter"
 )
 
 type FakeReport struct {
-	GenerateStub        func(io.Writer) error
+	GenerateStub        func(*config.Scenario, io.Writer) error
 	generateMutex       sync.RWMutex
 	generateArgsForCall []struct {
-		arg1 io.Writer
+		arg1 *config.Scenario
+		arg2 io.Writer
 	}
 	generateReturns struct {
 		result1 error
@@ -24,18 +26,19 @@ type FakeReport struct {
 	invocationsMutex sync.RWMutex
 }
 
-func (fake *FakeReport) Generate(arg1 io.Writer) error {
+func (fake *FakeReport) Generate(arg1 *config.Scenario, arg2 io.Writer) error {
 	fake.generateMutex.Lock()
 	ret, specificReturn := fake.generateReturnsOnCall[len(fake.generateArgsForCall)]
 	fake.generateArgsForCall = append(fake.generateArgsForCall, struct {
-		arg1 io.Writer
-	}{arg1})
+		arg1 *config.Scenario
+		arg2 io.Writer
+	}{arg1, arg2})
 	stub := fake.GenerateStub
 	fakeReturns := fake.generateReturns
-	fake.recordInvocation("Generate", []interface{}{arg1})
+	fake.recordInvocation("Generate", []interface{}{arg1, arg2})
 	fake.generateMutex.Unlock()
 	if stub != nil {
-		return stub(arg1)
+		return stub(arg1, arg2)
 	}
 	if specificReturn {
 		return ret.result1
@@ -49,17 +52,17 @@ func (fake *FakeReport) GenerateCallCount() int {
 	return len(fake.generateArgsForCall)
 }
 
-func (fake *FakeReport) GenerateCalls(stub func(io.Writer) error) {
+func (fake *FakeReport) GenerateCalls(stub func(*config.Scenario, io.Writer) error) {
 	fake.generateMutex.Lock()
 	defer fake.generateMutex.Unlock()
 	fake.GenerateStub = stub
 }
 
-func (fake *FakeReport) GenerateArgsForCall(i int) io.Writer {
+func (fake *FakeReport) GenerateArgsForCall(i int) (*config.Scenario, io.Writer) {
 	fake.generateMutex.RLock()
 	defer fake.generateMutex.RUnlock()
 	argsForCall := fake.generateArgsForCall[i]
-	return argsForCall.arg1
+	return argsForCall.arg1, argsForCall.arg2
 }
 
 func (fake *FakeReport) GenerateReturns(result1 error) {

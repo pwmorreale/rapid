@@ -1,14 +1,14 @@
 name: test-scenario
 version: 1.0
 sequence:
-  iterations: 1
+  iterations: 100
   time_limit: 1m
   abort_on_error: true
   ignore_duplicate_errors: true
   requests:
-    - name: name_of_request
+    - name: request1
       scheme: https
-      path: some path
+      path: some_path
       host: host
       time_limit: 1m
       query:
@@ -32,3 +32,27 @@ sequence:
           - 200
           - 401
           - 203
+    - name: request2
+      scheme: http
+      path: different_path
+      host: host2
+      time_limit: 1m
+      query:
+        key: value
+        key2: value2
+      extra_headers:
+        header1: header1_value
+        header2: header2_value
+        header3: $save_name
+      content: some-content
+      content_type: text
+      response:
+        content:
+          type: json
+          contains:
+            - "foo"
+            - "bar*"
+          extract: goo.moo.boo
+          save_as: foo
+        expected_status:
+          - 500

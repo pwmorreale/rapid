@@ -4,13 +4,15 @@ package mocks
 import (
 	"sync"
 
+	"github.com/pwmorreale/rapid/internal/config"
 	"github.com/pwmorreale/rapid/internal/sequences"
 )
 
 type FakeSequence struct {
-	RunStub        func() error
+	RunStub        func(*config.Scenario) error
 	runMutex       sync.RWMutex
 	runArgsForCall []struct {
+		arg1 *config.Scenario
 	}
 	runReturns struct {
 		result1 error
@@ -22,17 +24,18 @@ type FakeSequence struct {
 	invocationsMutex sync.RWMutex
 }
 
-func (fake *FakeSequence) Run() error {
+func (fake *FakeSequence) Run(arg1 *config.Scenario) error {
 	fake.runMutex.Lock()
 	ret, specificReturn := fake.runReturnsOnCall[len(fake.runArgsForCall)]
 	fake.runArgsForCall = append(fake.runArgsForCall, struct {
-	}{})
+		arg1 *config.Scenario
+	}{arg1})
 	stub := fake.RunStub
 	fakeReturns := fake.runReturns
-	fake.recordInvocation("Run", []interface{}{})
+	fake.recordInvocation("Run", []interface{}{arg1})
 	fake.runMutex.Unlock()
 	if stub != nil {
-		return stub()
+		return stub(arg1)
 	}
 	if specificReturn {
 		return ret.result1
@@ -46,10 +49,17 @@ func (fake *FakeSequence) RunCallCount() int {
 	return len(fake.runArgsForCall)
 }
 
-func (fake *FakeSequence) RunCalls(stub func() error) {
+func (fake *FakeSequence) RunCalls(stub func(*config.Scenario) error) {
 	fake.runMutex.Lock()
 	defer fake.runMutex.Unlock()
 	fake.RunStub = stub
+}
+
+func (fake *FakeSequence) RunArgsForCall(i int) *config.Scenario {
+	fake.runMutex.RLock()
+	defer fake.runMutex.RUnlock()
+	argsForCall := fake.runArgsForCall[i]
+	return argsForCall.arg1
 }
 
 func (fake *FakeSequence) RunReturns(result1 error) {

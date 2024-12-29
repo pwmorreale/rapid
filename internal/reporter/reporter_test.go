@@ -9,23 +9,18 @@ import (
 	"testing"
 
 	"github.com/pwmorreale/rapid/internal/reporter"
-	"github.com/pwmorreale/rapid/test/mocks"
 	"github.com/test-go/testify/assert"
 )
 
 func TestNew(t *testing.T) {
-	sc := &mocks.FakeScenario{}
-
-	rpt := reporter.New(sc)
+	rpt := reporter.New()
 	assert.NotNil(t, rpt)
 }
 
 func TestGenerate(t *testing.T) {
-	sc := &mocks.FakeScenario{}
-
-	rpt := reporter.New(sc)
+	rpt := reporter.New()
 	assert.NotNil(t, rpt)
 
-	err := rpt.Generate(os.Stdout)
+	err := rpt.Generate(nil, os.Stdout)
 	assert.Nil(t, err)
 }

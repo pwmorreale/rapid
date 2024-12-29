@@ -8,8 +8,8 @@ package cmd
 import (
 	"os"
 
+	"github.com/pwmorreale/rapid/internal/config"
 	"github.com/pwmorreale/rapid/internal/reporter"
-	"github.com/pwmorreale/rapid/internal/scenario"
 	"github.com/pwmorreale/rapid/internal/sequences"
 	"github.com/spf13/cobra"
 )
@@ -37,22 +37,22 @@ func Start() error {
 // RunCli executes the CLI interface.
 func RunCli(_ *cobra.Command, _ []string) error {
 
-	sc := scenario.New()
+	c := config.New()
 
-	err := sc.ParseFile(scenarioFile)
+	scenario, err := c.ParseFile(scenarioFile)
 	if err != nil {
 		return err
 	}
 
-	rpt := reporter.New(sc)
+	rpt := reporter.New()
 
-	seq := sequences.New(sc, rpt)
+	seq := sequences.New(rpt)
 
 	// Run the sequence...
-	err = seq.Run()
+	err = seq.Run(scenario)
 	if err != nil {
 		return err
 	}
 
-	return rpt.Generate(os.Stdout)
+	return rpt.Generate(scenario, os.Stdout)
 }
