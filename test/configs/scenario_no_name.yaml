@@ -1,5 +1,0 @@
-#
-# Test scenario yaml file that does not contain the required 'name' element.
-#
-foo:
-  bar: moo
