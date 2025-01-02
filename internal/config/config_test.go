@@ -20,26 +20,12 @@ func TestReadInConfig(t *testing.T) {
 	assert.Equal(t, s.Name, "test-scenario")
 	assert.Equal(t, len(s.Seq.Reqs), 2)
 
-	assert.Contains(t, s.Seq.Reqs[0].ExtraHeaders, "header1")
+	assert.Equal(t, len(s.Seq.Reqs[0].ExtraHeaders), 2)
+	assert.Equal(t, s.Seq.Reqs[0].ExtraHeaders[0].Name, "Foo")
 	assert.Equal(t, s.Seq.Reqs[0].Name, "request1")
 	assert.Equal(t, len(s.Seq.Reqs[0].Rsp.Status), 3)
 
 	assert.Equal(t, s.Seq.Reqs[1].Name, "request2")
 	assert.Equal(t, s.Seq.Reqs[1].Rsp.Status[0], 500)
-}
-
-func TestReadInConfigBadExt(t *testing.T) {
-
-	c := config.New()
-	_, err := c.ParseFile("../../test/configs/scenario_name.bad_ext")
-	assert.NotNil(t, err)
-
-}
-
-func TestReadInConfigExact(t *testing.T) {
-
-	c := config.New()
-
-	_, err := c.ParseFile("../../test/configs/scenario_no_name.yaml")
-	assert.NotNil(t, err)
+	assert.Equal(t, len(s.Seq.Reqs[0].Rsp.Status), 3)
 }

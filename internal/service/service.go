@@ -58,8 +58,8 @@ func (s *Context) Create(r *config.Request) (*http.Request, error) {
 	}
 
 	// Add extra headers...
-	for h, v := range r.ExtraHeaders {
-		request.Header.Add(h, v)
+	for i := range r.ExtraHeaders {
+		request.Header.Add(r.ExtraHeaders[i].Name, r.ExtraHeaders[i].Value)
 	}
 
 	// Cookies...

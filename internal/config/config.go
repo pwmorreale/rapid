@@ -42,12 +42,23 @@ type Sequence struct {
 	Reqs       []Request     `mapstructure:"requests"`
 }
 
+// Extract defines response data extraction.
+type Extract struct {
+	Path   string `mapstructure:"path"`
+	SaveAs string `mapstructure:"save_as"`
+}
+
+// Headers contains user defined headers for inclusion with the request.
+type Headers struct {
+	Name  string `mapstructure:"name"`
+	Value string `mapstructure:"value"`
+}
+
 // ContentData cdefines expected response data.
 type ContentData struct {
-	Type     string   `mapstructure:"type"`
-	Contains []string `mapstructure:"contains"`
-	Extract  string   `mapstructure:"extract"`
-	SaveAs   string   `mapstructure:"save_as"`
+	Type     string    `mapstructure:"type"`
+	Contains []string  `mapstructure:"contains"`
+	Extract  []Extract `mapstructure:"extract"`
 }
 
 // Response defines a REST reqponse
@@ -67,7 +78,7 @@ type Request struct {
 	Password     string            `mapstructure:"password"`
 	Fragment     string            `mapstructure:"fragment"`
 	Query        map[string]string `mapstructure:"query"`
-	ExtraHeaders map[string]string `mapstructure:"extra_headers"`
+	ExtraHeaders []Headers         `mapstructure:"extra_headers"`
 	Cookies      map[string]string `mapstructure:"cookies"`
 	Content      string            `mapstructure:"content"`
 	ContentType  string            `mapstructure:"content_type"`

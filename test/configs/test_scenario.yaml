@@ -19,9 +19,10 @@ sequence:
         key: value
         key2: value2
       extra_headers:
-        header1: header_value
-        header2: header2_value
-        header3: $save_name
+        - name: Foo
+          value: bar
+        - name: Goo
+          value: moo
       content: some-content
       content_type: text
       response:
@@ -30,8 +31,11 @@ sequence:
           contains:
             - "foo"
             - "bar*"
-          extract: goo.moo.boo
-          save_as: foo
+          extract:
+            - path: goo.moo.boo
+              save_as: foo
+            - path: boo.hoo
+              save_as: foo2
         expected_status:
           - 200
           - 401
@@ -49,9 +53,10 @@ sequence:
         key: value
         key2: value2
       extra_headers:
-        header1: header1_value
-        header2: header2_value
-        header3: $save_name
+        - name: Foo
+          value: bar
+        - name: Goo
+          value: moo
       content: some-content
       content_type: text
       response:
@@ -60,7 +65,10 @@ sequence:
           contains:
             - "foo"
             - "bar*"
-          extract: goo.moo.boo
-          save_as: foo
+          extract:
+            - path: hoo.koo.boo
+              save_as: foo3
+            - path: boo.hoo
+              save_as: foo4
         expected_status:
           - 500
