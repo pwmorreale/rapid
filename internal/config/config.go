@@ -32,10 +32,11 @@ type Scenario struct {
 	Seq     Sequence `mapstructure:"sequence"`
 }
 
-// Sequences contains the sequence configuration.
+// Sequence contains the sequence configuration.
 type Sequence struct {
 	Iterations int           `mapstructure:"iterations"`
-	Duration   time.Duration `mapstructure:"time_limit"`
+	Limit      time.Duration `mapstructure:"time_limit"`
+	Delay      time.Duration `mapstructure:"delay"`
 	ErrorAbort bool          `mapstructure:"abort_on_error"`
 	IgnoreDups bool          `mapstructure:"ignore_duplicate_errors"`
 	Reqs       []Request     `mapstructure:"requests"`
@@ -58,11 +59,16 @@ type Response struct {
 // Request defines the a request/response
 type Request struct {
 	Name         string            `mapstructure:"name"`
+	Method       string            `mapstructure:"method"`
 	Scheme       string            `mapstructure:"scheme"`
 	Path         string            `mapstructure:"path"`
 	Host         string            `mapstructure:"host"`
+	Username     string            `mapstructure:"username"`
+	Password     string            `mapstructure:"password"`
+	Fragment     string            `mapstructure:"fragment"`
 	Query        map[string]string `mapstructure:"query"`
 	ExtraHeaders map[string]string `mapstructure:"extra_headers"`
+	Cookies      map[string]string `mapstructure:"cookies"`
 	Content      string            `mapstructure:"content"`
 	ContentType  string            `mapstructure:"content_type"`
 	TimeLimit    time.Duration     `mapstructure:"time_limit"`

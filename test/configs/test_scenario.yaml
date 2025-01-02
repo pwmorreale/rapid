@@ -7,10 +7,14 @@ sequence:
   ignore_duplicate_errors: true
   requests:
     - name: request1
+      method: get
       scheme: https
       path: some_path
       host: host
       time_limit: 1m
+      username: bob-ross
+      password: happy-little-trees
+      fragment: frag
       query:
         key: value
         key2: value2
@@ -33,10 +37,14 @@ sequence:
           - 401
           - 203
     - name: request2
+      method: put
       scheme: http
       path: different_path
       host: host2
       time_limit: 1m
+      username: bob-ross
+      password: happy-little-trees
+      fragment: frag
       query:
         key: value
         key2: value2

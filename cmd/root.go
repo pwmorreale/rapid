@@ -11,6 +11,7 @@ import (
 	"github.com/pwmorreale/rapid/internal/config"
 	"github.com/pwmorreale/rapid/internal/reporter"
 	"github.com/pwmorreale/rapid/internal/sequences"
+	"github.com/pwmorreale/rapid/internal/service"
 	"github.com/spf13/cobra"
 )
 
@@ -46,7 +47,9 @@ func RunCli(_ *cobra.Command, _ []string) error {
 
 	rpt := reporter.New()
 
-	seq := sequences.New(rpt)
+	srv := service.New()
+
+	seq := sequences.New(srv, rpt)
 
 	// Run the sequence...
 	err = seq.Run(scenario)
