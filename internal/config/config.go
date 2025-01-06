@@ -64,7 +64,7 @@ type ContentData struct {
 // Response defines a REST reqponse
 type Response struct {
 	Content ContentData `mapstructure:"content"`
-	Status  []int       `mapstructure:"expected_status"`
+	Status  []string    `mapstructure:"expected_status"`
 }
 
 // Request defines the a request/response

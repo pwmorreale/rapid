@@ -26,6 +26,6 @@ func TestReadInConfig(t *testing.T) {
 	assert.Equal(t, len(s.Seq.Reqs[0].Rsp.Status), 3)
 
 	assert.Equal(t, s.Seq.Reqs[1].Name, "request2")
-	assert.Equal(t, s.Seq.Reqs[1].Rsp.Status[0], 500)
+	assert.Equal(t, s.Seq.Reqs[1].Rsp.Status[0], "500")
 	assert.Equal(t, len(s.Seq.Reqs[0].Rsp.Status), 3)
 }
