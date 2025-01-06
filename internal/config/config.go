@@ -27,9 +27,10 @@ type Context struct {
 
 // Scenario defines the entire configuration.
 type Scenario struct {
-	Name    string   `mapstructure:"name"`
-	Version string   `mapstructure:"version"`
-	Seq     Sequence `mapstructure:"sequence"`
+	Name     string            `mapstructure:"name"`
+	Version  string            `mapstructure:"version"`
+	Sequence Sequence          `mapstructure:"sequence"`
+	Data     map[string]string `mapstructure:"data"`
 }
 
 // Sequence contains the sequence configuration.
@@ -39,7 +40,7 @@ type Sequence struct {
 	Delay        time.Duration `mapstructure:"delay"`
 	AbortOnError bool          `mapstructure:"abort_on_error"`
 	IgnoreDups   bool          `mapstructure:"ignore_duplicate_errors"`
-	Reqs         []Request     `mapstructure:"requests"`
+	Requests     []Request     `mapstructure:"requests"`
 }
 
 // Extract defines response data extraction.
@@ -83,7 +84,7 @@ type Request struct {
 	Content      string            `mapstructure:"content"`
 	ContentType  string            `mapstructure:"content_type"`
 	TimeLimit    time.Duration     `mapstructure:"time_limit"`
-	Rsp          Response          `mapstructure:"response"`
+	Response     Response          `mapstructure:"response"`
 }
 
 // New creates a new context instance

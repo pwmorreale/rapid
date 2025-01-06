@@ -35,13 +35,13 @@ type Context struct {
 
 func checkStatus(resp *http.Response, r *config.Request) error {
 
-	for i := range r.Rsp.Status {
-		if resp.Status == r.Rsp.Status[i] {
+	for i := range r.Response.Status {
+		if resp.Status == r.Response.Status[i] {
 			return nil
 		}
 	}
 
-	return fmt.Errorf("response status: %s not in expected status: %v", resp.Status, r.Rsp.Status)
+	return fmt.Errorf("response status: %s not in expected status: %v", resp.Status, r.Response.Status)
 }
 
 // New returns a new context.

@@ -38,9 +38,9 @@ func TestRun(t *testing.T) {
 	assert.Nil(t, err)
 
 	// Two requests in the test sequence...
-	assert.Equal(t, sc.Seq.Iterations*2, srv.CreateRequestCallCount())
-	assert.Equal(t, sc.Seq.Iterations*2, srv.SendCallCount())
-	assert.Equal(t, sc.Seq.Iterations*2, srv.ValidateResponseCallCount())
+	assert.Equal(t, sc.Sequence.Iterations*2, srv.CreateRequestCallCount())
+	assert.Equal(t, sc.Sequence.Iterations*2, srv.SendCallCount())
+	assert.Equal(t, sc.Sequence.Iterations*2, srv.ValidateResponseCallCount())
 }
 
 func TestRunFailSecondRequest(t *testing.T) {
@@ -141,7 +141,7 @@ func TestRunAbortOnError(t *testing.T) {
 	sc, err := c.ParseFile("../../test/configs/test_scenario.yaml")
 	assert.Nil(t, err)
 
-	sc.Seq.AbortOnError = false
+	sc.Sequence.AbortOnError = false
 
 	srv.ValidateResponseReturnsOnCall(0, errors.New("blowing chunks"))
 
@@ -164,8 +164,8 @@ func TestRunExceedTimeLimit(t *testing.T) {
 	assert.Nil(t, err)
 
 	// Ensure we exceed the time limit
-	sc.Seq.Delay, _ = time.ParseDuration("100ms")
-	sc.Seq.Limit, _ = time.ParseDuration("10ms")
+	sc.Sequence.Delay, _ = time.ParseDuration("100ms")
+	sc.Sequence.Limit, _ = time.ParseDuration("10ms")
 
 	err = seq.Run(sc)
 

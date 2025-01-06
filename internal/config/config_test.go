@@ -18,14 +18,14 @@ func TestReadInConfig(t *testing.T) {
 	assert.Nil(t, err)
 
 	assert.Equal(t, s.Name, "test-scenario")
-	assert.Equal(t, len(s.Seq.Reqs), 2)
+	assert.Equal(t, len(s.Sequence.Requests), 2)
 
-	assert.Equal(t, len(s.Seq.Reqs[0].ExtraHeaders), 2)
-	assert.Equal(t, s.Seq.Reqs[0].ExtraHeaders[0].Name, "Foo")
-	assert.Equal(t, s.Seq.Reqs[0].Name, "request1")
-	assert.Equal(t, len(s.Seq.Reqs[0].Rsp.Status), 3)
+	assert.Equal(t, len(s.Sequence.Requests[0].ExtraHeaders), 2)
+	assert.Equal(t, s.Sequence.Requests[0].ExtraHeaders[0].Name, "Foo")
+	assert.Equal(t, s.Sequence.Requests[0].Name, "request1")
+	assert.Equal(t, len(s.Sequence.Requests[0].Response.Status), 3)
 
-	assert.Equal(t, s.Seq.Reqs[1].Name, "request2")
-	assert.Equal(t, s.Seq.Reqs[1].Rsp.Status[0], "500")
-	assert.Equal(t, len(s.Seq.Reqs[0].Rsp.Status), 3)
+	assert.Equal(t, s.Sequence.Requests[1].Name, "request2")
+	assert.Equal(t, s.Sequence.Requests[1].Response.Status[0], "500")
+	assert.Equal(t, len(s.Sequence.Requests[0].Response.Status), 3)
 }

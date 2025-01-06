@@ -10,7 +10,7 @@ import (
 
 var testURL = "https://bob-ross:happy-little-trees@google.com:80/blah/moo?key=value&key2=value2#fraggie"
 
-func TestCreateRequest(t *testing.T) {
+func TestCreateRequests(t *testing.T) {
 
 	s := service.New()
 
@@ -18,7 +18,7 @@ func TestCreateRequest(t *testing.T) {
 	sc, err := c.ParseFile("../../test/configs/single_request.yaml")
 	assert.Nil(t, err)
 
-	request, err := s.CreateRequest(&sc.Seq.Reqs[0])
+	request, err := s.CreateRequest(&sc.Sequence.Requests[0])
 	assert.Nil(t, err)
 
 	assert.Equal(t, testURL, request.URL.String())
@@ -35,8 +35,12 @@ func TestCreateClient(t *testing.T) {
 	sc, err := c.ParseFile("../../test/configs/single_request.yaml")
 	assert.Nil(t, err)
 
-	client, err := s.CreateClient(&sc.Seq.Reqs[0])
+	client, err := s.CreateClient(&sc.Sequence.Requests[0])
 	assert.Nil(t, err)
 	assert.NotNil(t, client)
+
+}
+
+func TestSend(t *testing.T) {
 
 }

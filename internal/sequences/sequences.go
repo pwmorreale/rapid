@@ -14,10 +14,10 @@ import (
 	"github.com/pwmorreale/rapid/internal/service"
 )
 
-// Sequence defines interfaces for executing scenarios
+// Sequenceuence defines interfaces for executing scenarios
 //
-//go:generate counterfeiter -o ../../test/mocks/fake_sequence.go . Sequence
-type Sequence interface {
+//go:generate counterfeiter -o ../../test/mocks/fake_sequence.go . Sequenceuence
+type Sequenceuence interface {
 	Run(*config.Scenario) error
 }
 
@@ -65,20 +65,20 @@ func (ctx *Context) Run(sc *config.Scenario) error {
 
 	startTime := time.Now()
 
-	for i := 0; i < sc.Seq.Iterations; i++ {
+	for i := 0; i < sc.Sequence.Iterations; i++ {
 
-		for _, r := range sc.Seq.Reqs {
+		for _, r := range sc.Sequence.Requests {
 
 			err := ctx.handleRequest(&r)
-			if err != nil && sc.Seq.AbortOnError {
+			if err != nil && sc.Sequence.AbortOnError {
 				return err
 			}
 
-			time.Sleep(sc.Seq.Delay)
+			time.Sleep(sc.Sequence.Delay)
 
-			if sc.Seq.Limit > 0 && time.Since(startTime) > sc.Seq.Limit {
+			if sc.Sequence.Limit > 0 && time.Since(startTime) > sc.Sequence.Limit {
 				// Log something.
-				return fmt.Errorf("Execution exceeded time limit of: %v", sc.Seq.Limit)
+				return fmt.Errorf("Execution exceeded time limit of: %v", sc.Sequence.Limit)
 			}
 		}
 
