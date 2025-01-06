@@ -34,12 +34,12 @@ type Scenario struct {
 
 // Sequence contains the sequence configuration.
 type Sequence struct {
-	Iterations int           `mapstructure:"iterations"`
-	Limit      time.Duration `mapstructure:"time_limit"`
-	Delay      time.Duration `mapstructure:"delay"`
-	ErrorAbort bool          `mapstructure:"abort_on_error"`
-	IgnoreDups bool          `mapstructure:"ignore_duplicate_errors"`
-	Reqs       []Request     `mapstructure:"requests"`
+	Iterations   int           `mapstructure:"iterations"`
+	Limit        time.Duration `mapstructure:"time_limit"`
+	Delay        time.Duration `mapstructure:"delay"`
+	AbortOnError bool          `mapstructure:"abort_on_error"`
+	IgnoreDups   bool          `mapstructure:"ignore_duplicate_errors"`
+	Reqs         []Request     `mapstructure:"requests"`
 }
 
 // Extract defines response data extraction.

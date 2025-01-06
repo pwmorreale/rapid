@@ -22,14 +22,26 @@ import (
 //
 //go:generate counterfeiter -o ../../test/mocks/fake_service.go . Service
 type Service interface {
-	Create(*config.Request) (*http.Request, error)
-	Send(*http.Request, *config.Request) (*http.Response, error)
-	Validate(*http.Response, *config.Request) error
+	CreateRequest(*config.Request) (*http.Request, error)
+	CreateClient(*config.Request) (*http.Client, error)
+	Send(*http.Client, *http.Request, *config.Request) (*http.Response, error)
+	ValidateResponse(*http.Client, *http.Response, *config.Request) error
 }
 
 // Context defines a scenario context.
 type Context struct {
 	savedContent map[string]string
+}
+
+func checkStatus(resp *http.Response, r *config.Request) error {
+
+	for i := range r.Rsp.Status {
+		if resp.Status == r.Rsp.Status[i] {
+			return nil
+		}
+	}
+
+	return fmt.Errorf("response status: %s not in expected status: %v", resp.Status, r.Rsp.Status)
 }
 
 // New returns a new context.
@@ -38,12 +50,12 @@ func New() *Context {
 }
 
 // Create creates a http request.
-func (s *Context) Create(r *config.Request) (*http.Request, error) {
+func (s *Context) CreateRequest(r *config.Request) (*http.Request, error) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), r.TimeLimit)
 	defer cancel()
 
-	u := buildURL(r)
+	u := s.BuildURL(r)
 
 	rdr := s.getContentReader(r)
 	request, err := http.NewRequestWithContext(ctx, r.Method, u, rdr)
@@ -71,21 +83,31 @@ func (s *Context) Create(r *config.Request) (*http.Request, error) {
 	return request, nil
 }
 
-// Send executes the request
-func (s *Context) Send(hr *http.Request, _ *config.Request) (*http.Response, error) {
+// CreateClient creates a new http client
+func (s *Context) CreateClient(req *config.Request) (*http.Client, error) {
 
-	httpClient := &http.Client{}
+	client := &http.Client{}
 
-	return httpClient.Do(hr)
+	return client, nil
 }
 
-// Validate compares the response against the expected results.
-func (s *Context) Validate(_ *http.Response, _ *config.Request) error {
+// ValidateResponse checks the response of a service request.
+func (s *Context) ValidateResponse(*http.Client, *http.Response, *config.Request) error {
 	return nil
 }
 
-// buildURL creates the URL from the configuration
-func buildURL(r *config.Request) string {
+// Send compares the response against the expected results.
+func (s *Context) Send(client *http.Client, request *http.Request, r *config.Request) (*http.Response, error) {
+
+	resp, err := client.Do(request)
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
+}
+
+// BuildURL creates the URL from the configuration
+func (s *Context) BuildURL(r *config.Request) string {
 
 	var u url.URL
 
@@ -93,6 +115,7 @@ func buildURL(r *config.Request) string {
 	u.Path = r.Path
 	u.Host = r.Host
 	u.User = getUserinfo(r)
+	u.Fragment = r.Fragment
 
 	q := u.Query()
 	for k, v := range r.Query {

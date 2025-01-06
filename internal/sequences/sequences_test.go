@@ -38,9 +38,9 @@ func TestRun(t *testing.T) {
 	assert.Nil(t, err)
 
 	// Two requests in the test sequence...
-	assert.Equal(t, sc.Seq.Iterations*2, srv.CreateCallCount())
+	assert.Equal(t, sc.Seq.Iterations*2, srv.CreateRequestCallCount())
 	assert.Equal(t, sc.Seq.Iterations*2, srv.SendCallCount())
-	assert.Equal(t, sc.Seq.Iterations*2, srv.ValidateCallCount())
+	assert.Equal(t, sc.Seq.Iterations*2, srv.ValidateResponseCallCount())
 }
 
 func TestRunFailSecondRequest(t *testing.T) {
@@ -54,14 +54,37 @@ func TestRunFailSecondRequest(t *testing.T) {
 	sc, err := c.ParseFile("../../test/configs/test_scenario.yaml")
 	assert.Nil(t, err)
 
-	srv.CreateReturnsOnCall(1, nil, errors.New("blowing chunks"))
+	srv.CreateRequestReturnsOnCall(1, nil, errors.New("blowing chunks"))
 
 	err = seq.Run(sc)
 
 	assert.Equal(t, err, errors.New("blowing chunks"))
-	assert.Equal(t, 2, srv.CreateCallCount())
+	assert.Equal(t, 2, srv.CreateRequestCallCount())
+	assert.Equal(t, 1, srv.CreateClientCallCount())
 	assert.Equal(t, 1, srv.SendCallCount())
-	assert.Equal(t, 1, srv.ValidateCallCount())
+	assert.Equal(t, 1, srv.ValidateResponseCallCount())
+}
+
+func TestRunFailClient(t *testing.T) {
+	rpt := &mocks.FakeReport{}
+	srv := &mocks.FakeService{}
+
+	seq := sequences.New(srv, rpt)
+	assert.NotNil(t, seq)
+
+	c := config.New()
+	sc, err := c.ParseFile("../../test/configs/test_scenario.yaml")
+	assert.Nil(t, err)
+
+	srv.CreateClientReturnsOnCall(0, nil, errors.New("blowing chunks"))
+
+	err = seq.Run(sc)
+
+	assert.Equal(t, err, errors.New("blowing chunks"))
+	assert.Equal(t, 1, srv.CreateRequestCallCount())
+	assert.Equal(t, 1, srv.CreateClientCallCount())
+	assert.Equal(t, 0, srv.SendCallCount())
+	assert.Equal(t, 0, srv.ValidateResponseCallCount())
 }
 
 func TestRunFailSend(t *testing.T) {
@@ -80,9 +103,10 @@ func TestRunFailSend(t *testing.T) {
 	err = seq.Run(sc)
 
 	assert.Equal(t, err, errors.New("blowing chunks"))
-	assert.Equal(t, 1, srv.CreateCallCount())
+	assert.Equal(t, 1, srv.CreateRequestCallCount())
+	assert.Equal(t, 1, srv.CreateClientCallCount())
 	assert.Equal(t, 1, srv.SendCallCount())
-	assert.Equal(t, 0, srv.ValidateCallCount())
+	assert.Equal(t, 0, srv.ValidateResponseCallCount())
 }
 
 func TestRunFailValidate(t *testing.T) {
@@ -96,16 +120,38 @@ func TestRunFailValidate(t *testing.T) {
 	sc, err := c.ParseFile("../../test/configs/test_scenario.yaml")
 	assert.Nil(t, err)
 
-	srv.ValidateReturnsOnCall(0, errors.New("blowing chunks"))
+	srv.ValidateResponseReturnsOnCall(0, errors.New("blowing chunks"))
 
 	err = seq.Run(sc)
 
 	assert.Equal(t, err, errors.New("blowing chunks"))
-	assert.Equal(t, 1, srv.CreateCallCount())
+	assert.Equal(t, 1, srv.CreateRequestCallCount())
 	assert.Equal(t, 1, srv.SendCallCount())
-	assert.Equal(t, 1, srv.ValidateCallCount())
+	assert.Equal(t, 1, srv.ValidateResponseCallCount())
 }
 
+func TestRunAbortOnError(t *testing.T) {
+	rpt := &mocks.FakeReport{}
+	srv := &mocks.FakeService{}
+
+	seq := sequences.New(srv, rpt)
+	assert.NotNil(t, seq)
+
+	c := config.New()
+	sc, err := c.ParseFile("../../test/configs/test_scenario.yaml")
+	assert.Nil(t, err)
+
+	sc.Seq.AbortOnError = false
+
+	srv.ValidateResponseReturnsOnCall(0, errors.New("blowing chunks"))
+
+	err = seq.Run(sc)
+
+	assert.Equal(t, 200, srv.CreateRequestCallCount())
+	assert.Equal(t, 200, srv.CreateClientCallCount())
+	assert.Equal(t, 200, srv.SendCallCount())
+	assert.Equal(t, 200, srv.ValidateResponseCallCount())
+}
 func TestRunExceedTimeLimit(t *testing.T) {
 	rpt := &mocks.FakeReport{}
 	srv := &mocks.FakeService{}
@@ -123,7 +169,7 @@ func TestRunExceedTimeLimit(t *testing.T) {
 
 	err = seq.Run(sc)
 
-	assert.Equal(t, 1, srv.CreateCallCount())
+	assert.Equal(t, 1, srv.CreateRequestCallCount())
 	assert.Equal(t, 1, srv.SendCallCount())
-	assert.Equal(t, 1, srv.ValidateCallCount())
+	assert.Equal(t, 1, srv.ValidateResponseCallCount())
 }

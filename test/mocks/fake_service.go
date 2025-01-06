@@ -10,24 +10,38 @@ import (
 )
 
 type FakeService struct {
-	CreateStub        func(*config.Request) (*http.Request, error)
-	createMutex       sync.RWMutex
-	createArgsForCall []struct {
+	CreateClientStub        func(*config.Request) (*http.Client, error)
+	createClientMutex       sync.RWMutex
+	createClientArgsForCall []struct {
 		arg1 *config.Request
 	}
-	createReturns struct {
+	createClientReturns struct {
+		result1 *http.Client
+		result2 error
+	}
+	createClientReturnsOnCall map[int]struct {
+		result1 *http.Client
+		result2 error
+	}
+	CreateRequestStub        func(*config.Request) (*http.Request, error)
+	createRequestMutex       sync.RWMutex
+	createRequestArgsForCall []struct {
+		arg1 *config.Request
+	}
+	createRequestReturns struct {
 		result1 *http.Request
 		result2 error
 	}
-	createReturnsOnCall map[int]struct {
+	createRequestReturnsOnCall map[int]struct {
 		result1 *http.Request
 		result2 error
 	}
-	SendStub        func(*http.Request, *config.Request) (*http.Response, error)
+	SendStub        func(*http.Client, *http.Request, *config.Request) (*http.Response, error)
 	sendMutex       sync.RWMutex
 	sendArgsForCall []struct {
-		arg1 *http.Request
-		arg2 *config.Request
+		arg1 *http.Client
+		arg2 *http.Request
+		arg3 *config.Request
 	}
 	sendReturns struct {
 		result1 *http.Response
@@ -37,32 +51,33 @@ type FakeService struct {
 		result1 *http.Response
 		result2 error
 	}
-	ValidateStub        func(*http.Response, *config.Request) error
-	validateMutex       sync.RWMutex
-	validateArgsForCall []struct {
-		arg1 *http.Response
-		arg2 *config.Request
+	ValidateResponseStub        func(*http.Client, *http.Response, *config.Request) error
+	validateResponseMutex       sync.RWMutex
+	validateResponseArgsForCall []struct {
+		arg1 *http.Client
+		arg2 *http.Response
+		arg3 *config.Request
 	}
-	validateReturns struct {
+	validateResponseReturns struct {
 		result1 error
 	}
-	validateReturnsOnCall map[int]struct {
+	validateResponseReturnsOnCall map[int]struct {
 		result1 error
 	}
 	invocations      map[string][][]interface{}
 	invocationsMutex sync.RWMutex
 }
 
-func (fake *FakeService) Create(arg1 *config.Request) (*http.Request, error) {
-	fake.createMutex.Lock()
-	ret, specificReturn := fake.createReturnsOnCall[len(fake.createArgsForCall)]
-	fake.createArgsForCall = append(fake.createArgsForCall, struct {
+func (fake *FakeService) CreateClient(arg1 *config.Request) (*http.Client, error) {
+	fake.createClientMutex.Lock()
+	ret, specificReturn := fake.createClientReturnsOnCall[len(fake.createClientArgsForCall)]
+	fake.createClientArgsForCall = append(fake.createClientArgsForCall, struct {
 		arg1 *config.Request
 	}{arg1})
-	stub := fake.CreateStub
-	fakeReturns := fake.createReturns
-	fake.recordInvocation("Create", []interface{}{arg1})
-	fake.createMutex.Unlock()
+	stub := fake.CreateClientStub
+	fakeReturns := fake.createClientReturns
+	fake.recordInvocation("CreateClient", []interface{}{arg1})
+	fake.createClientMutex.Unlock()
 	if stub != nil {
 		return stub(arg1)
 	}
@@ -72,64 +87,129 @@ func (fake *FakeService) Create(arg1 *config.Request) (*http.Request, error) {
 	return fakeReturns.result1, fakeReturns.result2
 }
 
-func (fake *FakeService) CreateCallCount() int {
-	fake.createMutex.RLock()
-	defer fake.createMutex.RUnlock()
-	return len(fake.createArgsForCall)
+func (fake *FakeService) CreateClientCallCount() int {
+	fake.createClientMutex.RLock()
+	defer fake.createClientMutex.RUnlock()
+	return len(fake.createClientArgsForCall)
 }
 
-func (fake *FakeService) CreateCalls(stub func(*config.Request) (*http.Request, error)) {
-	fake.createMutex.Lock()
-	defer fake.createMutex.Unlock()
-	fake.CreateStub = stub
+func (fake *FakeService) CreateClientCalls(stub func(*config.Request) (*http.Client, error)) {
+	fake.createClientMutex.Lock()
+	defer fake.createClientMutex.Unlock()
+	fake.CreateClientStub = stub
 }
 
-func (fake *FakeService) CreateArgsForCall(i int) *config.Request {
-	fake.createMutex.RLock()
-	defer fake.createMutex.RUnlock()
-	argsForCall := fake.createArgsForCall[i]
+func (fake *FakeService) CreateClientArgsForCall(i int) *config.Request {
+	fake.createClientMutex.RLock()
+	defer fake.createClientMutex.RUnlock()
+	argsForCall := fake.createClientArgsForCall[i]
 	return argsForCall.arg1
 }
 
-func (fake *FakeService) CreateReturns(result1 *http.Request, result2 error) {
-	fake.createMutex.Lock()
-	defer fake.createMutex.Unlock()
-	fake.CreateStub = nil
-	fake.createReturns = struct {
+func (fake *FakeService) CreateClientReturns(result1 *http.Client, result2 error) {
+	fake.createClientMutex.Lock()
+	defer fake.createClientMutex.Unlock()
+	fake.CreateClientStub = nil
+	fake.createClientReturns = struct {
+		result1 *http.Client
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeService) CreateClientReturnsOnCall(i int, result1 *http.Client, result2 error) {
+	fake.createClientMutex.Lock()
+	defer fake.createClientMutex.Unlock()
+	fake.CreateClientStub = nil
+	if fake.createClientReturnsOnCall == nil {
+		fake.createClientReturnsOnCall = make(map[int]struct {
+			result1 *http.Client
+			result2 error
+		})
+	}
+	fake.createClientReturnsOnCall[i] = struct {
+		result1 *http.Client
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeService) CreateRequest(arg1 *config.Request) (*http.Request, error) {
+	fake.createRequestMutex.Lock()
+	ret, specificReturn := fake.createRequestReturnsOnCall[len(fake.createRequestArgsForCall)]
+	fake.createRequestArgsForCall = append(fake.createRequestArgsForCall, struct {
+		arg1 *config.Request
+	}{arg1})
+	stub := fake.CreateRequestStub
+	fakeReturns := fake.createRequestReturns
+	fake.recordInvocation("CreateRequest", []interface{}{arg1})
+	fake.createRequestMutex.Unlock()
+	if stub != nil {
+		return stub(arg1)
+	}
+	if specificReturn {
+		return ret.result1, ret.result2
+	}
+	return fakeReturns.result1, fakeReturns.result2
+}
+
+func (fake *FakeService) CreateRequestCallCount() int {
+	fake.createRequestMutex.RLock()
+	defer fake.createRequestMutex.RUnlock()
+	return len(fake.createRequestArgsForCall)
+}
+
+func (fake *FakeService) CreateRequestCalls(stub func(*config.Request) (*http.Request, error)) {
+	fake.createRequestMutex.Lock()
+	defer fake.createRequestMutex.Unlock()
+	fake.CreateRequestStub = stub
+}
+
+func (fake *FakeService) CreateRequestArgsForCall(i int) *config.Request {
+	fake.createRequestMutex.RLock()
+	defer fake.createRequestMutex.RUnlock()
+	argsForCall := fake.createRequestArgsForCall[i]
+	return argsForCall.arg1
+}
+
+func (fake *FakeService) CreateRequestReturns(result1 *http.Request, result2 error) {
+	fake.createRequestMutex.Lock()
+	defer fake.createRequestMutex.Unlock()
+	fake.CreateRequestStub = nil
+	fake.createRequestReturns = struct {
 		result1 *http.Request
 		result2 error
 	}{result1, result2}
 }
 
-func (fake *FakeService) CreateReturnsOnCall(i int, result1 *http.Request, result2 error) {
-	fake.createMutex.Lock()
-	defer fake.createMutex.Unlock()
-	fake.CreateStub = nil
-	if fake.createReturnsOnCall == nil {
-		fake.createReturnsOnCall = make(map[int]struct {
+func (fake *FakeService) CreateRequestReturnsOnCall(i int, result1 *http.Request, result2 error) {
+	fake.createRequestMutex.Lock()
+	defer fake.createRequestMutex.Unlock()
+	fake.CreateRequestStub = nil
+	if fake.createRequestReturnsOnCall == nil {
+		fake.createRequestReturnsOnCall = make(map[int]struct {
 			result1 *http.Request
 			result2 error
 		})
 	}
-	fake.createReturnsOnCall[i] = struct {
+	fake.createRequestReturnsOnCall[i] = struct {
 		result1 *http.Request
 		result2 error
 	}{result1, result2}
 }
 
-func (fake *FakeService) Send(arg1 *http.Request, arg2 *config.Request) (*http.Response, error) {
+func (fake *FakeService) Send(arg1 *http.Client, arg2 *http.Request, arg3 *config.Request) (*http.Response, error) {
 	fake.sendMutex.Lock()
 	ret, specificReturn := fake.sendReturnsOnCall[len(fake.sendArgsForCall)]
 	fake.sendArgsForCall = append(fake.sendArgsForCall, struct {
-		arg1 *http.Request
-		arg2 *config.Request
-	}{arg1, arg2})
+		arg1 *http.Client
+		arg2 *http.Request
+		arg3 *config.Request
+	}{arg1, arg2, arg3})
 	stub := fake.SendStub
 	fakeReturns := fake.sendReturns
-	fake.recordInvocation("Send", []interface{}{arg1, arg2})
+	fake.recordInvocation("Send", []interface{}{arg1, arg2, arg3})
 	fake.sendMutex.Unlock()
 	if stub != nil {
-		return stub(arg1, arg2)
+		return stub(arg1, arg2, arg3)
 	}
 	if specificReturn {
 		return ret.result1, ret.result2
@@ -143,17 +223,17 @@ func (fake *FakeService) SendCallCount() int {
 	return len(fake.sendArgsForCall)
 }
 
-func (fake *FakeService) SendCalls(stub func(*http.Request, *config.Request) (*http.Response, error)) {
+func (fake *FakeService) SendCalls(stub func(*http.Client, *http.Request, *config.Request) (*http.Response, error)) {
 	fake.sendMutex.Lock()
 	defer fake.sendMutex.Unlock()
 	fake.SendStub = stub
 }
 
-func (fake *FakeService) SendArgsForCall(i int) (*http.Request, *config.Request) {
+func (fake *FakeService) SendArgsForCall(i int) (*http.Client, *http.Request, *config.Request) {
 	fake.sendMutex.RLock()
 	defer fake.sendMutex.RUnlock()
 	argsForCall := fake.sendArgsForCall[i]
-	return argsForCall.arg1, argsForCall.arg2
+	return argsForCall.arg1, argsForCall.arg2, argsForCall.arg3
 }
 
 func (fake *FakeService) SendReturns(result1 *http.Response, result2 error) {
@@ -182,19 +262,20 @@ func (fake *FakeService) SendReturnsOnCall(i int, result1 *http.Response, result
 	}{result1, result2}
 }
 
-func (fake *FakeService) Validate(arg1 *http.Response, arg2 *config.Request) error {
-	fake.validateMutex.Lock()
-	ret, specificReturn := fake.validateReturnsOnCall[len(fake.validateArgsForCall)]
-	fake.validateArgsForCall = append(fake.validateArgsForCall, struct {
-		arg1 *http.Response
-		arg2 *config.Request
-	}{arg1, arg2})
-	stub := fake.ValidateStub
-	fakeReturns := fake.validateReturns
-	fake.recordInvocation("Validate", []interface{}{arg1, arg2})
-	fake.validateMutex.Unlock()
+func (fake *FakeService) ValidateResponse(arg1 *http.Client, arg2 *http.Response, arg3 *config.Request) error {
+	fake.validateResponseMutex.Lock()
+	ret, specificReturn := fake.validateResponseReturnsOnCall[len(fake.validateResponseArgsForCall)]
+	fake.validateResponseArgsForCall = append(fake.validateResponseArgsForCall, struct {
+		arg1 *http.Client
+		arg2 *http.Response
+		arg3 *config.Request
+	}{arg1, arg2, arg3})
+	stub := fake.ValidateResponseStub
+	fakeReturns := fake.validateResponseReturns
+	fake.recordInvocation("ValidateResponse", []interface{}{arg1, arg2, arg3})
+	fake.validateResponseMutex.Unlock()
 	if stub != nil {
-		return stub(arg1, arg2)
+		return stub(arg1, arg2, arg3)
 	}
 	if specificReturn {
 		return ret.result1
@@ -202,44 +283,44 @@ func (fake *FakeService) Validate(arg1 *http.Response, arg2 *config.Request) err
 	return fakeReturns.result1
 }
 
-func (fake *FakeService) ValidateCallCount() int {
-	fake.validateMutex.RLock()
-	defer fake.validateMutex.RUnlock()
-	return len(fake.validateArgsForCall)
+func (fake *FakeService) ValidateResponseCallCount() int {
+	fake.validateResponseMutex.RLock()
+	defer fake.validateResponseMutex.RUnlock()
+	return len(fake.validateResponseArgsForCall)
 }
 
-func (fake *FakeService) ValidateCalls(stub func(*http.Response, *config.Request) error) {
-	fake.validateMutex.Lock()
-	defer fake.validateMutex.Unlock()
-	fake.ValidateStub = stub
+func (fake *FakeService) ValidateResponseCalls(stub func(*http.Client, *http.Response, *config.Request) error) {
+	fake.validateResponseMutex.Lock()
+	defer fake.validateResponseMutex.Unlock()
+	fake.ValidateResponseStub = stub
 }
 
-func (fake *FakeService) ValidateArgsForCall(i int) (*http.Response, *config.Request) {
-	fake.validateMutex.RLock()
-	defer fake.validateMutex.RUnlock()
-	argsForCall := fake.validateArgsForCall[i]
-	return argsForCall.arg1, argsForCall.arg2
+func (fake *FakeService) ValidateResponseArgsForCall(i int) (*http.Client, *http.Response, *config.Request) {
+	fake.validateResponseMutex.RLock()
+	defer fake.validateResponseMutex.RUnlock()
+	argsForCall := fake.validateResponseArgsForCall[i]
+	return argsForCall.arg1, argsForCall.arg2, argsForCall.arg3
 }
 
-func (fake *FakeService) ValidateReturns(result1 error) {
-	fake.validateMutex.Lock()
-	defer fake.validateMutex.Unlock()
-	fake.ValidateStub = nil
-	fake.validateReturns = struct {
+func (fake *FakeService) ValidateResponseReturns(result1 error) {
+	fake.validateResponseMutex.Lock()
+	defer fake.validateResponseMutex.Unlock()
+	fake.ValidateResponseStub = nil
+	fake.validateResponseReturns = struct {
 		result1 error
 	}{result1}
 }
 
-func (fake *FakeService) ValidateReturnsOnCall(i int, result1 error) {
-	fake.validateMutex.Lock()
-	defer fake.validateMutex.Unlock()
-	fake.ValidateStub = nil
-	if fake.validateReturnsOnCall == nil {
-		fake.validateReturnsOnCall = make(map[int]struct {
+func (fake *FakeService) ValidateResponseReturnsOnCall(i int, result1 error) {
+	fake.validateResponseMutex.Lock()
+	defer fake.validateResponseMutex.Unlock()
+	fake.ValidateResponseStub = nil
+	if fake.validateResponseReturnsOnCall == nil {
+		fake.validateResponseReturnsOnCall = make(map[int]struct {
 			result1 error
 		})
 	}
-	fake.validateReturnsOnCall[i] = struct {
+	fake.validateResponseReturnsOnCall[i] = struct {
 		result1 error
 	}{result1}
 }
@@ -247,12 +328,14 @@ func (fake *FakeService) ValidateReturnsOnCall(i int, result1 error) {
 func (fake *FakeService) Invocations() map[string][][]interface{} {
 	fake.invocationsMutex.RLock()
 	defer fake.invocationsMutex.RUnlock()
-	fake.createMutex.RLock()
-	defer fake.createMutex.RUnlock()
+	fake.createClientMutex.RLock()
+	defer fake.createClientMutex.RUnlock()
+	fake.createRequestMutex.RLock()
+	defer fake.createRequestMutex.RUnlock()
 	fake.sendMutex.RLock()
 	defer fake.sendMutex.RUnlock()
-	fake.validateMutex.RLock()
-	defer fake.validateMutex.RUnlock()
+	fake.validateResponseMutex.RLock()
+	defer fake.validateResponseMutex.RUnlock()
 	copiedInvocations := map[string][][]interface{}{}
 	for key, value := range fake.invocations {
 		copiedInvocations[key] = value

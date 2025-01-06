@@ -1,0 +1,40 @@
+name: single request
+version: 1.0
+sequence:
+  iterations: 1
+  time_limit: 1m
+  abort_on_error: true
+  ignore_duplicate_errors: true
+  requests:
+    - name: request1
+      method: get
+      scheme: https
+      path: /blah/moo
+      host: google.com:80
+      time_limit: 1m
+      username: bob-ross
+      password: happy-little-trees
+      fragment: fraggie
+      query:
+        key: value
+        key2: value2
+      extra_headers:
+        - name: Foo
+          value: bar
+        - name: Goo
+          value: moo
+      content: some-content
+      content_type: text
+      response:
+        content:
+          type: json
+          contains:
+            - "foo"
+            - "bar*"
+          extract:
+            - path: goo.moo.boo
+              save_as: foo
+            - path: boo.hoo
+              save_as: foo2
+        expected_status:
+          - 200

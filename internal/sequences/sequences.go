@@ -35,6 +35,31 @@ func New(srv service.Service, rpt reporter.Report) *Context {
 	}
 }
 
+func (ctx *Context) handleRequest(r *config.Request) error {
+
+	request, err := ctx.service.CreateRequest(r)
+	if err != nil {
+		return err
+	}
+
+	client, err := ctx.service.CreateClient(r)
+	if err != nil {
+		return err
+	}
+
+	response, err := ctx.service.Send(client, request, r)
+	if err != nil {
+		return err
+	}
+
+	err = ctx.service.ValidateResponse(client, response, r)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // Run executes the sequence.
 func (ctx *Context) Run(sc *config.Scenario) error {
 
@@ -44,18 +69,8 @@ func (ctx *Context) Run(sc *config.Scenario) error {
 
 		for _, r := range sc.Seq.Reqs {
 
-			req, err := ctx.service.Create(&r)
-			if err != nil {
-				return err
-			}
-
-			rsp, err := ctx.service.Send(req, &r)
-			if err != nil {
-				return err
-			}
-
-			err = ctx.service.Validate(rsp, &r)
-			if err != nil {
+			err := ctx.handleRequest(&r)
+			if err != nil && sc.Seq.AbortOnError {
 				return err
 			}
 
