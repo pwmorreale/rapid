@@ -21,11 +21,11 @@ func TestReadInConfig(t *testing.T) {
 	assert.Equal(t, len(s.Sequence.Requests), 2)
 
 	assert.Equal(t, len(s.Sequence.Requests[0].ExtraHeaders), 2)
-	assert.Equal(t, s.Sequence.Requests[0].ExtraHeaders[0].Name, "Foo")
+	assert.Equal(t, s.Sequence.Requests[0].ExtraHeaders[0].Name, "X-Paintbrush-for-sky")
 	assert.Equal(t, s.Sequence.Requests[0].Name, "request1")
-	assert.Equal(t, len(s.Sequence.Requests[0].Response.Status), 3)
+	assert.Equal(t, len(s.Sequence.Requests[0].Response.Status), 1)
 
 	assert.Equal(t, s.Sequence.Requests[1].Name, "request2")
-	assert.Equal(t, s.Sequence.Requests[1].Response.Status[0], "500")
-	assert.Equal(t, len(s.Sequence.Requests[0].Response.Status), 3)
+	assert.Equal(t, s.Sequence.Requests[1].Response.Status[0], "200")
+	assert.Equal(t, len(s.Sequence.Requests[0].Response.Status), 1)
 }

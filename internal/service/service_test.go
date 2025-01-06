@@ -1,6 +1,7 @@
 package service_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/pwmorreale/rapid/internal/config"
@@ -8,7 +9,7 @@ import (
 	"github.com/test-go/testify/assert"
 )
 
-var testURL = "https://bob-ross:happy-little-trees@google.com:80/blah/moo?key=value&key2=value2#fraggie"
+var testURL = "https://bob.ross.com/happy_little_trees"
 
 func TestCreateRequests(t *testing.T) {
 
@@ -16,6 +17,7 @@ func TestCreateRequests(t *testing.T) {
 
 	c := config.New()
 	sc, err := c.ParseFile("../../test/configs/single_request.yaml")
+	fmt.Println(err)
 	assert.Nil(t, err)
 
 	request, err := s.CreateRequest(&sc.Sequence.Requests[0])

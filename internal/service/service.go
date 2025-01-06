@@ -11,7 +11,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"net/url"
 	"strconv"
 	"strings"
 
@@ -55,10 +54,8 @@ func (s *Context) CreateRequest(r *config.Request) (*http.Request, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.TimeLimit)
 	defer cancel()
 
-	u := s.BuildURL(r)
-
 	rdr := s.getContentReader(r)
-	request, err := http.NewRequestWithContext(ctx, r.Method, u, rdr)
+	request, err := http.NewRequestWithContext(ctx, r.Method, r.URL, rdr)
 
 	if rdr != nil {
 		request.Header.Add("Content-Type", r.ContentType)
@@ -106,28 +103,6 @@ func (s *Context) Send(client *http.Client, request *http.Request, r *config.Req
 	return resp, nil
 }
 
-// BuildURL creates the URL from the configuration
-func (s *Context) BuildURL(r *config.Request) string {
-
-	var u url.URL
-
-	u.Scheme = r.Scheme
-	u.Path = r.Path
-	u.Host = r.Host
-	u.User = getUserinfo(r)
-	u.Fragment = r.Fragment
-
-	q := u.Query()
-	for k, v := range r.Query {
-		q.Set(k, v)
-	}
-	u.RawQuery = q.Encode()
-
-	us := u.String()
-
-	return us
-}
-
 func (s *Context) getContentReader(r *config.Request) io.Reader {
 
 	d := r.Content
@@ -155,15 +130,4 @@ func cookieEncode(r *config.Request) string {
 		buf.WriteString(fmt.Sprintf("%s=%s; ", k, v))
 	}
 	return buf.String()
-}
-
-func getUserinfo(r *config.Request) *url.Userinfo {
-
-	if r.Username != "" && r.Password != "" {
-		return url.UserPassword(r.Username, r.Password)
-	} else if r.Username != "" {
-		return url.User(r.Username)
-	}
-
-	return nil
 }

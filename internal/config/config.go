@@ -72,13 +72,7 @@ type Response struct {
 type Request struct {
 	Name         string            `mapstructure:"name"`
 	Method       string            `mapstructure:"method"`
-	Scheme       string            `mapstructure:"scheme"`
-	Path         string            `mapstructure:"path"`
-	Host         string            `mapstructure:"host"`
-	Username     string            `mapstructure:"username"`
-	Password     string            `mapstructure:"password"`
-	Fragment     string            `mapstructure:"fragment"`
-	Query        map[string]string `mapstructure:"query"`
+	URL          string            `mapstructure:"url"`
 	ExtraHeaders []Headers         `mapstructure:"extra_headers"`
 	Cookies      map[string]string `mapstructure:"cookies"`
 	Content      string            `mapstructure:"content"`

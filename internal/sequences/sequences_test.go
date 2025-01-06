@@ -147,10 +147,10 @@ func TestRunAbortOnError(t *testing.T) {
 
 	err = seq.Run(sc)
 
-	assert.Equal(t, 200, srv.CreateRequestCallCount())
-	assert.Equal(t, 200, srv.CreateClientCallCount())
-	assert.Equal(t, 200, srv.SendCallCount())
-	assert.Equal(t, 200, srv.ValidateResponseCallCount())
+	assert.Equal(t, 20, srv.CreateRequestCallCount())
+	assert.Equal(t, 20, srv.CreateClientCallCount())
+	assert.Equal(t, 20, srv.SendCallCount())
+	assert.Equal(t, 20, srv.ValidateResponseCallCount())
 }
 func TestRunExceedTimeLimit(t *testing.T) {
 	rpt := &mocks.FakeReport{}

@@ -1,29 +1,21 @@
 name: test-scenario
 version: 1.0
 sequence:
-  iterations: 100
+  iterations: 10
   time_limit: 1m
   abort_on_error: true
   ignore_duplicate_errors: true
   requests:
     - name: request1
-      method: get
-      scheme: https
-      path: some_path
-      host: host
       time_limit: 1m
-      username: bob-ross
-      password: happy-little-trees
-      fragment: frag
-      query:
-        key: value
-        key2: value2
+      method: post
+      url: https://bob.ross.com/happy_little_trees
       extra_headers:
-        - name: Foo
-          value: bar
-        - name: Goo
-          value: moo
-      content: some-content
+        - name: X-Paintbrush-for-sky
+          value: wide
+        - name: X-Paintbrush-for-trees
+          value: narrow
+      content: "various paint colors"
       content_type: text
       response:
         content:
@@ -38,37 +30,18 @@ sequence:
               save_as: foo2
         expected_status:
           - 200
-          - 401
-          - 203
     - name: request2
-      method: put
-      scheme: http
-      path: different_path
-      host: host2
       time_limit: 1m
-      username: bob-ross
-      password: happy-little-trees
-      fragment: frag
-      query:
-        key: value
-        key2: value2
-      extra_headers:
-        - name: Foo
-          value: bar
-        - name: Goo
-          value: moo
-      content: some-content
-      content_type: text
+      method: get
+      url: https://www.washingtonpost.com/articles
       response:
         content:
-          type: json
+          type: xml
           contains:
-            - "foo"
-            - "bar*"
+            - opinions
+            - todays.news.stories
           extract:
-            - path: hoo.koo.boo
-              save_as: foo3
-            - path: boo.hoo
-              save_as: foo4
+            - path: todays.headlines
+              save_as: headlines
         expected_status:
-          - 500
+          - 200

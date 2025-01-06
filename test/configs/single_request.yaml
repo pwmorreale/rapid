@@ -7,17 +7,9 @@ sequence:
   ignore_duplicate_errors: true
   requests:
     - name: request1
-      method: get
-      scheme: https
-      path: /blah/moo
-      host: google.com:80
       time_limit: 1m
-      username: bob-ross
-      password: happy-little-trees
-      fragment: fraggie
-      query:
-        key: value
-        key2: value2
+      method: get
+      url: https://bob.ross.com/happy_little_trees
       extra_headers:
         - name: Foo
           value: bar
