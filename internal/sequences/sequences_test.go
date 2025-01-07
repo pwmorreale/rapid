@@ -169,7 +169,8 @@ func TestRunExceedTimeLimit(t *testing.T) {
 	sc.Sequence.Limit, _ = time.ParseDuration("10ms")
 
 	err = seq.Run(sc)
-	assert.Nil(t, err)
+
+	assert.Equal(t, "execution exceeded time limit of: 10ms", err.Error())
 
 	assert.Equal(t, 1, srv.CreateRequestCallCount())
 	assert.Equal(t, 1, srv.SendCallCount())
