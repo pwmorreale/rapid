@@ -9,6 +9,7 @@ import (
 	"os"
 
 	"github.com/pwmorreale/rapid/internal/config"
+	"github.com/pwmorreale/rapid/internal/data"
 	"github.com/pwmorreale/rapid/internal/reporter"
 	"github.com/pwmorreale/rapid/internal/sequences"
 	"github.com/pwmorreale/rapid/internal/service"
@@ -45,9 +46,17 @@ func RunCli(_ *cobra.Command, _ []string) error {
 		return err
 	}
 
+	d := data.New()
+	for k, v := range scenario.Data {
+		err = d.Add(k, v)
+		if err != nil {
+			return err
+		}
+	}
+
 	rpt := reporter.New()
 
-	srv := service.New()
+	srv := service.New(d)
 
 	seq := sequences.New(srv, rpt)
 

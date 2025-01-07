@@ -8,7 +8,7 @@ import (
 	"github.com/pwmorreale/rapid/internal/sequences"
 )
 
-type FakeSequenceuence struct {
+type FakeSequence struct {
 	RunStub        func(*config.Scenario) error
 	runMutex       sync.RWMutex
 	runArgsForCall []struct {
@@ -24,7 +24,7 @@ type FakeSequenceuence struct {
 	invocationsMutex sync.RWMutex
 }
 
-func (fake *FakeSequenceuence) Run(arg1 *config.Scenario) error {
+func (fake *FakeSequence) Run(arg1 *config.Scenario) error {
 	fake.runMutex.Lock()
 	ret, specificReturn := fake.runReturnsOnCall[len(fake.runArgsForCall)]
 	fake.runArgsForCall = append(fake.runArgsForCall, struct {
@@ -43,26 +43,26 @@ func (fake *FakeSequenceuence) Run(arg1 *config.Scenario) error {
 	return fakeReturns.result1
 }
 
-func (fake *FakeSequenceuence) RunCallCount() int {
+func (fake *FakeSequence) RunCallCount() int {
 	fake.runMutex.RLock()
 	defer fake.runMutex.RUnlock()
 	return len(fake.runArgsForCall)
 }
 
-func (fake *FakeSequenceuence) RunCalls(stub func(*config.Scenario) error) {
+func (fake *FakeSequence) RunCalls(stub func(*config.Scenario) error) {
 	fake.runMutex.Lock()
 	defer fake.runMutex.Unlock()
 	fake.RunStub = stub
 }
 
-func (fake *FakeSequenceuence) RunArgsForCall(i int) *config.Scenario {
+func (fake *FakeSequence) RunArgsForCall(i int) *config.Scenario {
 	fake.runMutex.RLock()
 	defer fake.runMutex.RUnlock()
 	argsForCall := fake.runArgsForCall[i]
 	return argsForCall.arg1
 }
 
-func (fake *FakeSequenceuence) RunReturns(result1 error) {
+func (fake *FakeSequence) RunReturns(result1 error) {
 	fake.runMutex.Lock()
 	defer fake.runMutex.Unlock()
 	fake.RunStub = nil
@@ -71,7 +71,7 @@ func (fake *FakeSequenceuence) RunReturns(result1 error) {
 	}{result1}
 }
 
-func (fake *FakeSequenceuence) RunReturnsOnCall(i int, result1 error) {
+func (fake *FakeSequence) RunReturnsOnCall(i int, result1 error) {
 	fake.runMutex.Lock()
 	defer fake.runMutex.Unlock()
 	fake.RunStub = nil
@@ -85,7 +85,7 @@ func (fake *FakeSequenceuence) RunReturnsOnCall(i int, result1 error) {
 	}{result1}
 }
 
-func (fake *FakeSequenceuence) Invocations() map[string][][]interface{} {
+func (fake *FakeSequence) Invocations() map[string][][]interface{} {
 	fake.invocationsMutex.RLock()
 	defer fake.invocationsMutex.RUnlock()
 	fake.runMutex.RLock()
@@ -97,7 +97,7 @@ func (fake *FakeSequenceuence) Invocations() map[string][][]interface{} {
 	return copiedInvocations
 }
 
-func (fake *FakeSequenceuence) recordInvocation(key string, args []interface{}) {
+func (fake *FakeSequence) recordInvocation(key string, args []interface{}) {
 	fake.invocationsMutex.Lock()
 	defer fake.invocationsMutex.Unlock()
 	if fake.invocations == nil {
@@ -109,4 +109,4 @@ func (fake *FakeSequenceuence) recordInvocation(key string, args []interface{}) 
 	fake.invocations[key] = append(fake.invocations[key], args)
 }
 
-var _ sequences.Sequenceuence = new(FakeSequenceuence)
+var _ sequences.Sequence = new(FakeSequence)

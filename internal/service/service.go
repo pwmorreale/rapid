@@ -15,6 +15,7 @@ import (
 	"strings"
 
 	"github.com/pwmorreale/rapid/internal/config"
+	"github.com/pwmorreale/rapid/internal/data"
 )
 
 // Service defines the interface for managing requests and responses
@@ -29,7 +30,7 @@ type Service interface {
 
 // Context defines a scenario context.
 type Context struct {
-	savedContent map[string]string
+	datum data.Data
 }
 
 func checkStatus(resp *http.Response, r *config.Request) error {
@@ -44,18 +45,23 @@ func checkStatus(resp *http.Response, r *config.Request) error {
 }
 
 // New returns a new context.
-func New() *Context {
-	return &Context{}
+func New(d data.Data) *Context {
+	return &Context{
+		datum: d,
+	}
 }
 
-// Create creates a http request.
+// CreateRequest creates a http request.
 func (s *Context) CreateRequest(r *config.Request) (*http.Request, error) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), r.TimeLimit)
 	defer cancel()
 
+	// Perform any substitutions on the url.
+	url := s.datum.Replace(r.URL)
+
 	rdr := s.getContentReader(r)
-	request, err := http.NewRequestWithContext(ctx, r.Method, r.URL, rdr)
+	request, err := http.NewRequestWithContext(ctx, r.Method, url, rdr)
 
 	if rdr != nil {
 		request.Header.Add("Content-Type", r.ContentType)
@@ -68,11 +74,15 @@ func (s *Context) CreateRequest(r *config.Request) (*http.Request, error) {
 
 	// Add extra headers...
 	for i := range r.ExtraHeaders {
-		request.Header.Add(r.ExtraHeaders[i].Name, r.ExtraHeaders[i].Value)
+
+		// Perform any substitutions on any extra headers.
+		hv := s.datum.Replace(r.ExtraHeaders[i].Value)
+
+		request.Header.Add(r.ExtraHeaders[i].Name, hv)
 	}
 
 	// Cookies...
-	cookies := cookieEncode(r)
+	cookies := s.cookieEncode(r)
 	if cookies != "" {
 		request.Header.Add("Cookie", cookies)
 	}
@@ -81,7 +91,7 @@ func (s *Context) CreateRequest(r *config.Request) (*http.Request, error) {
 }
 
 // CreateClient creates a new http client
-func (s *Context) CreateClient(req *config.Request) (*http.Client, error) {
+func (s *Context) CreateClient(_ *config.Request) (*http.Client, error) {
 
 	client := &http.Client{}
 
@@ -94,7 +104,7 @@ func (s *Context) ValidateResponse(*http.Client, *http.Response, *config.Request
 }
 
 // Send compares the response against the expected results.
-func (s *Context) Send(client *http.Client, request *http.Request, r *config.Request) (*http.Response, error) {
+func (s *Context) Send(client *http.Client, request *http.Request, _ *config.Request) (*http.Response, error) {
 
 	resp, err := client.Do(request)
 	if err != nil {
@@ -105,29 +115,26 @@ func (s *Context) Send(client *http.Client, request *http.Request, r *config.Req
 
 func (s *Context) getContentReader(r *config.Request) io.Reader {
 
-	d := r.Content
+	// Perform any substitutions on cookie values.
+	content := s.datum.Replace(r.Content)
 
-	//
-	// If first byte is a '$', then assume a lookup in the
-	// saved content.
-	//
-	if strings.IndexByte(r.Content, '$') == 0 {
-		d = s.savedContent[strings.TrimLeft(r.Content, "$")]
-	}
-
-	rdr := strings.NewReader(d)
+	rdr := strings.NewReader(content)
 	if rdr.Size() != 0 {
 		return rdr
 	}
 	return nil
 }
 
-func cookieEncode(r *config.Request) string {
+func (s *Context) cookieEncode(r *config.Request) string {
 
 	var buf bytes.Buffer
 
 	for k, v := range r.Cookies {
-		buf.WriteString(fmt.Sprintf("%s=%s; ", k, v))
+
+		// Perform any substitutions on cookie values.
+		vv := s.datum.Replace(v)
+
+		buf.WriteString(fmt.Sprintf("%s=%s; ", k, vv))
 	}
 	return buf.String()
 }

@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/pwmorreale/rapid/internal/config"
+	"github.com/pwmorreale/rapid/internal/data"
 	"github.com/pwmorreale/rapid/internal/service"
 	"github.com/test-go/testify/assert"
 )
@@ -13,7 +14,7 @@ var testURL = "https://bob.ross.com/happy_little_trees"
 
 func TestCreateRequests(t *testing.T) {
 
-	s := service.New()
+	s := service.New(data.New())
 
 	c := config.New()
 	sc, err := c.ParseFile("../../test/configs/single_request.yaml")
@@ -31,7 +32,7 @@ func TestCreateRequests(t *testing.T) {
 
 func TestCreateClient(t *testing.T) {
 
-	s := service.New()
+	s := service.New(data.New())
 
 	c := config.New()
 	sc, err := c.ParseFile("../../test/configs/single_request.yaml")

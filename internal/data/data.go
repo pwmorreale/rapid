@@ -7,11 +7,9 @@ package data
 
 import "regexp"
 
-// Sequenceuence defines interfaces for executing scenarios
-//
-//go:generate counterfeiter -o ../../test/mocks/fake_data.go . Data
+// Data defines interfaces for executing scenarios
 type Data interface {
-	Add(string, string)
+	Add(string, string) error
 	Replace(string) string
 }
 

@@ -146,6 +146,7 @@ func TestRunAbortOnError(t *testing.T) {
 	srv.ValidateResponseReturnsOnCall(0, errors.New("blowing chunks"))
 
 	err = seq.Run(sc)
+	assert.Nil(t, err)
 
 	assert.Equal(t, 20, srv.CreateRequestCallCount())
 	assert.Equal(t, 20, srv.CreateClientCallCount())
@@ -168,6 +169,7 @@ func TestRunExceedTimeLimit(t *testing.T) {
 	sc.Sequence.Limit, _ = time.ParseDuration("10ms")
 
 	err = seq.Run(sc)
+	assert.Nil(t, err)
 
 	assert.Equal(t, 1, srv.CreateRequestCallCount())
 	assert.Equal(t, 1, srv.SendCallCount())
