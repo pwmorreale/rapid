@@ -48,7 +48,7 @@ func RunCli(_ *cobra.Command, _ []string) error {
 
 	d := data.New()
 	for k, v := range scenario.Data {
-		err = d.Add(k, v)
+		err = d.AddReplacement(k, v)
 		if err != nil {
 			return err
 		}

@@ -45,6 +45,7 @@ type Sequence struct {
 
 // Extract defines response data extraction.
 type Extract struct {
+	Type   string `mapstructure:"type"`
 	Path   string `mapstructure:"path"`
 	SaveAs string `mapstructure:"save_as"`
 }

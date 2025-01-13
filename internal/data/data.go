@@ -9,7 +9,8 @@ import "regexp"
 
 // Data defines interfaces for executing scenarios
 type Data interface {
-	Add(string, string) error
+	AddReplacement(string, string) error
+	AddMatcher(string) error
 	Replace(string) string
 }
 
@@ -21,7 +22,8 @@ type Replacement struct {
 
 // Context defines a sequence
 type Context struct {
-	All []Replacement
+	All      []Replacement
+	Matchers []*regexp.Regexp
 }
 
 // New creates a new context instance
@@ -30,7 +32,7 @@ func New() *Context {
 }
 
 // Add creates a new regex replacement.
-func (d *Context) Add(name string, value string) error {
+func (d *Context) AddReplacement(name string, value string) error {
 
 	r := Replacement{}
 
@@ -45,6 +47,16 @@ func (d *Context) Add(name string, value string) error {
 	d.All = append(d.All, r)
 
 	return nil
+}
+
+// Add creates a new regex replacement.
+func (d *Context) AddMatcher(rs string) error {
+
+	r, err := regexp.Compile(rs)
+	if err == nil {
+		d.Matchers = append(d.Matchers, r)
+	}
+	return err
 }
 
 // Replace replaces any matches and returns a new string
