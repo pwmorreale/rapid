@@ -99,7 +99,13 @@ func (s *Context) CreateClient(_ *config.Request) (*http.Client, error) {
 }
 
 // ValidateResponse checks the response of a service request.
-func (s *Context) ValidateResponse(*http.Client, *http.Response, *config.Request) error {
+func (s *Context) ValidateResponse(client *http.Client, response *http.Response, request *config.Request) error {
+
+	err := checkStatus(response, request)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 

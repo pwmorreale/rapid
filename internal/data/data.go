@@ -12,6 +12,7 @@ type Data interface {
 	AddReplacement(string, string) error
 	AddMatcher(string) error
 	Replace(string) string
+	Match(string) bool
 }
 
 // Replacement defines a compiled regex and its associated replacement string
@@ -66,4 +67,15 @@ func (d *Context) Replace(s string) string {
 		s = d.All[i].Regx.ReplaceAllLiteralString(s, d.All[i].Repl)
 	}
 	return s
+}
+
+// Match finds matches in the given string.
+func (d *Context) Match(s string) bool {
+
+	for i := range d.Matchers {
+		if d.Matchers[i].MatchString(s) == true {
+			return true
+		}
+	}
+	return false
 }
