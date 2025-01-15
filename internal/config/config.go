@@ -6,17 +6,27 @@
 package config
 
 import (
+	"fmt"
+	"regexp"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/spf13/viper"
 )
 
+// Various constants...
+const (
+	DefaultContentLimit = 4096
+
+	TypeRegex = "regex"
+)
+
 // Configuration defines the interface for managing the scenario
 //
 //go:generate counterfeiter -o ../../test/mocks/fake_config.go . Configuration
 type Configuration interface {
-	ParseFile(f string) error
+	ParseFile(f string) (*Scenario, error)
+	CompileExpressions(*Scenario) error
 }
 
 // Context defines a scenario context.
@@ -45,9 +55,9 @@ type Sequence struct {
 
 // Extract defines response data extraction.
 type Extract struct {
-	Type   string `mapstructure:"type"`
 	Path   string `mapstructure:"path"`
 	SaveAs string `mapstructure:"save_as"`
+	RegExp *regexp.Regexp
 }
 
 // Headers contains user defined headers for inclusion with the request.
@@ -58,9 +68,11 @@ type Headers struct {
 
 // ContentData cdefines expected response data.
 type ContentData struct {
-	Type     string    `mapstructure:"type"`
-	Contains []string  `mapstructure:"contains"`
-	Extract  []Extract `mapstructure:"extract"`
+	Type         string   `mapstructure:"type"`
+	Contains     []string `mapstructure:"contains"`
+	Regex        []*regexp.Regexp
+	Extract      []Extract `mapstructure:"extract"`
+	ContentLimit int       `mapstructure:"response_content_limit"`
 }
 
 // Response defines a REST reqponse
@@ -110,4 +122,57 @@ func (c *Context) ParseFile(flnm string) (*Scenario, error) {
 	c.id = uuid.New().String()
 
 	return &s, nil
+}
+
+func compileContains(r *Request) error {
+
+	for i := range r.Response.Content.Contains {
+		cre, err := regexp.Compile(r.Response.Content.Contains[i])
+		if err != nil {
+			return fmt.Errorf("request: %s contains[%d]: %s : %s",
+				r.Name, i, r.Response.Content.Contains[i], err.Error())
+		}
+		r.Response.Content.Regex = append(r.Response.Content.Regex, cre)
+	}
+
+	return nil
+}
+
+func compileExtracts(r *Request) error {
+
+	if r.Response.Content.Type != TypeRegex {
+		return nil
+	}
+
+	for i := range r.Response.Content.Extract {
+
+		re, err := regexp.Compile(r.Response.Content.Extract[i].Path)
+		if err != nil {
+			return fmt.Errorf("request: %s : %s", r.Name, err.Error())
+		}
+		r.Response.Content.Extract[i].RegExp = re
+	}
+
+	return nil
+}
+
+// CompileExpressions compiles all the regular expressions in this scenario.
+func (c *Context) CompileExpressions(sc *Scenario) error {
+
+	for i := range sc.Sequence.Requests {
+
+		r := &sc.Sequence.Requests[i]
+
+		err := compileContains(r)
+		if err != nil {
+			return err
+		}
+
+		err = compileExtracts(r)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
