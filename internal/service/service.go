@@ -22,6 +22,9 @@ import (
 //
 //go:generate counterfeiter -o ../../test/mocks/fake_service.go . Service
 type Service interface {
+	CheckContains(string, *http.Response, *config.Request) error
+	Extract(string, *http.Response, *config.Request) error
+	GetContentReader(*config.Request) io.Reader
 	CreateRequest(*config.Request) (*http.Request, error)
 	CreateClient(*config.Request) (*http.Client, error)
 	Send(*http.Client, *http.Request, *config.Request) (*http.Response, error)
@@ -33,7 +36,7 @@ type Context struct {
 	datum data.Data
 }
 
-func checkStatus(resp *http.Response, r *config.Request) error {
+func (s *Context) CheckStatus(resp *http.Response, r *config.Request) error {
 
 	for i := range r.Response.Status {
 		if resp.Status == r.Response.Status[i] {
@@ -42,6 +45,58 @@ func checkStatus(resp *http.Response, r *config.Request) error {
 	}
 
 	return fmt.Errorf("response status: %s not in expected status: %v", resp.Status, r.Response.Status)
+}
+
+func (s *Context) GetBody(response *http.Response, request *config.Request) (string, error) {
+
+	limit := request.Response.Content.ContentLimit
+	max := config.DefaultContentLimit
+	if limit > 0 && limit < max {
+		max = limit
+	}
+
+	buf := make([]byte, max+1)
+	_, err := io.ReadFull(response.Body, buf)
+	if err != nil {
+		return "", err
+	}
+
+	return string(buf), nil
+}
+
+func (s *Context) CheckContains(body string, response *http.Response, request *config.Request) error {
+
+	return nil
+}
+
+func (s *Context) Extract(body string, response *http.Response, request *config.Request) error {
+	return nil
+}
+
+func (s *Context) GetContentReader(r *config.Request) io.Reader {
+
+	// Perform any substitutions on cookie values.
+	content := s.datum.Replace(r.Content)
+
+	rdr := strings.NewReader(content)
+	if rdr.Size() != 0 {
+		return rdr
+	}
+	return nil
+}
+
+func (s *Context) CookieEncode(r *config.Request) string {
+
+	var buf bytes.Buffer
+
+	for k, v := range r.Cookies {
+
+		// Perform any substitutions on cookie values.
+		vv := s.datum.Replace(v)
+
+		buf.WriteString(fmt.Sprintf("%s=%s; ", k, vv))
+	}
+	return buf.String()
 }
 
 // New returns a new context.
@@ -60,7 +115,7 @@ func (s *Context) CreateRequest(r *config.Request) (*http.Request, error) {
 	// Perform any substitutions on the url.
 	url := s.datum.Replace(r.URL)
 
-	rdr := s.getContentReader(r)
+	rdr := s.GetContentReader(r)
 	request, err := http.NewRequestWithContext(ctx, r.Method, url, rdr)
 
 	if rdr != nil {
@@ -82,7 +137,7 @@ func (s *Context) CreateRequest(r *config.Request) (*http.Request, error) {
 	}
 
 	// Cookies...
-	cookies := s.cookieEncode(r)
+	cookies := s.CookieEncode(r)
 	if cookies != "" {
 		request.Header.Add("Cookie", cookies)
 	}
@@ -101,7 +156,22 @@ func (s *Context) CreateClient(_ *config.Request) (*http.Client, error) {
 // ValidateResponse checks the response of a service request.
 func (s *Context) ValidateResponse(client *http.Client, response *http.Response, request *config.Request) error {
 
-	err := checkStatus(response, request)
+	err := s.CheckStatus(response, request)
+	if err != nil {
+		return err
+	}
+
+	body, err := s.GetBody(response, request)
+	if err != nil {
+		return err
+	}
+
+	err = s.CheckContains(body, response, request)
+	if err != nil {
+		return err
+	}
+
+	err = s.Extract(body, response, request)
 	if err != nil {
 		return err
 	}
@@ -117,30 +187,4 @@ func (s *Context) Send(client *http.Client, request *http.Request, _ *config.Req
 		return nil, err
 	}
 	return resp, nil
-}
-
-func (s *Context) getContentReader(r *config.Request) io.Reader {
-
-	// Perform any substitutions on cookie values.
-	content := s.datum.Replace(r.Content)
-
-	rdr := strings.NewReader(content)
-	if rdr.Size() != 0 {
-		return rdr
-	}
-	return nil
-}
-
-func (s *Context) cookieEncode(r *config.Request) string {
-
-	var buf bytes.Buffer
-
-	for k, v := range r.Cookies {
-
-		// Perform any substitutions on cookie values.
-		vv := s.datum.Replace(v)
-
-		buf.WriteString(fmt.Sprintf("%s=%s; ", k, vv))
-	}
-	return buf.String()
 }

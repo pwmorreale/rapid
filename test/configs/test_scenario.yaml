@@ -24,11 +24,9 @@ sequence:
             - "foo"
             - "bar*"
           extract:
-            - type: regex
-              path: goo.moo.boo
+            - path: goo.moo.boo
               save_as: foo
-            - type: json
-              path: boo.hoo
+            - path: boo.hoo
               save_as: foo2
         expected_status:
           - 200

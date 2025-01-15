@@ -46,4 +46,6 @@ func TestCreateClient(t *testing.T) {
 
 func TestSend(t *testing.T) {
 
+	err := service.checkContains()
+
 }
