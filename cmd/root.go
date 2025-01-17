@@ -46,12 +46,6 @@ func RunCli(_ *cobra.Command, _ []string) error {
 		return err
 	}
 
-	// precompile all regex's to find typos fast...
-	err = c.CompileExpressions(scenario)
-	if err != nil {
-		return err
-	}
-
 	d := data.New()
 	for k, v := range scenario.Data {
 		err = d.AddReplacement(k, v)

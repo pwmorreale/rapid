@@ -6,8 +6,6 @@
 package config
 
 import (
-	"fmt"
-	"regexp"
 	"time"
 
 	"github.com/google/uuid"
@@ -26,7 +24,6 @@ const (
 //go:generate counterfeiter -o ../../test/mocks/fake_config.go . Configuration
 type Configuration interface {
 	ParseFile(f string) (*Scenario, error)
-	CompileExpressions(*Scenario) error
 }
 
 // Context defines a scenario context.
@@ -54,44 +51,50 @@ type Sequence struct {
 }
 
 // Extract defines response data extraction.
-type Extract struct {
-	Path   string `mapstructure:"path"`
-	SaveAs string `mapstructure:"save_as"`
-	RegExp *regexp.Regexp
+type ExtractData struct {
+	Type      string `mapstructure:"type"`
+	Path      string `mapstructure:"path"`
+	DastaName string `mapstructure:"data_name"`
 }
 
-// Headers contains user defined headers for inclusion with the request.
-type Headers struct {
+// HeaderData contains user defined headers for inclusion with the request.
+type HeaderData struct {
 	Name  string `mapstructure:"name"`
 	Value string `mapstructure:"value"`
 }
 
 // ContentData cdefines expected response data.
 type ContentData struct {
-	Type         string   `mapstructure:"type"`
-	Contains     []string `mapstructure:"contains"`
-	Regex        []*regexp.Regexp
-	Extract      []Extract `mapstructure:"extract"`
-	ContentLimit int       `mapstructure:"response_content_limit"`
+	MediaType string        `mapstructure:"content_type"`
+	MaxSize   int           `mapstructure:"max_content"`
+	Contains  []string      `mapstructure:"contains"`
+	Extract   []ExtractData `mapstructure:"extract"`
 }
 
-// Response defines a REST reqponse
+// CookieData defines a cookie string
+type CookieData struct {
+	Value string `mapstructure:"value"`
+}
+
+// Response defines a REST response
 type Response struct {
-	Content ContentData `mapstructure:"content"`
-	Status  []string    `mapstructure:"expected_status"`
+	StatusCode string       `mapstructure:"status_code"`
+	Headers    []HeaderData `mapstructure:"headers"`
+	Cookies    []CookieData `mapstructure:"cookies"`
+	Content    ContentData  `mapstructure:"content"`
 }
 
 // Request defines the a request/response
 type Request struct {
-	Name         string            `mapstructure:"name"`
-	Method       string            `mapstructure:"method"`
-	URL          string            `mapstructure:"url"`
-	ExtraHeaders []Headers         `mapstructure:"extra_headers"`
-	Cookies      map[string]string `mapstructure:"cookies"`
-	Content      string            `mapstructure:"content"`
-	ContentType  string            `mapstructure:"content_type"`
-	TimeLimit    time.Duration     `mapstructure:"time_limit"`
-	Response     Response          `mapstructure:"response"`
+	Name         string        `mapstructure:"name"`
+	Method       string        `mapstructure:"method"`
+	URL          string        `mapstructure:"url"`
+	ExtraHeaders []HeaderData  `mapstructure:"extra_headers"`
+	Cookies      []CookieData  `mapstructure:"cookies"`
+	Content      string        `mapstructure:"content"`
+	ContentType  string        `mapstructure:"content_type"`
+	TimeLimit    time.Duration `mapstructure:"time_limit"`
+	Responses    []Response    `mapstructure:"responses"`
 }
 
 // New creates a new context instance
@@ -122,57 +125,4 @@ func (c *Context) ParseFile(flnm string) (*Scenario, error) {
 	c.id = uuid.New().String()
 
 	return &s, nil
-}
-
-func compileContains(r *Request) error {
-
-	for i := range r.Response.Content.Contains {
-		cre, err := regexp.Compile(r.Response.Content.Contains[i])
-		if err != nil {
-			return fmt.Errorf("request: %s contains[%d]: %s : %s",
-				r.Name, i, r.Response.Content.Contains[i], err.Error())
-		}
-		r.Response.Content.Regex = append(r.Response.Content.Regex, cre)
-	}
-
-	return nil
-}
-
-func compileExtracts(r *Request) error {
-
-	if r.Response.Content.Type != TypeRegex {
-		return nil
-	}
-
-	for i := range r.Response.Content.Extract {
-
-		re, err := regexp.Compile(r.Response.Content.Extract[i].Path)
-		if err != nil {
-			return fmt.Errorf("request: %s : %s", r.Name, err.Error())
-		}
-		r.Response.Content.Extract[i].RegExp = re
-	}
-
-	return nil
-}
-
-// CompileExpressions compiles all the regular expressions in this scenario.
-func (c *Context) CompileExpressions(sc *Scenario) error {
-
-	for i := range sc.Sequence.Requests {
-
-		r := &sc.Sequence.Requests[i]
-
-		err := compileContains(r)
-		if err != nil {
-			return err
-		}
-
-		err = compileExtracts(r)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
 }

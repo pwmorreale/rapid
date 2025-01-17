@@ -52,7 +52,7 @@ func (ctx *Context) handleRequest(r *config.Request) error {
 		return err
 	}
 
-	err = ctx.service.ValidateResponse(client, response, r)
+	err = ctx.service.Validate(client, response, r)
 	if err != nil {
 		return err
 	}

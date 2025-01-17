@@ -17,7 +17,7 @@ func TestCreateRequests(t *testing.T) {
 	s := service.New(data.New())
 
 	c := config.New()
-	sc, err := c.ParseFile("../../test/configs/single_request.yaml")
+	sc, err := c.ParseFile("../../test/configs/test_scenario.yaml")
 	fmt.Println(err)
 	assert.Nil(t, err)
 
@@ -26,8 +26,9 @@ func TestCreateRequests(t *testing.T) {
 
 	assert.Equal(t, testURL, request.URL.String())
 
-	assert.Contains(t, request.Header, "Foo")
+	assert.Contains(t, request.Header, "X-Paintbrush-For-Sky")
 	assert.Contains(t, request.Header, "Content-Length")
+
 }
 
 func TestCreateClient(t *testing.T) {
@@ -35,17 +36,11 @@ func TestCreateClient(t *testing.T) {
 	s := service.New(data.New())
 
 	c := config.New()
-	sc, err := c.ParseFile("../../test/configs/single_request.yaml")
+	sc, err := c.ParseFile("../../test/configs/test_scenario.yaml")
 	assert.Nil(t, err)
 
 	client, err := s.CreateClient(&sc.Sequence.Requests[0])
 	assert.Nil(t, err)
 	assert.NotNil(t, client)
-
-}
-
-func TestSend(t *testing.T) {
-
-	err := service.checkContains()
 
 }

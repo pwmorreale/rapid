@@ -1,5 +1,8 @@
 name: test-scenario
 version: 1.0
+data:
+  name1: value1
+  name2: value2
 sequence:
   iterations: 10
   time_limit: 1m
@@ -15,33 +18,42 @@ sequence:
           value: wide
         - name: X-Paintbrush-for-trees
           value: narrow
+      cookies:
+        - value: id=bob_ross; max-age=424242; Secure; HttpOnly
+        - value: id=betsy_ross; Expires=Thu, 21 Oct 2080 07:28:00 GMT; Secure
       content: "various paint colors"
-      content_type: text
-      response:
-        content:
-          type: json
-          contains:
-            - "foo"
-            - "bar*"
-          extract:
-            - path: goo.moo.boo
-              save_as: foo
-            - path: boo.hoo
-              save_as: foo2
-        expected_status:
-          - 200
+      content_type: text/html
+      responses:
+        - status_code: 200
+          headers:
+            - name: header1
+              value: value1
+            - name: header2
+              value: value2
+          cookies:
+            - value: id=diana_ross; max-age=90900; Secure; HttpOnly
+            - value: id=marion_ross; Expires=Thu, 21 Oct 2080 07:28:00 GMT; Secure
+          content:
+            content_type: application/json
+            max_content: 4096
+            contains:
+              - "foo"
+              - "bar*"
+            extract:
+              - type: application/json
+                path: goo.moo.boo
+                data_name: foo
+        - status_code: 500
+          headers:
+            - name: header3
+              value: value3
+            - name: header4
+              value: value4
+            - name: header5
+              value: value5
     - name: request2
       time_limit: 1m
       method: get
       url: https://www.washingtonpost.com/articles
-      response:
-        content:
-          type: xml
-          contains:
-            - opinions
-            - todays.news.stories
-          extract:
-            - path: todays.headlines
-              save_as: headlines
-        expected_status:
-          - 200
+      responses:
+        - status_code: 500

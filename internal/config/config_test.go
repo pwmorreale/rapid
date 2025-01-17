@@ -21,39 +21,25 @@ func TestReadInConfig(t *testing.T) {
 	assert.Equal(t, len(s.Sequence.Requests), 2)
 
 	assert.Equal(t, len(s.Sequence.Requests[0].ExtraHeaders), 2)
+	assert.Equal(t, len(s.Sequence.Requests[0].Cookies), 2)
 	assert.Equal(t, s.Sequence.Requests[0].ExtraHeaders[0].Name, "X-Paintbrush-for-sky")
 	assert.Equal(t, s.Sequence.Requests[0].Name, "request1")
-	assert.Equal(t, len(s.Sequence.Requests[0].Response.Status), 1)
+
+	assert.Equal(t, 2, len(s.Sequence.Requests[0].Responses))
+
+	assert.Equal(t, s.Sequence.Requests[0].Responses[0].StatusCode, "200")
+	assert.Equal(t, s.Sequence.Requests[0].Responses[1].StatusCode, "500")
+
+	assert.Equal(t, 2, len(s.Sequence.Requests[0].Responses[0].Headers))
+	assert.Equal(t, s.Sequence.Requests[0].Responses[0].Headers[0].Name, "header1")
+	assert.Equal(t, s.Sequence.Requests[0].Responses[0].Headers[0].Value, "value1")
+
+	assert.Equal(t, 2, len(s.Sequence.Requests[0].Responses[0].Cookies))
+
+	assert.Equal(t, s.Sequence.Requests[0].Responses[1].StatusCode, "500")
+	assert.Equal(t, 3, len(s.Sequence.Requests[0].Responses[1].Headers))
+
+	assert.Equal(t, 0, len(s.Sequence.Requests[0].Responses[1].Cookies))
 
 	assert.Equal(t, s.Sequence.Requests[1].Name, "request2")
-	assert.Equal(t, s.Sequence.Requests[1].Response.Status[0], "200")
-	assert.Equal(t, len(s.Sequence.Requests[0].Response.Status), 1)
-}
-
-func TestCompileExpressions(t *testing.T) {
-	c := config.New()
-
-	s, err := c.ParseFile("../../test/configs/single_request.yaml")
-	assert.NotNil(t, s)
-	assert.Nil(t, err)
-
-	err = c.CompileExpressions(s)
-	assert.Nil(t, err)
-
-	assert.Equal(t, 2, len(s.Sequence.Requests[0].Response.Content.Contains))
-	assert.Equal(t, 2, len(s.Sequence.Requests[0].Response.Content.Regex))
-
-	// Content.Type == "json"
-	assert.Nil(t, s.Sequence.Requests[0].Response.Content.Extract[0].RegExp)
-	assert.Nil(t, s.Sequence.Requests[0].Response.Content.Extract[1].RegExp)
-
-	// Check Content.Type of Regex...
-	s.Sequence.Requests[0].Response.Content.Type = config.TypeRegex
-
-	err = c.CompileExpressions(s)
-	assert.Nil(t, err)
-
-	assert.NotNil(t, s.Sequence.Requests[0].Response.Content.Extract[0].RegExp)
-	assert.NotNil(t, s.Sequence.Requests[0].Response.Content.Extract[1].RegExp)
-
 }

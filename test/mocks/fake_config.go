@@ -8,17 +8,6 @@ import (
 )
 
 type FakeConfiguration struct {
-	CompileExpressionsStub        func(*config.Scenario) error
-	compileExpressionsMutex       sync.RWMutex
-	compileExpressionsArgsForCall []struct {
-		arg1 *config.Scenario
-	}
-	compileExpressionsReturns struct {
-		result1 error
-	}
-	compileExpressionsReturnsOnCall map[int]struct {
-		result1 error
-	}
 	ParseFileStub        func(string) (*config.Scenario, error)
 	parseFileMutex       sync.RWMutex
 	parseFileArgsForCall []struct {
@@ -34,67 +23,6 @@ type FakeConfiguration struct {
 	}
 	invocations      map[string][][]interface{}
 	invocationsMutex sync.RWMutex
-}
-
-func (fake *FakeConfiguration) CompileExpressions(arg1 *config.Scenario) error {
-	fake.compileExpressionsMutex.Lock()
-	ret, specificReturn := fake.compileExpressionsReturnsOnCall[len(fake.compileExpressionsArgsForCall)]
-	fake.compileExpressionsArgsForCall = append(fake.compileExpressionsArgsForCall, struct {
-		arg1 *config.Scenario
-	}{arg1})
-	stub := fake.CompileExpressionsStub
-	fakeReturns := fake.compileExpressionsReturns
-	fake.recordInvocation("CompileExpressions", []interface{}{arg1})
-	fake.compileExpressionsMutex.Unlock()
-	if stub != nil {
-		return stub(arg1)
-	}
-	if specificReturn {
-		return ret.result1
-	}
-	return fakeReturns.result1
-}
-
-func (fake *FakeConfiguration) CompileExpressionsCallCount() int {
-	fake.compileExpressionsMutex.RLock()
-	defer fake.compileExpressionsMutex.RUnlock()
-	return len(fake.compileExpressionsArgsForCall)
-}
-
-func (fake *FakeConfiguration) CompileExpressionsCalls(stub func(*config.Scenario) error) {
-	fake.compileExpressionsMutex.Lock()
-	defer fake.compileExpressionsMutex.Unlock()
-	fake.CompileExpressionsStub = stub
-}
-
-func (fake *FakeConfiguration) CompileExpressionsArgsForCall(i int) *config.Scenario {
-	fake.compileExpressionsMutex.RLock()
-	defer fake.compileExpressionsMutex.RUnlock()
-	argsForCall := fake.compileExpressionsArgsForCall[i]
-	return argsForCall.arg1
-}
-
-func (fake *FakeConfiguration) CompileExpressionsReturns(result1 error) {
-	fake.compileExpressionsMutex.Lock()
-	defer fake.compileExpressionsMutex.Unlock()
-	fake.CompileExpressionsStub = nil
-	fake.compileExpressionsReturns = struct {
-		result1 error
-	}{result1}
-}
-
-func (fake *FakeConfiguration) CompileExpressionsReturnsOnCall(i int, result1 error) {
-	fake.compileExpressionsMutex.Lock()
-	defer fake.compileExpressionsMutex.Unlock()
-	fake.CompileExpressionsStub = nil
-	if fake.compileExpressionsReturnsOnCall == nil {
-		fake.compileExpressionsReturnsOnCall = make(map[int]struct {
-			result1 error
-		})
-	}
-	fake.compileExpressionsReturnsOnCall[i] = struct {
-		result1 error
-	}{result1}
 }
 
 func (fake *FakeConfiguration) ParseFile(arg1 string) (*config.Scenario, error) {
@@ -164,8 +92,6 @@ func (fake *FakeConfiguration) ParseFileReturnsOnCall(i int, result1 *config.Sce
 func (fake *FakeConfiguration) Invocations() map[string][][]interface{} {
 	fake.invocationsMutex.RLock()
 	defer fake.invocationsMutex.RUnlock()
-	fake.compileExpressionsMutex.RLock()
-	defer fake.compileExpressionsMutex.RUnlock()
 	fake.parseFileMutex.RLock()
 	defer fake.parseFileMutex.RUnlock()
 	copiedInvocations := map[string][][]interface{}{}

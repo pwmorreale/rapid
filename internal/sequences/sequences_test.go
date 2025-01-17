@@ -40,7 +40,7 @@ func TestRun(t *testing.T) {
 	// Two requests in the test sequence...
 	assert.Equal(t, sc.Sequence.Iterations*2, srv.CreateRequestCallCount())
 	assert.Equal(t, sc.Sequence.Iterations*2, srv.SendCallCount())
-	assert.Equal(t, sc.Sequence.Iterations*2, srv.ValidateResponseCallCount())
+	assert.Equal(t, sc.Sequence.Iterations*2, srv.ValidateCallCount())
 }
 
 func TestRunFailSecondRequest(t *testing.T) {
@@ -62,7 +62,7 @@ func TestRunFailSecondRequest(t *testing.T) {
 	assert.Equal(t, 2, srv.CreateRequestCallCount())
 	assert.Equal(t, 1, srv.CreateClientCallCount())
 	assert.Equal(t, 1, srv.SendCallCount())
-	assert.Equal(t, 1, srv.ValidateResponseCallCount())
+	assert.Equal(t, 1, srv.ValidateCallCount())
 }
 
 func TestRunFailClient(t *testing.T) {
@@ -84,7 +84,7 @@ func TestRunFailClient(t *testing.T) {
 	assert.Equal(t, 1, srv.CreateRequestCallCount())
 	assert.Equal(t, 1, srv.CreateClientCallCount())
 	assert.Equal(t, 0, srv.SendCallCount())
-	assert.Equal(t, 0, srv.ValidateResponseCallCount())
+	assert.Equal(t, 0, srv.ValidateCallCount())
 }
 
 func TestRunFailSend(t *testing.T) {
@@ -106,7 +106,7 @@ func TestRunFailSend(t *testing.T) {
 	assert.Equal(t, 1, srv.CreateRequestCallCount())
 	assert.Equal(t, 1, srv.CreateClientCallCount())
 	assert.Equal(t, 1, srv.SendCallCount())
-	assert.Equal(t, 0, srv.ValidateResponseCallCount())
+	assert.Equal(t, 0, srv.ValidateCallCount())
 }
 
 func TestRunFailValidate(t *testing.T) {
@@ -120,14 +120,14 @@ func TestRunFailValidate(t *testing.T) {
 	sc, err := c.ParseFile("../../test/configs/test_scenario.yaml")
 	assert.Nil(t, err)
 
-	srv.ValidateResponseReturnsOnCall(0, errors.New("blowing chunks"))
+	srv.ValidateReturnsOnCall(0, errors.New("blowing chunks"))
 
 	err = seq.Run(sc)
 
 	assert.Equal(t, err, errors.New("blowing chunks"))
 	assert.Equal(t, 1, srv.CreateRequestCallCount())
 	assert.Equal(t, 1, srv.SendCallCount())
-	assert.Equal(t, 1, srv.ValidateResponseCallCount())
+	assert.Equal(t, 1, srv.ValidateCallCount())
 }
 
 func TestRunAbortOnError(t *testing.T) {
@@ -143,7 +143,7 @@ func TestRunAbortOnError(t *testing.T) {
 
 	sc.Sequence.AbortOnError = false
 
-	srv.ValidateResponseReturnsOnCall(0, errors.New("blowing chunks"))
+	srv.ValidateReturnsOnCall(0, errors.New("blowing chunks"))
 
 	err = seq.Run(sc)
 	assert.Nil(t, err)
@@ -151,7 +151,7 @@ func TestRunAbortOnError(t *testing.T) {
 	assert.Equal(t, 20, srv.CreateRequestCallCount())
 	assert.Equal(t, 20, srv.CreateClientCallCount())
 	assert.Equal(t, 20, srv.SendCallCount())
-	assert.Equal(t, 20, srv.ValidateResponseCallCount())
+	assert.Equal(t, 20, srv.ValidateCallCount())
 }
 func TestRunExceedTimeLimit(t *testing.T) {
 	rpt := &mocks.FakeReport{}
@@ -174,5 +174,5 @@ func TestRunExceedTimeLimit(t *testing.T) {
 
 	assert.Equal(t, 1, srv.CreateRequestCallCount())
 	assert.Equal(t, 1, srv.SendCallCount())
-	assert.Equal(t, 1, srv.ValidateResponseCallCount())
+	assert.Equal(t, 1, srv.ValidateCallCount())
 }
