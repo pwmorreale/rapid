@@ -30,8 +30,8 @@ func TestReadInConfig(t *testing.T) {
 
 	assert.Equal(t, 2, len(s.Sequence.Requests[0].Responses))
 
-	assert.Equal(t, s.Sequence.Requests[0].Responses[0].StatusCode, "200")
-	assert.Equal(t, s.Sequence.Requests[0].Responses[1].StatusCode, "500")
+	assert.Equal(t, 200, s.Sequence.Requests[0].Responses[0].StatusCode)
+	assert.Equal(t, 500, s.Sequence.Requests[0].Responses[1].StatusCode)
 
 	assert.Equal(t, 2, len(s.Sequence.Requests[0].Responses[0].Headers))
 	assert.Equal(t, s.Sequence.Requests[0].Responses[0].Headers[0].Name, "header1")
@@ -39,7 +39,7 @@ func TestReadInConfig(t *testing.T) {
 
 	assert.Equal(t, 2, len(s.Sequence.Requests[0].Responses[0].Cookies))
 
-	assert.Equal(t, s.Sequence.Requests[0].Responses[1].StatusCode, "500")
+	assert.Equal(t, 500, s.Sequence.Requests[0].Responses[1].StatusCode)
 	assert.Equal(t, 3, len(s.Sequence.Requests[0].Responses[1].Headers))
 
 	assert.Equal(t, 0, len(s.Sequence.Requests[0].Responses[1].Cookies))
