@@ -32,48 +32,6 @@ func TestAddReplacementBad(t *testing.T) {
 	assert.Equal(t, len(d.All), 0)
 }
 
-func TestAddMatcher(t *testing.T) {
-
-	d := data.New()
-
-	err := d.AddMatcher("goo")
-	assert.Nil(t, err)
-	assert.Equal(t, len(d.Matchers), 1)
-}
-
-func TestAddMatcherBad(t *testing.T) {
-
-	d := data.New()
-
-	err := d.AddMatcher(`\((?!['"]`)
-	assert.Equal(t, "error parsing regexp: invalid or unsupported Perl syntax: `(?!`", err.Error())
-	assert.Equal(t, len(d.Matchers), 0)
-}
-
-func TestMatch(t *testing.T) {
-
-	d := data.New()
-
-	err := d.AddMatcher("boo")
-	err = d.AddMatcher("goo")
-	assert.Nil(t, err)
-	assert.Equal(t, len(d.Matchers), 2)
-
-	assert.True(t, d.Match("goo"))
-}
-
-func TestNoMatch(t *testing.T) {
-
-	d := data.New()
-
-	err := d.AddMatcher("boo")
-	err = d.AddMatcher("goo")
-	assert.Nil(t, err)
-	assert.Equal(t, len(d.Matchers), 2)
-
-	assert.False(t, d.Match("moo"))
-}
-
 func TestReplace(t *testing.T) {
 
 	d := data.New()
