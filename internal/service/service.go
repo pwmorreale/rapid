@@ -31,6 +31,26 @@ type Context struct {
 	datum data.Data
 }
 
+func (s *Context) addCookies(request *http.Request, r *config.Request) error {
+
+	for i := range r.Cookies {
+
+		// Perform any substitutions on cookies.
+		ck := s.datum.Replace(r.Cookies[i].Value)
+
+		cookies, err := http.ParseCookie(ck)
+		if err != nil {
+			return err
+		}
+
+		for n := range cookies {
+			request.AddCookie(cookies[n])
+		}
+	}
+
+	return nil
+}
+
 // GetContentReader returns a reader for an http request.
 func (s *Context) GetContentReader(r *config.Request) io.Reader {
 
@@ -79,6 +99,11 @@ func (s *Context) CreateRequest(r *config.Request) (*http.Request, error) {
 		hv := s.datum.Replace(r.ExtraHeaders[i].Value)
 
 		request.Header.Add(r.ExtraHeaders[i].Name, hv)
+	}
+
+	err = s.addCookies(request, r)
+	if err != nil {
+		return nil, err
 	}
 
 	return request, nil

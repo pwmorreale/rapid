@@ -2,7 +2,8 @@ name: test-scenario
 version: 1.0
 data:
   name1: value1
-  name2: value2
+  color: blue
+  full_name: bob_ross
 sequence:
   iterations: 10
   time_limit: 1m
@@ -12,16 +13,16 @@ sequence:
     - name: request1
       time_limit: 1m
       method: post
-      url: https://bob.ross.com/happy_little_trees
+      url: https://$full_name.com/happy_little_trees
       extra_headers:
         - name: X-Paintbrush-for-sky
           value: wide
         - name: X-Paintbrush-for-trees
           value: narrow
       cookies:
-        - value: id=bob_ross; max-age=424242; Secure; HttpOnly
-        - value: id=betsy_ross; Expires=Thu, 21 Oct 2080 07:28:00 GMT; Secure
-      content: "various paint colors"
+        - value: "id=$full_name; Max-Age=42; SameSite=Strict"
+        - value: "id=betsy_ross; Expires=Thu, 21 Oct 2080 07:28:00 GMT; SameSite=Strict"
+      content: "various paint colors in $color"
       content_type: text/html
       responses:
         - status_code: 200
@@ -31,8 +32,8 @@ sequence:
             - name: header2
               value: value2
           cookies:
-            - value: id=diana_ross; max-age=90900; Secure; HttpOnly
-            - value: id=marion_ross; Expires=Thu, 21 Oct 2080 07:28:00 GMT; Secure
+            - value: "id=diana_ross; Max-Age=90900; HttpOnly"
+            - value: "id=marion_ross; Expires=Thu, 21 Oct 2080 07:28:00 GMT"
           content:
             content_type: application/json
             max_content: 4096
