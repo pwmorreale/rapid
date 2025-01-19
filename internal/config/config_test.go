@@ -3,7 +3,6 @@
 package config_test
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/pwmorreale/rapid/internal/config"
@@ -20,8 +19,6 @@ func TestReadInConfig(t *testing.T) {
 
 	assert.Equal(t, s.Name, "test-scenario")
 	assert.Equal(t, len(s.Sequence.Requests), 2)
-
-	fmt.Printf("%+v\n", s)
 
 	assert.Equal(t, 2, len(s.Sequence.Requests[0].ExtraHeaders))
 	assert.Equal(t, 2, len(s.Sequence.Requests[0].Cookies))
