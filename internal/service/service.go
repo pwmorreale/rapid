@@ -7,6 +7,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"net/http"
 	"strconv"
@@ -118,12 +119,36 @@ func (s *Context) CreateClient(_ *config.Request) (*http.Client, error) {
 }
 
 // FindResponse finds responses data based on returned status code.
-func (s *Context) FindResponse(httpResponse *http.Response, request *config.Request) (*config.Response, error) {
-	return nil, nil
+func (s *Context) FindResponse(httpResponse *http.Response, request *config.Request) *config.Response {
+
+	for i := range request.Responses {
+		if httpResponse.StatusCode == request.Responses[i].StatusCode {
+			return &request.Responses[i]
+		}
+	}
+	return nil
 }
 
 // VerifyResponse compres response data to expected data.
 func (s *Context) VerifyResponse(httpResponse *http.Response, response *config.Response, request *config.Request) error {
+
+	err := s.VerifyHeaders(httpResponse, response, request)
+	if err != nil {
+		return err
+	}
+
+	err = s.VerifyCookies(httpResponse, response, request)
+	if err != nil {
+		return err
+	}
+
+	err = s.VerifyContent(httpResponse, response, request)
+	if err != nil {
+		return err
+	}
+
+	// Extract...
+
 	return nil
 }
 
@@ -133,12 +158,12 @@ func (s *Context) Validate(client *http.Client, httpResponse *http.Response, req
 	defer client.CloseIdleConnections()
 	defer httpResponse.Body.Close()
 
-	response, err := s.FindResponse(httpResponse, request)
-	if err != nil {
-		return err
+	response := s.FindResponse(httpResponse, request)
+	if response == nil {
+		return fmt.Errorf("response not found for status code: %d for request: %s", response.StatusCode, request.Name)
 	}
 
-	err = s.VerifyResponse(httpResponse, response, request)
+	err := s.VerifyResponse(httpResponse, response, request)
 
 	return err
 }

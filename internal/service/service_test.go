@@ -1,8 +1,8 @@
 package service_test
 
 import (
-	"fmt"
 	"io"
+	"net/http"
 	"testing"
 
 	"github.com/pwmorreale/rapid/internal/config"
@@ -17,7 +17,6 @@ var testCookie = `id=bob_ross; Max-Age=42; SameSite=Strict; id=betsy_ross; Expir
 func initTestService(t *testing.T) (*service.Context, *config.Scenario, error) {
 	c := config.New()
 	sc, err := c.ParseFile("../../test/configs/test_scenario.yaml")
-	fmt.Println(err)
 	assert.Nil(t, err)
 
 	d := data.New()
@@ -75,5 +74,65 @@ func TestCreateClient(t *testing.T) {
 	client, err := s.CreateClient(&sc.Sequence.Requests[0])
 	assert.Nil(t, err)
 	assert.NotNil(t, client)
+
+}
+
+func TestHeaderMultipleValues(t *testing.T) {
+
+	expectedHeader := config.HeaderData{Name: "name1", Value: "value1"}
+
+	httpHeader := make(http.Header)
+
+	httpHeader.Add("name1", "value1")
+	httpHeader.Add("name1", "value2")
+
+	s, sc, err := initTestService(t)
+	assert.NotNil(t, s)
+	assert.NotNil(t, sc)
+	assert.Nil(t, err)
+
+	err = s.VerifyHeaderValues(httpHeader, &expectedHeader)
+	assert.Nil(t, err)
+
+	expectedHeader = config.HeaderData{Name: "name1", Value: "value2"}
+
+	err = s.VerifyHeaderValues(httpHeader, &expectedHeader)
+	assert.Nil(t, err)
+
+}
+
+func TestHeaderMissingHeader(t *testing.T) {
+
+	expectedHeader := config.HeaderData{Name: "name1", Value: "value1"}
+
+	httpHeader := make(http.Header)
+
+	httpHeader.Add("foobar", "value1")
+
+	s, sc, err := initTestService(t)
+	assert.NotNil(t, s)
+	assert.NotNil(t, sc)
+	assert.Nil(t, err)
+
+	err = s.VerifyHeaderValues(httpHeader, &expectedHeader)
+	assert.Equal(t, "header: Name1 not found", err.Error())
+
+}
+
+func TestHeaderMissingValue(t *testing.T) {
+
+	expectedHeader := config.HeaderData{Name: "name1", Value: "value1"}
+
+	httpHeader := make(http.Header)
+
+	httpHeader.Add("name1", "foobar")
+
+	s, sc, err := initTestService(t)
+	assert.NotNil(t, s)
+	assert.NotNil(t, sc)
+	assert.Nil(t, err)
+
+	err = s.VerifyHeaderValues(httpHeader, &expectedHeader)
+	assert.Equal(t, "header: Name1, expected value (value1) not found", err.Error())
 
 }
