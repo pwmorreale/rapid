@@ -5,12 +5,20 @@
 // Package data contins data substituion routines.
 package data
 
-import "regexp"
+import (
+	"io"
+	"regexp"
+)
 
 // Data defines interfaces for executing scenarios
+//
+//go:generate counterfeiter -o ../../test/mocks/fake_data.go . Data
 type Data interface {
 	AddReplacement(string, string) error
 	Replace(string) string
+	ExtractJSON(string, io.Reader) (string, error)
+	ExtractXML(string, io.Reader) (string, error)
+	ExtractRegex(string, io.Reader) (string, error)
 }
 
 // Replacement defines a compiled regex and its associated replacement string

@@ -8,7 +8,6 @@ package service
 import (
 	"context"
 	"fmt"
-	"io"
 	"net/http"
 	"strconv"
 	"strings"
@@ -53,7 +52,7 @@ func (s *Context) addCookies(request *http.Request, r *config.Request) error {
 }
 
 // GetContentReader returns a reader for an http request.
-func (s *Context) GetContentReader(r *config.Request) io.Reader {
+func (s *Context) GetContentReader(r *config.Request) *strings.Reader {
 
 	// Perform any substitutions on cookie values.
 	content := s.datum.Replace(r.Content)
@@ -86,7 +85,7 @@ func (s *Context) CreateRequest(r *config.Request) (*http.Request, error) {
 
 	if rdr != nil {
 		request.Header.Add("Content-Type", r.ContentType)
-		request.Header.Add("Content-Length", strconv.Itoa(len(r.Content)))
+		request.Header.Add("Content-Length", strconv.FormatInt(rdr.Size(), 10))
 	}
 
 	if err != nil {
@@ -132,22 +131,20 @@ func (s *Context) FindResponse(httpResponse *http.Response, request *config.Requ
 // VerifyResponse compres response data to expected data.
 func (s *Context) VerifyResponse(httpResponse *http.Response, response *config.Response, request *config.Request) error {
 
-	err := s.VerifyHeaders(httpResponse, response, request)
+	err := s.VerifyHeaders(httpResponse, response)
 	if err != nil {
 		return err
 	}
 
-	err = s.VerifyCookies(httpResponse, response, request)
+	err = s.VerifyCookies(httpResponse, response)
 	if err != nil {
 		return err
 	}
 
-	err = s.VerifyContent(httpResponse, response, request)
+	err = s.VerifyContentAndExtract(httpResponse, response)
 	if err != nil {
 		return err
 	}
-
-	// Extract...
 
 	return nil
 }

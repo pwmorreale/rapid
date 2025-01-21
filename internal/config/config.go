@@ -52,9 +52,9 @@ type Sequence struct {
 
 // Extract defines response data extraction.
 type ExtractData struct {
-	Type      string `mapstructure:"type"`
-	Path      string `mapstructure:"path"`
-	DastaName string `mapstructure:"data_name"`
+	Type string `mapstructure:"type"`
+	Path string `mapstructure:"path"`
+	Name string `mapstructure:"data_name"`
 }
 
 // HeaderData contains user defined headers for inclusion with the request.

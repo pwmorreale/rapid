@@ -79,60 +79,109 @@ func TestCreateClient(t *testing.T) {
 
 func TestHeaderMultipleValues(t *testing.T) {
 
-	expectedHeader := config.HeaderData{Name: "name1", Value: "value1"}
-
-	httpHeader := make(http.Header)
-
-	httpHeader.Add("name1", "value1")
-	httpHeader.Add("name1", "value2")
-
 	s, sc, err := initTestService(t)
 	assert.NotNil(t, s)
 	assert.NotNil(t, sc)
 	assert.Nil(t, err)
 
-	err = s.VerifyHeaderValues(httpHeader, &expectedHeader)
+	response := &http.Response{}
+	response.Header = make(map[string][]string)
+
+	configResponse := &sc.Sequence.Requests[0].Responses[0]
+
+	response.Header.Add("header1", "value1")
+	response.Header.Add("header2", "value2")
+	response.Header.Add("header3", "value3")
+
+	err = s.VerifyHeaders(response, configResponse)
 	assert.Nil(t, err)
-
-	expectedHeader = config.HeaderData{Name: "name1", Value: "value2"}
-
-	err = s.VerifyHeaderValues(httpHeader, &expectedHeader)
-	assert.Nil(t, err)
-
 }
 
 func TestHeaderMissingHeader(t *testing.T) {
 
-	expectedHeader := config.HeaderData{Name: "name1", Value: "value1"}
-
-	httpHeader := make(http.Header)
-
-	httpHeader.Add("foobar", "value1")
-
 	s, sc, err := initTestService(t)
 	assert.NotNil(t, s)
 	assert.NotNil(t, sc)
 	assert.Nil(t, err)
 
-	err = s.VerifyHeaderValues(httpHeader, &expectedHeader)
-	assert.Equal(t, "header: Name1 not found", err.Error())
+	response := &http.Response{}
+	response.Header = make(map[string][]string)
+
+	configResponse := &sc.Sequence.Requests[0].Responses[0]
+
+	err = s.VerifyHeaders(response, configResponse)
+	assert.Equal(t, "header: Header1 not found", err.Error())
 
 }
 
-func TestHeaderMissingValue(t *testing.T) {
-
-	expectedHeader := config.HeaderData{Name: "name1", Value: "value1"}
-
-	httpHeader := make(http.Header)
-
-	httpHeader.Add("name1", "foobar")
+func TestHeaderBadValue(t *testing.T) {
 
 	s, sc, err := initTestService(t)
 	assert.NotNil(t, s)
 	assert.NotNil(t, sc)
 	assert.Nil(t, err)
 
-	err = s.VerifyHeaderValues(httpHeader, &expectedHeader)
-	assert.Equal(t, "header: Name1, expected value (value1) not found", err.Error())
+	response := &http.Response{}
+	response.Header = make(map[string][]string)
+
+	response.Header.Add("header1", "foobar")
+
+	configResponse := &sc.Sequence.Requests[0].Responses[0]
+
+	err = s.VerifyHeaders(response, configResponse)
+	assert.Equal(t, "header: Header1, expected value (value1) not found", err.Error())
+
+}
+
+func TestHeaders(t *testing.T) {
+
+	s, sc, err := initTestService(t)
+	assert.NotNil(t, s)
+	assert.NotNil(t, sc)
+	assert.Nil(t, err)
+
+	response := &http.Response{}
+
+	configResponse := &sc.Sequence.Requests[0].Responses[0]
+
+	// Missing...
+	err = s.VerifyHeaders(response, configResponse)
+	assert.NotNil(t, err)
+
+	response.Header = make(map[string][]string)
+	response.Header.Add(configResponse.Headers[0].Name, configResponse.Headers[0].Value)
+	response.Header.Add(configResponse.Headers[1].Name, configResponse.Headers[1].Value)
+
+	err = s.VerifyHeaders(response, configResponse)
+	assert.Nil(t, err)
+
+}
+
+func TestVerifyCookies(t *testing.T) {
+
+	s, sc, err := initTestService(t)
+	assert.NotNil(t, s)
+	assert.NotNil(t, sc)
+	assert.Nil(t, err)
+
+	response := &http.Response{}
+
+	configResponse := &sc.Sequence.Requests[0].Responses[0]
+
+	response.Header = make(map[string][]string)
+	response.Header.Add("Set-Cookie", configResponse.Cookies[0].Value)
+
+	err = s.VerifyCookies(response, configResponse)
+	assert.Equal(t, "cookie: id=marion_ross; Expires=Mon, 21 Oct 2080 07:28:00 GMT not found in response", err.Error())
+
+	response.Header.Add("Set-Cookie", configResponse.Cookies[1].Value)
+	err = s.VerifyCookies(response, configResponse)
+	assert.Nil(t, err)
+
+	// Typo in config...
+	configResponse.Cookies[0].Value = "foo"
+
+	err = s.VerifyCookies(response, configResponse)
+	assert.Equal(t, "http: '=' not found in cookie", err.Error())
 
 }

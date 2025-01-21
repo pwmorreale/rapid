@@ -32,7 +32,7 @@ sequence:
             - name: header2
               value: value2
           cookies:
-            - value: "id=diana_ross; Max-Age=90900; HttpOnly"
+            - value: "id=diana_ross; SameSite=Strict"
             - value: "id=marion_ross; Expires=Thu, 21 Oct 2080 07:28:00 GMT"
           content:
             content_type: application/json
