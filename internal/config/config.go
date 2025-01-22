@@ -102,6 +102,17 @@ func New() *Context {
 	return &Context{}
 }
 
+func setDefaultContentMaxSize(s *Scenario) {
+
+	for i := range s.Sequence.Requests {
+		for n := range s.Sequence.Requests[i].Responses {
+			if s.Sequence.Requests[i].Responses[n].Content.MaxSize == 0 {
+				s.Sequence.Requests[i].Responses[n].Content.MaxSize = DefaultContentLimit
+			}
+		}
+	}
+}
+
 // ParseFile parse a scenario configuration
 func (c *Context) ParseFile(flnm string) (*Scenario, error) {
 
@@ -123,6 +134,8 @@ func (c *Context) ParseFile(flnm string) (*Scenario, error) {
 
 	c.v = v
 	c.id = uuid.New().String()
+
+	setDefaultContentMaxSize(&s)
 
 	return &s, nil
 }
