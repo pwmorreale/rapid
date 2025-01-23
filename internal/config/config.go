@@ -79,6 +79,7 @@ type CookieData struct {
 
 // Response defines a REST response
 type Response struct {
+	Name       string       `mapstructure:"name"`
 	StatusCode int          `mapstructure:"status_code"`
 	Headers    []HeaderData `mapstructure:"headers"`
 	Cookies    []CookieData `mapstructure:"cookies"`

@@ -26,6 +26,7 @@ sequence:
       content_type: text/html
       responses:
         - status_code: 200
+          name: success
           headers:
             - name: header1
               value: value1
@@ -46,6 +47,7 @@ sequence:
                 path: goo.moo.boo
                 data_name: foo
         - status_code: 500
+          name: server-failure
           headers:
             - name: header3
               value: value3
@@ -55,7 +57,8 @@ sequence:
               value: value5
           content:
             expected: false
-        - status_code: 202
+        - status_code: 201
+          name: created
           content:
             expected: true
             content_type: text/xml
