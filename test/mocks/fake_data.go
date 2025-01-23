@@ -63,6 +63,27 @@ type FakeData struct {
 		result1 string
 		result2 error
 	}
+	LenStub        func() int
+	lenMutex       sync.RWMutex
+	lenArgsForCall []struct {
+	}
+	lenReturns struct {
+		result1 int
+	}
+	lenReturnsOnCall map[int]struct {
+		result1 int
+	}
+	LookupStub        func(string) string
+	lookupMutex       sync.RWMutex
+	lookupArgsForCall []struct {
+		arg1 string
+	}
+	lookupReturns struct {
+		result1 string
+	}
+	lookupReturnsOnCall map[int]struct {
+		result1 string
+	}
 	ReplaceStub        func(string) string
 	replaceMutex       sync.RWMutex
 	replaceArgsForCall []struct {
@@ -335,6 +356,120 @@ func (fake *FakeData) ExtractXMLReturnsOnCall(i int, result1 string, result2 err
 	}{result1, result2}
 }
 
+func (fake *FakeData) Len() int {
+	fake.lenMutex.Lock()
+	ret, specificReturn := fake.lenReturnsOnCall[len(fake.lenArgsForCall)]
+	fake.lenArgsForCall = append(fake.lenArgsForCall, struct {
+	}{})
+	stub := fake.LenStub
+	fakeReturns := fake.lenReturns
+	fake.recordInvocation("Len", []interface{}{})
+	fake.lenMutex.Unlock()
+	if stub != nil {
+		return stub()
+	}
+	if specificReturn {
+		return ret.result1
+	}
+	return fakeReturns.result1
+}
+
+func (fake *FakeData) LenCallCount() int {
+	fake.lenMutex.RLock()
+	defer fake.lenMutex.RUnlock()
+	return len(fake.lenArgsForCall)
+}
+
+func (fake *FakeData) LenCalls(stub func() int) {
+	fake.lenMutex.Lock()
+	defer fake.lenMutex.Unlock()
+	fake.LenStub = stub
+}
+
+func (fake *FakeData) LenReturns(result1 int) {
+	fake.lenMutex.Lock()
+	defer fake.lenMutex.Unlock()
+	fake.LenStub = nil
+	fake.lenReturns = struct {
+		result1 int
+	}{result1}
+}
+
+func (fake *FakeData) LenReturnsOnCall(i int, result1 int) {
+	fake.lenMutex.Lock()
+	defer fake.lenMutex.Unlock()
+	fake.LenStub = nil
+	if fake.lenReturnsOnCall == nil {
+		fake.lenReturnsOnCall = make(map[int]struct {
+			result1 int
+		})
+	}
+	fake.lenReturnsOnCall[i] = struct {
+		result1 int
+	}{result1}
+}
+
+func (fake *FakeData) Lookup(arg1 string) string {
+	fake.lookupMutex.Lock()
+	ret, specificReturn := fake.lookupReturnsOnCall[len(fake.lookupArgsForCall)]
+	fake.lookupArgsForCall = append(fake.lookupArgsForCall, struct {
+		arg1 string
+	}{arg1})
+	stub := fake.LookupStub
+	fakeReturns := fake.lookupReturns
+	fake.recordInvocation("Lookup", []interface{}{arg1})
+	fake.lookupMutex.Unlock()
+	if stub != nil {
+		return stub(arg1)
+	}
+	if specificReturn {
+		return ret.result1
+	}
+	return fakeReturns.result1
+}
+
+func (fake *FakeData) LookupCallCount() int {
+	fake.lookupMutex.RLock()
+	defer fake.lookupMutex.RUnlock()
+	return len(fake.lookupArgsForCall)
+}
+
+func (fake *FakeData) LookupCalls(stub func(string) string) {
+	fake.lookupMutex.Lock()
+	defer fake.lookupMutex.Unlock()
+	fake.LookupStub = stub
+}
+
+func (fake *FakeData) LookupArgsForCall(i int) string {
+	fake.lookupMutex.RLock()
+	defer fake.lookupMutex.RUnlock()
+	argsForCall := fake.lookupArgsForCall[i]
+	return argsForCall.arg1
+}
+
+func (fake *FakeData) LookupReturns(result1 string) {
+	fake.lookupMutex.Lock()
+	defer fake.lookupMutex.Unlock()
+	fake.LookupStub = nil
+	fake.lookupReturns = struct {
+		result1 string
+	}{result1}
+}
+
+func (fake *FakeData) LookupReturnsOnCall(i int, result1 string) {
+	fake.lookupMutex.Lock()
+	defer fake.lookupMutex.Unlock()
+	fake.LookupStub = nil
+	if fake.lookupReturnsOnCall == nil {
+		fake.lookupReturnsOnCall = make(map[int]struct {
+			result1 string
+		})
+	}
+	fake.lookupReturnsOnCall[i] = struct {
+		result1 string
+	}{result1}
+}
+
 func (fake *FakeData) Replace(arg1 string) string {
 	fake.replaceMutex.Lock()
 	ret, specificReturn := fake.replaceReturnsOnCall[len(fake.replaceArgsForCall)]
@@ -407,6 +542,10 @@ func (fake *FakeData) Invocations() map[string][][]interface{} {
 	defer fake.extractRegexMutex.RUnlock()
 	fake.extractXMLMutex.RLock()
 	defer fake.extractXMLMutex.RUnlock()
+	fake.lenMutex.RLock()
+	defer fake.lenMutex.RUnlock()
+	fake.lookupMutex.RLock()
+	defer fake.lookupMutex.RUnlock()
 	fake.replaceMutex.RLock()
 	defer fake.replaceMutex.RUnlock()
 	copiedInvocations := map[string][][]interface{}{}

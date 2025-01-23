@@ -50,7 +50,7 @@ type Sequence struct {
 	Requests     []Request     `mapstructure:"requests"`
 }
 
-// Extract defines response data extraction.
+// ExtractData defines response data extraction.
 type ExtractData struct {
 	Type string `mapstructure:"type"`
 	Path string `mapstructure:"path"`
@@ -65,6 +65,7 @@ type HeaderData struct {
 
 // ContentData cdefines expected response data.
 type ContentData struct {
+	Expected  bool          `mapstructure:"expected"`
 	MediaType string        `mapstructure:"content_type"`
 	MaxSize   int           `mapstructure:"max_content"`
 	Contains  []string      `mapstructure:"contains"`

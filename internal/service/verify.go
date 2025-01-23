@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"regexp"
 
+	"github.com/gabriel-vasile/mimetype"
 	"github.com/pwmorreale/rapid/internal/config"
 )
 
@@ -22,23 +23,20 @@ func cookieExists(expected string, all []string) bool {
 	return false
 }
 
-func verifyNoContent(httpResponse *http.Response) error {
+func readContent(httpResponse *http.Response, response *config.Response) (int, []byte, error) {
 
-	if httpResponse.ContentLength > 0 {
-		return fmt.Errorf("response ContentLength: %d", httpResponse.ContentLength)
+	maxSize := httpResponse.ContentLength
+	if maxSize < 0 || maxSize > int64(response.Content.MaxSize) {
+		maxSize = int64(response.Content.MaxSize)
 	}
 
-	buf := make([]byte, 10)
-
+	buf := make([]byte, maxSize)
 	n, err := httpResponse.Body.Read(buf)
+	if err != nil && err != io.EOF {
+		return 0, nil, err
+	}
 
-	if err != nil {
-		return err
-	}
-	if n > 0 {
-		return fmt.Errorf("response Body contained data")
-	}
-	return nil
+	return n, buf[:n], nil
 }
 
 func verifyHeaderValues(httpHeaders http.Header, expectedHeader *config.HeaderData) error {
@@ -100,33 +98,46 @@ func (s *Context) VerifyCookies(httpResponse *http.Response, response *config.Re
 	return nil
 }
 
-// VerifyCOntentAndExtract verifies the content, if any and extracts saved values, if any.
+// VerifyContentAndExtract verifies the content, if any and extracts saved values, if any.
 func (s *Context) VerifyContentAndExtract(httpResponse *http.Response, response *config.Response) error {
 
-	// no content-type configured means that none is expected, prove it.
-	if response.Content.MediaType == "" {
-		return verifyNoContent(httpResponse)
-	}
-
-	contentType, _, err := mime.ParseMediaType(httpResponse.Header.Get("Content-Type"))
-	expectedContentType, _, err := mime.ParseMediaType(response.Content.MediaType)
-	if contentType != expectedContentType {
-		return fmt.Errorf("content-type: %s != %s", contentType, response.Content.MediaType)
-	}
-	maxSize := response.Content.MaxSize
-	if maxSize == 0 {
-		maxSize = config.DefaultContentLimit
-	}
-
-	lr := io.LimitReader(httpResponse.Body, int64(maxSize))
-	contentBytes, err := io.ReadAll(lr)
+	nrBytes, contentBytes, err := readContent(httpResponse, response)
 	if err != nil {
 		return err
 	}
 
+	// Check for no expected content...
+	if !response.Content.Expected {
+		if nrBytes > 0 {
+			return fmt.Errorf("no content expected yet read: %d response bytes", nrBytes)
+		}
+		return nil
+	}
+
+	contentType, _, err := mime.ParseMediaType(httpResponse.Header.Get("Content-Type"))
+	if err != nil {
+		return err
+	}
+
+	expectedContentType, _, err := mime.ParseMediaType(response.Content.MediaType)
+	if err != nil {
+		return err
+	}
+
+	if contentType != expectedContentType {
+		return fmt.Errorf("content-type: %s != %s", contentType, response.Content.MediaType)
+	}
+
+	switch {
+	case (httpResponse.ContentLength == 0 && nrBytes != 0):
+		return fmt.Errorf("mismatched Content-Length header (%d) and actual content (at least %d bytes)", httpResponse.ContentLength, nrBytes)
+	case (httpResponse.ContentLength > 0 && nrBytes == 0):
+		return fmt.Errorf("mismatched Content-Length header (%d) and actual content (at least %d bytes)", httpResponse.ContentLength, nrBytes)
+	}
+
 	// Verify contents vs. Content-Type
-	mediaType := http.DetectContentType(contentBytes)
-	if mediaType != contentType {
+	mediaType := mimetype.Detect(contentBytes)
+	if !mediaType.Is(contentType) {
 		return fmt.Errorf("mismatched content/types:  Content_Type: %s, detected content as: %s", contentType, mediaType)
 	}
 
@@ -150,13 +161,10 @@ func (s *Context) VerifyContentAndExtract(httpResponse *http.Response, response 
 		switch e.Type {
 		case "json":
 			v, err = s.datum.ExtractJSON(e.Path, rb)
-			break
 		case "xml":
 			v, err = s.datum.ExtractXML(e.Path, rb)
-			break
 		case "text":
 			v, err = s.datum.ExtractRegex(e.Path, rb)
-			break
 		}
 
 		if err != nil {

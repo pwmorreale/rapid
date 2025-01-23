@@ -20,7 +20,7 @@ func TestAddReplacement(t *testing.T) {
 
 	err := d.AddReplacement("goo", "kkk")
 	assert.Nil(t, err)
-	assert.Equal(t, len(d.All), 1)
+	assert.Equal(t, d.Len(), 1)
 }
 
 func TestAddReplacementBad(t *testing.T) {
@@ -29,7 +29,7 @@ func TestAddReplacementBad(t *testing.T) {
 
 	err := d.AddReplacement(`\((?!['"]`, "kkk")
 	assert.Equal(t, "error parsing regexp: invalid or unsupported Perl syntax: `(?!`", err.Error())
-	assert.Equal(t, len(d.All), 0)
+	assert.Equal(t, d.Len(), 0)
 }
 
 func TestReplace(t *testing.T) {
@@ -38,7 +38,7 @@ func TestReplace(t *testing.T) {
 
 	err := d.AddReplacement("goo", "value")
 	assert.Nil(t, err)
-	assert.Equal(t, len(d.All), 1)
+	assert.Equal(t, d.Len(), 1)
 
 	s := d.Replace("$goo")
 	assert.Equal(t, "value", s)
@@ -72,7 +72,7 @@ func TestMultiReplace(t *testing.T) {
 	err = d.AddReplacement("Steve", "Fred")
 	assert.Nil(t, err)
 
-	assert.Equal(t, len(d.All), 3)
+	assert.Equal(t, d.Len(), 3)
 
 	before := "$hello $George, this is $Steve paying you $50"
 	after := "hi Hank, this is Fred paying you $50"

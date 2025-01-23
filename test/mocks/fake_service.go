@@ -36,6 +36,18 @@ type FakeService struct {
 		result1 *http.Request
 		result2 error
 	}
+	FindResponseStub        func(*http.Response, *config.Request) *config.Response
+	findResponseMutex       sync.RWMutex
+	findResponseArgsForCall []struct {
+		arg1 *http.Response
+		arg2 *config.Request
+	}
+	findResponseReturns struct {
+		result1 *config.Response
+	}
+	findResponseReturnsOnCall map[int]struct {
+		result1 *config.Response
+	}
 	SendStub        func(*http.Client, *http.Request, *config.Request) (*http.Response, error)
 	sendMutex       sync.RWMutex
 	sendArgsForCall []struct {
@@ -62,6 +74,18 @@ type FakeService struct {
 		result1 error
 	}
 	validateReturnsOnCall map[int]struct {
+		result1 error
+	}
+	VerifyResponseStub        func(*http.Response, *config.Response) error
+	verifyResponseMutex       sync.RWMutex
+	verifyResponseArgsForCall []struct {
+		arg1 *http.Response
+		arg2 *config.Response
+	}
+	verifyResponseReturns struct {
+		result1 error
+	}
+	verifyResponseReturnsOnCall map[int]struct {
 		result1 error
 	}
 	invocations      map[string][][]interface{}
@@ -196,6 +220,68 @@ func (fake *FakeService) CreateRequestReturnsOnCall(i int, result1 *http.Request
 	}{result1, result2}
 }
 
+func (fake *FakeService) FindResponse(arg1 *http.Response, arg2 *config.Request) *config.Response {
+	fake.findResponseMutex.Lock()
+	ret, specificReturn := fake.findResponseReturnsOnCall[len(fake.findResponseArgsForCall)]
+	fake.findResponseArgsForCall = append(fake.findResponseArgsForCall, struct {
+		arg1 *http.Response
+		arg2 *config.Request
+	}{arg1, arg2})
+	stub := fake.FindResponseStub
+	fakeReturns := fake.findResponseReturns
+	fake.recordInvocation("FindResponse", []interface{}{arg1, arg2})
+	fake.findResponseMutex.Unlock()
+	if stub != nil {
+		return stub(arg1, arg2)
+	}
+	if specificReturn {
+		return ret.result1
+	}
+	return fakeReturns.result1
+}
+
+func (fake *FakeService) FindResponseCallCount() int {
+	fake.findResponseMutex.RLock()
+	defer fake.findResponseMutex.RUnlock()
+	return len(fake.findResponseArgsForCall)
+}
+
+func (fake *FakeService) FindResponseCalls(stub func(*http.Response, *config.Request) *config.Response) {
+	fake.findResponseMutex.Lock()
+	defer fake.findResponseMutex.Unlock()
+	fake.FindResponseStub = stub
+}
+
+func (fake *FakeService) FindResponseArgsForCall(i int) (*http.Response, *config.Request) {
+	fake.findResponseMutex.RLock()
+	defer fake.findResponseMutex.RUnlock()
+	argsForCall := fake.findResponseArgsForCall[i]
+	return argsForCall.arg1, argsForCall.arg2
+}
+
+func (fake *FakeService) FindResponseReturns(result1 *config.Response) {
+	fake.findResponseMutex.Lock()
+	defer fake.findResponseMutex.Unlock()
+	fake.FindResponseStub = nil
+	fake.findResponseReturns = struct {
+		result1 *config.Response
+	}{result1}
+}
+
+func (fake *FakeService) FindResponseReturnsOnCall(i int, result1 *config.Response) {
+	fake.findResponseMutex.Lock()
+	defer fake.findResponseMutex.Unlock()
+	fake.FindResponseStub = nil
+	if fake.findResponseReturnsOnCall == nil {
+		fake.findResponseReturnsOnCall = make(map[int]struct {
+			result1 *config.Response
+		})
+	}
+	fake.findResponseReturnsOnCall[i] = struct {
+		result1 *config.Response
+	}{result1}
+}
+
 func (fake *FakeService) Send(arg1 *http.Client, arg2 *http.Request, arg3 *config.Request) (*http.Response, error) {
 	fake.sendMutex.Lock()
 	ret, specificReturn := fake.sendReturnsOnCall[len(fake.sendArgsForCall)]
@@ -325,6 +411,68 @@ func (fake *FakeService) ValidateReturnsOnCall(i int, result1 error) {
 	}{result1}
 }
 
+func (fake *FakeService) VerifyResponse(arg1 *http.Response, arg2 *config.Response) error {
+	fake.verifyResponseMutex.Lock()
+	ret, specificReturn := fake.verifyResponseReturnsOnCall[len(fake.verifyResponseArgsForCall)]
+	fake.verifyResponseArgsForCall = append(fake.verifyResponseArgsForCall, struct {
+		arg1 *http.Response
+		arg2 *config.Response
+	}{arg1, arg2})
+	stub := fake.VerifyResponseStub
+	fakeReturns := fake.verifyResponseReturns
+	fake.recordInvocation("VerifyResponse", []interface{}{arg1, arg2})
+	fake.verifyResponseMutex.Unlock()
+	if stub != nil {
+		return stub(arg1, arg2)
+	}
+	if specificReturn {
+		return ret.result1
+	}
+	return fakeReturns.result1
+}
+
+func (fake *FakeService) VerifyResponseCallCount() int {
+	fake.verifyResponseMutex.RLock()
+	defer fake.verifyResponseMutex.RUnlock()
+	return len(fake.verifyResponseArgsForCall)
+}
+
+func (fake *FakeService) VerifyResponseCalls(stub func(*http.Response, *config.Response) error) {
+	fake.verifyResponseMutex.Lock()
+	defer fake.verifyResponseMutex.Unlock()
+	fake.VerifyResponseStub = stub
+}
+
+func (fake *FakeService) VerifyResponseArgsForCall(i int) (*http.Response, *config.Response) {
+	fake.verifyResponseMutex.RLock()
+	defer fake.verifyResponseMutex.RUnlock()
+	argsForCall := fake.verifyResponseArgsForCall[i]
+	return argsForCall.arg1, argsForCall.arg2
+}
+
+func (fake *FakeService) VerifyResponseReturns(result1 error) {
+	fake.verifyResponseMutex.Lock()
+	defer fake.verifyResponseMutex.Unlock()
+	fake.VerifyResponseStub = nil
+	fake.verifyResponseReturns = struct {
+		result1 error
+	}{result1}
+}
+
+func (fake *FakeService) VerifyResponseReturnsOnCall(i int, result1 error) {
+	fake.verifyResponseMutex.Lock()
+	defer fake.verifyResponseMutex.Unlock()
+	fake.VerifyResponseStub = nil
+	if fake.verifyResponseReturnsOnCall == nil {
+		fake.verifyResponseReturnsOnCall = make(map[int]struct {
+			result1 error
+		})
+	}
+	fake.verifyResponseReturnsOnCall[i] = struct {
+		result1 error
+	}{result1}
+}
+
 func (fake *FakeService) Invocations() map[string][][]interface{} {
 	fake.invocationsMutex.RLock()
 	defer fake.invocationsMutex.RUnlock()
@@ -332,10 +480,14 @@ func (fake *FakeService) Invocations() map[string][][]interface{} {
 	defer fake.createClientMutex.RUnlock()
 	fake.createRequestMutex.RLock()
 	defer fake.createRequestMutex.RUnlock()
+	fake.findResponseMutex.RLock()
+	defer fake.findResponseMutex.RUnlock()
 	fake.sendMutex.RLock()
 	defer fake.sendMutex.RUnlock()
 	fake.validateMutex.RLock()
 	defer fake.validateMutex.RUnlock()
+	fake.verifyResponseMutex.RLock()
+	defer fake.verifyResponseMutex.RUnlock()
 	copiedInvocations := map[string][][]interface{}{}
 	for key, value := range fake.invocations {
 		copiedInvocations[key] = value

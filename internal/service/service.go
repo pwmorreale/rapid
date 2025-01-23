@@ -24,6 +24,8 @@ type Service interface {
 	CreateClient(*config.Request) (*http.Client, error)
 	Send(*http.Client, *http.Request, *config.Request) (*http.Response, error)
 	Validate(*http.Client, *http.Response, *config.Request) error
+	VerifyResponse(*http.Response, *config.Response) error
+	FindResponse(*http.Response, *config.Request) *config.Response
 }
 
 // Context defines a scenario context.
@@ -129,7 +131,7 @@ func (s *Context) FindResponse(httpResponse *http.Response, request *config.Requ
 }
 
 // VerifyResponse compres response data to expected data.
-func (s *Context) VerifyResponse(httpResponse *http.Response, response *config.Response, request *config.Request) error {
+func (s *Context) VerifyResponse(httpResponse *http.Response, response *config.Response) error {
 
 	err := s.VerifyHeaders(httpResponse, response)
 	if err != nil {
@@ -160,7 +162,7 @@ func (s *Context) Validate(client *http.Client, httpResponse *http.Response, req
 		return fmt.Errorf("response not found for status code: %d for request: %s", response.StatusCode, request.Name)
 	}
 
-	err := s.VerifyResponse(httpResponse, response, request)
+	err := s.VerifyResponse(httpResponse, response)
 
 	return err
 }

@@ -25,7 +25,7 @@ func TestReadInConfig(t *testing.T) {
 	assert.Equal(t, s.Sequence.Requests[0].ExtraHeaders[0].Name, "X-Paintbrush-for-sky")
 	assert.Equal(t, s.Sequence.Requests[0].Name, "request1")
 
-	assert.Equal(t, 2, len(s.Sequence.Requests[0].Responses))
+	assert.Equal(t, 3, len(s.Sequence.Requests[0].Responses))
 
 	assert.Equal(t, 200, s.Sequence.Requests[0].Responses[0].StatusCode)
 	assert.Equal(t, 500, s.Sequence.Requests[0].Responses[1].StatusCode)

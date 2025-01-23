@@ -35,13 +35,14 @@ sequence:
             - value: "id=diana_ross; SameSite=Strict"
             - value: "id=marion_ross; Expires=Thu, 21 Oct 2080 07:28:00 GMT"
           content:
+            expected: true
             content_type: application/json
             max_content: 4096
             contains:
               - "foo"
               - "bar*"
             extract:
-              - type: application/json
+              - type: json
                 path: goo.moo.boo
                 data_name: foo
         - status_code: 500
@@ -52,9 +53,25 @@ sequence:
               value: value4
             - name: header5
               value: value5
+          content:
+            expected: false
+        - status_code: 202
+          content:
+            expected: true
+            content_type: text/xml
+            max_content: 256
+            contains:
+              - "Bob"
+              - "week*"
+            extract:
+              - type: xml
+                path: //note/from
+                data_name: who
     - name: request2
       time_limit: 1m
       method: get
       url: https://www.washingtonpost.com/articles
       responses:
         - status_code: 500
+          content:
+            expected: false

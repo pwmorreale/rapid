@@ -1,8 +1,10 @@
 package service_test
 
 import (
+	"bytes"
 	"io"
 	"net/http"
+	"strconv"
 	"testing"
 
 	"github.com/pwmorreale/rapid/internal/config"
@@ -14,7 +16,52 @@ import (
 var testURL = "https://bob_ross.com/happy_little_trees"
 var testCookie = `id=bob_ross; Max-Age=42; SameSite=Strict; id=betsy_ross; Expires="Thu, 21 Oct 2080 07:28:00 GMT"; SameSite=Strict`
 
-func initTestService(t *testing.T) (*service.Context, *config.Scenario, error) {
+var json = `{
+  "foo": "barhoo",
+  "goo": {
+    "moo": {
+      "boo": "doo"
+    }
+  }
+}`
+
+var xml = `<?xml version="1.0" encoding="UTF-8"?>
+<note>
+  <from>Bob Ross</from>
+  <to>All Painters</to>
+  <message>Remember to paint this weekend!</message>
+</note>`
+
+func makeResponse(contentType string, content []byte, length int64, headers *[]config.HeaderData, cookies *[]config.CookieData) *http.Response {
+
+	response := http.Response{}
+	response.Body = io.NopCloser(bytes.NewReader(content))
+
+	response.Header = make(map[string][]string)
+
+	if contentType != "" {
+		response.Header.Add("Content-Type", contentType)
+	}
+	response.Header.Add("Content-Length", strconv.FormatInt(length, 10))
+
+	response.ContentLength = length
+
+	if headers != nil {
+		for i := range *headers {
+			response.Header.Add((*headers)[i].Name, (*headers)[i].Value)
+		}
+	}
+
+	if cookies != nil {
+		for i := range *cookies {
+			response.Header.Add("Set-Cookie", (*cookies)[i].Value)
+		}
+	}
+
+	return &response
+}
+
+func initTestService(t *testing.T) (*service.Context, *config.Scenario, data.Data, error) {
 	c := config.New()
 	sc, err := c.ParseFile("../../test/configs/test_scenario.yaml")
 	assert.Nil(t, err)
@@ -23,19 +70,19 @@ func initTestService(t *testing.T) (*service.Context, *config.Scenario, error) {
 	for k, v := range sc.Data {
 		err := d.AddReplacement(k, v)
 		if err != nil {
-			return nil, nil, err
+			return nil, nil, nil, err
 		}
 
 	}
 
 	s := service.New(d)
 
-	return s, sc, nil
+	return s, sc, d, nil
 }
 
 func TestCreateRequest(t *testing.T) {
 
-	s, sc, err := initTestService(t)
+	s, sc, _, err := initTestService(t)
 	assert.NotNil(t, s)
 	assert.NotNil(t, sc)
 	assert.Nil(t, err)
@@ -66,7 +113,7 @@ func TestCreateRequest(t *testing.T) {
 
 func TestCreateClient(t *testing.T) {
 
-	s, sc, err := initTestService(t)
+	s, sc, _, err := initTestService(t)
 	assert.NotNil(t, s)
 	assert.NotNil(t, sc)
 	assert.Nil(t, err)
@@ -79,19 +126,17 @@ func TestCreateClient(t *testing.T) {
 
 func TestHeaderMultipleValues(t *testing.T) {
 
-	s, sc, err := initTestService(t)
+	s, sc, _, err := initTestService(t)
 	assert.NotNil(t, s)
 	assert.NotNil(t, sc)
 	assert.Nil(t, err)
 
-	response := &http.Response{}
-	response.Header = make(map[string][]string)
+	headers := []config.HeaderData{{Name: "header1", Value: "value1"},
+		{Name: "header2", Value: "value2"},
+		{Name: "header3", Value: "value3"}}
+	response := makeResponse("", []byte{}, 0, &headers, nil)
 
 	configResponse := &sc.Sequence.Requests[0].Responses[0]
-
-	response.Header.Add("header1", "value1")
-	response.Header.Add("header2", "value2")
-	response.Header.Add("header3", "value3")
 
 	err = s.VerifyHeaders(response, configResponse)
 	assert.Nil(t, err)
@@ -99,13 +144,13 @@ func TestHeaderMultipleValues(t *testing.T) {
 
 func TestHeaderMissingHeader(t *testing.T) {
 
-	s, sc, err := initTestService(t)
+	s, sc, _, err := initTestService(t)
 	assert.NotNil(t, s)
 	assert.NotNil(t, sc)
 	assert.Nil(t, err)
 
-	response := &http.Response{}
-	response.Header = make(map[string][]string)
+	headers := []config.HeaderData{}
+	response := makeResponse("", []byte{}, 0, &headers, nil)
 
 	configResponse := &sc.Sequence.Requests[0].Responses[0]
 
@@ -116,15 +161,13 @@ func TestHeaderMissingHeader(t *testing.T) {
 
 func TestHeaderBadValue(t *testing.T) {
 
-	s, sc, err := initTestService(t)
+	s, sc, _, err := initTestService(t)
 	assert.NotNil(t, s)
 	assert.NotNil(t, sc)
 	assert.Nil(t, err)
 
-	response := &http.Response{}
-	response.Header = make(map[string][]string)
-
-	response.Header.Add("header1", "foobar")
+	headers := []config.HeaderData{{Name: "header1", Value: "foobar"}}
+	response := makeResponse("", []byte{}, 0, &headers, nil)
 
 	configResponse := &sc.Sequence.Requests[0].Responses[0]
 
@@ -135,12 +178,12 @@ func TestHeaderBadValue(t *testing.T) {
 
 func TestHeaders(t *testing.T) {
 
-	s, sc, err := initTestService(t)
+	s, sc, _, err := initTestService(t)
 	assert.NotNil(t, s)
 	assert.NotNil(t, sc)
 	assert.Nil(t, err)
 
-	response := &http.Response{}
+	response := makeResponse("", []byte{}, 0, nil, nil)
 
 	configResponse := &sc.Sequence.Requests[0].Responses[0]
 
@@ -159,14 +202,14 @@ func TestHeaders(t *testing.T) {
 
 func TestVerifyCookies(t *testing.T) {
 
-	s, sc, err := initTestService(t)
+	s, sc, _, err := initTestService(t)
 	assert.NotNil(t, s)
 	assert.NotNil(t, sc)
 	assert.Nil(t, err)
 
-	response := &http.Response{}
-
 	configResponse := &sc.Sequence.Requests[0].Responses[0]
+
+	response := &http.Response{}
 
 	response.Header = make(map[string][]string)
 	response.Header.Add("Set-Cookie", configResponse.Cookies[0].Value)
@@ -184,4 +227,53 @@ func TestVerifyCookies(t *testing.T) {
 	err = s.VerifyCookies(response, configResponse)
 	assert.Equal(t, "http: '=' not found in cookie", err.Error())
 
+}
+
+func TestVerifyNoContent(t *testing.T) {
+
+	s, sc, _, err := initTestService(t)
+	assert.NotNil(t, s)
+	assert.NotNil(t, sc)
+	assert.Nil(t, err)
+
+	response := makeResponse("", []byte{}, 0, nil, nil)
+
+	configResponse := &sc.Sequence.Requests[0].Responses[1]
+
+	// No content...
+	err = s.VerifyContentAndExtract(response, configResponse)
+	assert.Nil(t, err)
+
+}
+
+func TestVerifyJSONContent(t *testing.T) {
+
+	s, sc, d, err := initTestService(t)
+	assert.NotNil(t, s)
+	assert.NotNil(t, sc)
+	assert.Nil(t, err)
+
+	response := makeResponse("application/json", []byte(json), -1, nil, nil)
+	configResponse := &sc.Sequence.Requests[0].Responses[0]
+
+	err = s.VerifyContentAndExtract(response, configResponse)
+	assert.Nil(t, err)
+
+	assert.Equal(t, "doo", d.Lookup("foo"))
+}
+
+func TestVerifyXMLContent(t *testing.T) {
+
+	s, sc, d, err := initTestService(t)
+	assert.NotNil(t, s)
+	assert.NotNil(t, sc)
+	assert.Nil(t, err)
+
+	response := makeResponse("text/xml", []byte(xml), int64(len(xml)), nil, nil)
+	configResponse := &sc.Sequence.Requests[0].Responses[2]
+
+	err = s.VerifyContentAndExtract(response, configResponse)
+	assert.Nil(t, err)
+
+	assert.Equal(t, "Bob Ross", d.Lookup("who"))
 }

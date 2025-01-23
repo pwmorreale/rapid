@@ -16,6 +16,8 @@ import (
 type Data interface {
 	AddReplacement(string, string) error
 	Replace(string) string
+	Lookup(string) string
+	Len() int
 	ExtractJSON(string, io.Reader) (string, error)
 	ExtractXML(string, io.Reader) (string, error)
 	ExtractRegex(string, io.Reader) (string, error)
@@ -23,13 +25,14 @@ type Data interface {
 
 // Replacement defines a compiled regex and its associated replacement string
 type Replacement struct {
-	Regx *regexp.Regexp
-	Repl string
+	name  string
+	regx  *regexp.Regexp
+	value string
 }
 
 // Context defines a sequence
 type Context struct {
-	All []Replacement
+	all []Replacement
 }
 
 // New creates a new context instance
@@ -37,7 +40,7 @@ func New() *Context {
 	return &Context{}
 }
 
-// Add creates a new regex replacement.
+// AddReplacement creates a new regex replacement.
 func (d *Context) AddReplacement(name string, value string) error {
 
 	r := Replacement{}
@@ -47,10 +50,11 @@ func (d *Context) AddReplacement(name string, value string) error {
 		return err
 	}
 
-	r.Regx = re
-	r.Repl = value
+	r.name = name
+	r.regx = re
+	r.value = value
 
-	d.All = append(d.All, r)
+	d.all = append(d.all, r)
 
 	return nil
 }
@@ -58,8 +62,23 @@ func (d *Context) AddReplacement(name string, value string) error {
 // Replace replaces any matches and returns a new string
 func (d *Context) Replace(s string) string {
 
-	for i := range d.All {
-		s = d.All[i].Regx.ReplaceAllLiteralString(s, d.All[i].Repl)
+	for i := range d.all {
+		s = d.all[i].regx.ReplaceAllLiteralString(s, d.all[i].value)
 	}
 	return s
+}
+
+// Lookup returns the reaplcement text (value) for a name
+func (d *Context) Lookup(n string) string {
+	for i := range d.all {
+		if n == d.all[i].name {
+			return d.all[i].value
+		}
+	}
+	return ""
+}
+
+// Len returns the number of replacement elements.
+func (d *Context) Len() int {
+	return len(d.all)
 }
