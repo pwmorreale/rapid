@@ -28,7 +28,6 @@ type Configuration interface {
 
 // Context defines a scenario context.
 type Context struct {
-	v  *viper.Viper
 	id string
 }
 
@@ -120,21 +119,19 @@ func (c *Context) ParseFile(flnm string) (*Scenario, error) {
 
 	var s Scenario
 
-	v := viper.New()
-	v.SetConfigFile(flnm)
-	err := v.ReadInConfig()
+	viper.SetConfigFile(flnm)
+	err := viper.ReadInConfig()
 	if err != nil {
 		return nil, err
 
 	}
 
 	// Ensure text config matches what we expect.
-	err = v.UnmarshalExact(&s)
+	err = viper.UnmarshalExact(&s)
 	if err != nil {
 		return nil, err
 	}
 
-	c.v = v
 	c.id = uuid.New().String()
 
 	setDefaultContentMaxSize(&s)
