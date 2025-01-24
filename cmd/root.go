@@ -6,13 +6,8 @@
 package cmd
 
 import (
-	"os"
+	"fmt"
 
-	"github.com/pwmorreale/rapid/internal/config"
-	"github.com/pwmorreale/rapid/internal/data"
-	"github.com/pwmorreale/rapid/internal/reporter"
-	"github.com/pwmorreale/rapid/internal/sequences"
-	"github.com/pwmorreale/rapid/internal/service"
 	"github.com/spf13/cobra"
 )
 
@@ -33,38 +28,16 @@ func Start() error {
 	rootCmd.MarkFlagRequired("scenario")
 	rootCmd.MarkFlagFilename("scenario")
 
+	rootCmd.AddCommand(sanityCmd)
+	rootCmd.AddCommand(runCmd)
+
 	return rootCmd.Execute()
 }
 
 // RunCli executes the CLI interface.
 func RunCli(_ *cobra.Command, _ []string) error {
 
-	c := config.New()
+	fmt.Printf("running in ROOT")
 
-	scenario, err := c.ParseFile(scenarioFile)
-	if err != nil {
-		return err
-	}
-
-	d := data.New()
-	for k, v := range scenario.Data {
-		err = d.AddReplacement(k, v)
-		if err != nil {
-			return err
-		}
-	}
-
-	rpt := reporter.New()
-
-	srv := service.New(d)
-
-	seq := sequences.New(srv, rpt)
-
-	// Run the sequence...
-	err = seq.Run(scenario)
-	if err != nil {
-		return err
-	}
-
-	return rpt.Generate(scenario, os.Stdout)
+	return nil
 }
