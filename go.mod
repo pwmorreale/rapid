@@ -6,6 +6,7 @@ require (
 	github.com/antchfx/xmlquery v1.4.3
 	github.com/gabriel-vasile/mimetype v1.4.8
 	github.com/google/uuid v1.6.0
+	github.com/lmittmann/tint v1.0.6
 	github.com/spf13/cobra v1.8.1
 	github.com/spf13/viper v1.19.0
 	github.com/stretchr/testify v1.10.0
