@@ -6,8 +6,7 @@
 package cmd
 
 import (
-	"fmt"
-
+	"github.com/pwmorreale/rapid/internal/config"
 	"github.com/spf13/cobra"
 )
 
@@ -21,8 +20,5 @@ var sanityCmd = &cobra.Command{
 
 // runSanity creates and runs a REST server instance
 func runSanity(_ *cobra.Command, _ []string) error {
-
-	fmt.Println("running in SANITY")
-
-	return nil
+	return config.SanityCheck(scenarioFile)
 }
