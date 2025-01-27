@@ -10,7 +10,7 @@ import (
 	"github.com/pwmorreale/rapid/internal/config"
 	"github.com/pwmorreale/rapid/internal/data"
 	"github.com/pwmorreale/rapid/internal/service"
-	"github.com/test-go/testify/assert"
+	"github.com/stretchr/testify/assert"
 )
 
 var testURL = "https://bob_ross.com/happy_little_trees"

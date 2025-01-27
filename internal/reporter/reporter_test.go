@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	"github.com/pwmorreale/rapid/internal/reporter"
-	"github.com/test-go/testify/assert"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestNew(t *testing.T) {

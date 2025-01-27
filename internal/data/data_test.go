@@ -11,7 +11,7 @@ import (
 	"testing/iotest"
 
 	"github.com/pwmorreale/rapid/internal/data"
-	"github.com/test-go/testify/assert"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestAddReplacement(t *testing.T) {
