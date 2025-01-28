@@ -6,12 +6,18 @@
 package cmd
 
 import (
-	"fmt"
+	"os"
 
+	"github.com/pwmorreale/rapid/internal/config"
+	"github.com/pwmorreale/rapid/internal/data"
+	"github.com/pwmorreale/rapid/internal/reporter"
+	"github.com/pwmorreale/rapid/internal/sequences"
+	"github.com/pwmorreale/rapid/internal/service"
 	"github.com/spf13/cobra"
 )
 
 var (
+	checkOnly    bool
 	scenarioFile string
 	rootCmd      = &cobra.Command{
 		Use:   "rapid",
@@ -24,12 +30,11 @@ var (
 // Start starts the application.
 func Start() error {
 
+	rootCmd.Flags().BoolP("check", "c", false, "Check for errors in the scenario, then exit")
+
 	rootCmd.Flags().StringVarP(&scenarioFile, "scenario", "s", "", "Path to scenario file.")
 	rootCmd.MarkFlagRequired("scenario")
 	rootCmd.MarkFlagFilename("scenario")
-
-	rootCmd.AddCommand(sanityCmd)
-	rootCmd.AddCommand(runCmd)
 
 	return rootCmd.Execute()
 }
@@ -37,7 +42,40 @@ func Start() error {
 // RunCli executes the CLI interface.
 func RunCli(_ *cobra.Command, _ []string) error {
 
-	fmt.Printf("running in ROOT")
+	if checkOnly {
+		return config.SanityCheck(scenarioFile)
+	}
 
-	return nil
+	return executeScenario()
+}
+
+func executeScenario() error {
+	c := config.New()
+
+	scenario, err := c.ParseFile(scenarioFile)
+	if err != nil {
+		return err
+	}
+
+	d := data.New()
+	for k, v := range scenario.Data {
+		err = d.AddReplacement(k, v)
+		if err != nil {
+			return err
+		}
+	}
+
+	rpt := reporter.New()
+
+	srv := service.New(d)
+
+	seq := sequences.New(srv, rpt)
+
+	// Run the sequence...
+	err = seq.Run(scenario)
+	if err != nil {
+		return err
+	}
+
+	return rpt.Generate(scenario, os.Stdout)
 }
