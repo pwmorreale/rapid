@@ -11,6 +11,7 @@ import (
 	"github.com/pwmorreale/rapid/internal/config"
 	"github.com/pwmorreale/rapid/internal/data"
 	"github.com/pwmorreale/rapid/internal/reporter"
+	"github.com/pwmorreale/rapid/internal/sanity"
 	"github.com/pwmorreale/rapid/internal/sequences"
 	"github.com/pwmorreale/rapid/internal/service"
 	"github.com/spf13/cobra"
@@ -43,7 +44,7 @@ func Start() error {
 func RunCli(_ *cobra.Command, _ []string) error {
 
 	if checkOnly {
-		return config.SanityCheck(scenarioFile)
+		os.Exit(sanity.Check(scenarioFile))
 	}
 
 	return executeScenario()

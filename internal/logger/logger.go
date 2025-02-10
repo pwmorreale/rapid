@@ -16,10 +16,15 @@ import (
 	"github.com/pwmorreale/rapid/internal/config"
 )
 
+// Handler is used to define a text or json handler.
 type Handler int
 
 const (
+
+	// Text specifies using the tinted text handler.
 	Text Handler = 1
+
+	// JSON specifies using the slog JSON handler.
 	JSON Handler = 2
 )
 
@@ -33,87 +38,96 @@ type Logger interface {
 	Error(config.Request, *config.Response, string, ...any)
 }
 
+// Options defines options for the new logger instance.
 type Options struct {
-	handler      Handler
-	defaultLevel slog.Level
-	w            io.Writer
+	Handler       Handler
+	OmitTimestamp bool
+	DefaultLevel  slog.Level
+	Writer        io.Writer
 }
 
-// COntext defines a context for the package.
+// Context defines a context for the package.
 type Context struct {
-	nrErr     int
 	logHandle *slog.Logger
 }
 
-func makeTextLogger(opts Options) *slog.Logger {
-	hopts := &tint.Options{
-		Level: opts.defaultLevel,
-		ReplaceAttr: func(_ []string, a slog.Attr) slog.Attr {
-			if a.Key == slog.TimeKey {
-				return slog.Attr{}
-			}
-			return a
-		},
+func omitTimestamp(_ []string, a slog.Attr) slog.Attr {
+	if a.Key == slog.TimeKey {
+		return slog.Attr{}
 	}
-
-	return slog.New(tint.NewHandler(opts.w, hopts))
+	return a
 }
 
-func makeJSONLogger(opts Options) *slog.Logger {
-	hopts := &slog.HandlerOptions{
-		Level: opts.defaultLevel,
-		ReplaceAttr: func(_ []string, a slog.Attr) slog.Attr {
-			if a.Key == slog.TimeKey {
-				return slog.Attr{}
-			}
-			return a
-		},
-	}
-
-	return slog.New(slog.NewJSONHandler(opts.w, hopts))
-}
-
+// New creates a new logger instance based on the options.
 func New(opts Options) *Context {
 
 	c := &Context{}
 
-	switch opts.handler {
+	replaceAttr := omitTimestamp
+	if !opts.OmitTimestamp {
+		replaceAttr = nil
+	}
+
+	switch opts.Handler {
 	case Text:
-		c.logHandle = makeTextLogger(opts)
+		topts := &tint.Options{
+			Level:       opts.DefaultLevel,
+			ReplaceAttr: replaceAttr,
+		}
+		c.logHandle = slog.New(tint.NewHandler(opts.Writer, topts))
 	case JSON:
-		c.logHandle = makeJSONLogger(opts)
+		hopts := &slog.HandlerOptions{
+			Level:       opts.DefaultLevel,
+			ReplaceAttr: replaceAttr,
+		}
+		c.logHandle = slog.New(slog.NewJSONHandler(opts.Writer, hopts))
 	default:
 		return nil
 	}
 
-	return &Context{}
+	return c
+
 }
 
-func (c *Context) handleLog(level slog.Level, reg config.Request, rsp *config.Response, format string, args ...any) {
-	if !c.logHandle.Enabled(context.Background(), slog.LevelDebug) {
+func (c *Context) handleLog(level slog.Level, req *config.Request, rsp *config.Response, format string, args ...any) {
+
+	if !c.logHandle.Enabled(context.Background(), level) {
 		return
 	}
 
-	r := slog.NewRecord(time.Now(), level, fmt.Sprintf(format, args...), 0)
-	_ = c.logHandle.Handler().Handle(context.Background(), r)
+	s := format
+	if len(args) > 1 {
+		s = fmt.Sprintf(format, args...)
+	}
+
+	r := slog.NewRecord(time.Now(), level, s, 0)
+
+	if req != nil {
+		r.Add("request", req)
+	}
+	if rsp != nil {
+		r.Add("response", rsp)
+	}
+
+	c.logHandle.Handler().Handle(context.Background(), r)
 }
 
 // Debug writes a debug log message
-func (c *Context) Debug(req config.Request, rsp *config.Response, format string, args ...any) {
+func (c *Context) Debug(req *config.Request, rsp *config.Response, format string, args ...any) {
 	c.handleLog(slog.LevelDebug, req, rsp, format, args)
 }
 
 // Info writes an info log message
-func (c *Context) Info(req config.Request, rsp *config.Response, format string, args ...any) {
+func (c *Context) Info(req *config.Request, rsp *config.Response, format string, args ...any) {
 	c.handleLog(slog.LevelInfo, req, rsp, format, args)
 }
 
 // Warn writes a warn log message
-func (c *Context) Warn(req config.Request, rsp *config.Response, format string, args ...any) {
+func (c *Context) Warn(req *config.Request, rsp *config.Response, format string, args ...any) {
 	c.handleLog(slog.LevelWarn, req, rsp, format, args)
 }
 
 // Error writes an error log message
-func (c *Context) Error(req config.Request, rsp *config.Response, format string, args ...any) {
+func (c *Context) Error(req *config.Request, rsp *config.Response, format string, args ...any) {
 	c.handleLog(slog.LevelError, req, rsp, format, args)
 }
