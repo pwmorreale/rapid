@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"sync/atomic"
 	"time"
 
 	"github.com/lmittmann/tint"
@@ -49,6 +50,7 @@ type Options struct {
 // Context defines a context for the package.
 type Context struct {
 	logHandle *slog.Logger
+	errCount  atomic.Int32
 }
 
 func omitTimestamp(_ []string, a slog.Attr) slog.Attr {
@@ -59,7 +61,7 @@ func omitTimestamp(_ []string, a slog.Attr) slog.Attr {
 }
 
 // New creates a new logger instance based on the options.
-func New(opts Options) *Context {
+func New(opts *Options) *Context {
 
 	c := &Context{}
 
@@ -130,4 +132,10 @@ func (c *Context) Warn(req *config.Request, rsp *config.Response, format string,
 // Error writes an error log message
 func (c *Context) Error(req *config.Request, rsp *config.Response, format string, args ...any) {
 	c.handleLog(slog.LevelError, req, rsp, format, args)
+	c.errCount.Add(1)
+}
+
+// ExitCode is the number of error logs modulo 125
+func (c *Context) ErrorCount() int {
+	return int(c.errCount.Load())
 }
