@@ -6,21 +6,56 @@
 package sanity
 
 import (
-	"log/slog"
+	"net/http"
 	"net/url"
-	"os"
+	"strings"
 
+	"github.com/gabriel-vasile/mimetype"
 	"github.com/pwmorreale/rapid/internal/config"
 	"github.com/pwmorreale/rapid/internal/logger"
 )
 
 var log *logger.Context
 
-func checkRequestCookies(_ *config.Request) {
+func checkRequestCookies(request *config.Request) {
 
+	for i := range request.Cookies {
+		log.Info(request, nil, "Parsing cookie value: %s", request.Cookies[i].Value)
+		cookies, err := http.ParseCookie(request.Cookies[i].Value)
+		if err != nil {
+			log.Error(request, nil, "parsing cookie: %s", err)
+			continue
+		}
+
+		log.Debug(request, nil, "contains %d cookies", len(cookies))
+
+		for n := range cookies {
+			err := cookies[n].Valid()
+			if err != nil {
+				log.Error(request, nil, "Invalid cookie: %s", err)
+			}
+			log.Debug(request, nil, "cookie: %s is valid", cookies[n].String())
+		}
+	}
 }
 
-func checkRequestContent(_ *config.Request) {
+func checkRequestContent(request *config.Request) {
+
+	if !strings.Contains(request.ContentType, "/") {
+		log.Warn(request, nil, "ContentType: %s not in form of type/subtype", request.ContentType)
+	}
+
+	mime := mimetype.Lookup(request.ContentType)
+	if mime == nil {
+		log.Error(request, nil, "invalid ContentType: %s not a recognized mime type", request.ContentType)
+		return
+	}
+
+	mediaType := mimetype.Detect([]byte(request.Content))
+	if !mediaType.Is(request.ContentType) {
+		log.Error(request, nil, "mismatched content/types:  Content_Type: %s, detected content as: %s", request.ContentType, mediaType)
+	}
+
 }
 
 func checkResponse(_ *config.Request, _ *config.Response) {
@@ -70,14 +105,7 @@ func checkRequest(request *config.Request) {
 }
 
 // Check verifies a scenario configuration.
-func Check(scenarioFile string) int {
-
-	opts := logger.Options{
-		Handler:       logger.Text,
-		OmitTimestamp: true,
-		DefaultLevel:  slog.LevelInfo,
-		Writer:        os.Stderr,
-	}
+func Check(scenarioFile string, opts *logger.Options) int {
 
 	log = logger.New(opts)
 
