@@ -15,3 +15,7 @@ You define content, headers, and cookies for both requests and the expected resp
 A scenario is the basic unit that describes a test case for RAPID.  Scenarios consist of one or more *sequences* of *requests* and their expected *responses*.. 
 
 Simply put, a request is a definition of a REST API instance.  You can define the parameters of the URL and query parameters, and any additional headers for the request.
+
+## Features
+
+
