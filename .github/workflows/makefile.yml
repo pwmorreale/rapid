@@ -19,7 +19,7 @@ jobs:
 
     - name: StaticCheck
       run: go install honnef.co/go/tools/cmd/staticcheck@latest
-      run: make staticcheck    
+           make staticcheck    
 
     - name: Lint
       run: make lint
