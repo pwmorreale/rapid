@@ -6,6 +6,7 @@
 package config
 
 import (
+	"log/slog"
 	"time"
 
 	"github.com/google/uuid"
@@ -139,4 +140,18 @@ func (c *Context) ParseFile(flnm string) (*Scenario, error) {
 	setDefaultContentMaxSize(&s)
 
 	return &s, nil
+}
+
+// LogValue is used by the slog logger to record elements of the http request.
+func (rq *Request) LogValue() slog.Value {
+	return slog.GroupValue(
+		slog.String("name", rq.Name),
+		slog.String("method", rq.Method))
+}
+
+// LogValue is used by the slog logger to record elements of the http response.
+func (rp *Response) LogValue() slog.Value {
+	return slog.GroupValue(
+		slog.String("name", rp.Name),
+		slog.Int("method", rp.StatusCode))
 }
