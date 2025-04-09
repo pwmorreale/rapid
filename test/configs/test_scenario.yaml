@@ -1,0 +1,82 @@
+name: test-scenario
+version: 1.0
+data:
+  name1: value1
+  color: blue
+  full_name: bob_ross
+sequence:
+  iterations: 10
+  time_limit: 1m
+  abort_on_error: true
+  ignore_duplicate_errors: true
+  requests:
+    - name: request1
+      concurrent_calls: 1
+      concurrent_duration: 1m
+      time_limit: 1m
+      method: post
+      url: https://$full_name.com/happy_little_trees
+      extra_headers:
+        - name: X-Paintbrush-for-sky
+          value: wide
+        - name: X-Paintbrush-for-trees
+          value: narrow
+      cookies:
+        - value: "id=$full_name; Max-Age=42; SameSite=Strict"
+        - value: "id=betsy_ross; Expires=Thu, 21 Oct 2080 07:28:00 GMT; SameSite=Strict"
+      content: "various paint colors in $color"
+      content_type: text/html
+      responses:
+        - status_code: 200
+          name: success
+          headers:
+            - name: header1
+              value: value1
+            - name: header2
+              value: value2
+          cookies:
+            - value: "id=diana_ross; SameSite=Strict"
+            - value: "id=marion_ross; Expires=Thu, 21 Oct 2080 07:28:00 GMT"
+          content:
+            expected: true
+            content_type: application/json
+            max_content: 4096
+            contains:
+              - "foo"
+              - "bar*"
+            extract:
+              - type: json
+                path: goo.moo.boo
+                data_name: foo
+        - status_code: 500
+          name: server-failure
+          headers:
+            - name: header3
+              value: value3
+            - name: header4
+              value: value4
+            - name: header5
+              value: value5
+          content:
+            expected: false
+        - status_code: 201
+          name: created
+          content:
+            expected: true
+            content_type: text/xml
+            max_content: 256
+            contains:
+              - "Bob"
+              - "week*"
+            extract:
+              - type: xml
+                path: //note/from
+                data_name: who
+    - name: request2
+      time_limit: 1m
+      method: get
+      url: https://www.washingtonpost.com/articles
+      responses:
+        - status_code: 500
+          content:
+            expected: false
