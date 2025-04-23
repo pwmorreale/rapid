@@ -12,6 +12,10 @@ import (
 )
 
 var scenarioFile string
+var logFormat string
+var logFilename string
+var logLevel string
+var logTimestamp bool
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -30,9 +34,12 @@ func Execute() {
 
 func init() {
 
-	rootCmd.PersistentFlags().StringVarP(&scenarioFile, "scenario", "s", "", "Path to scenario file")
-	rootCmd.MarkFlagRequired("scenario")
-	rootCmd.MarkFlagFilename("scenario")
+	rootCmd.PersistentFlags().StringVarP(&logFormat, "log_format", "f", "text", `Log format: "text" or "json" `)
+	rootCmd.PersistentFlags().BoolVarP(&logTimestamp, "log_timestamp", "t", true, `Add timeStamp to log entries `)
+	rootCmd.PersistentFlags().StringVarP(&logLevel, "log_level", "l", "info", `Log level, one of: "debug", "info", "warn", or "error"`)
+	rootCmd.PersistentFlags().StringVarP(&logFilename, "log_file", "", "", `Log to "filename" instead of stdout`)
 
-	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	rootCmd.PersistentFlags().StringVarP(&scenarioFile, "scenario", "s", "", "Path to scenario file")
+	rootCmd.MarkPersistentFlagRequired("scenario")
+	rootCmd.MarkPersistentFlagFilename("scenario", "yaml")
 }
