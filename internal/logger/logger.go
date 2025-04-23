@@ -89,7 +89,7 @@ func handleLog(level slog.Level, req *config.Request, rsp *config.Response, form
 	}
 
 	s := format
-	if len(args) > 1 {
+	if len(args) > 0 {
 		s = fmt.Sprintf(format, args...)
 	}
 
