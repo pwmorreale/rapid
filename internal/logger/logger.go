@@ -37,10 +37,10 @@ var debugCount atomic.Int32
 
 // Options defines options for the new logger instance.
 type Options struct {
-	Handler       Handler
-	OmitTimestamp bool
-	DefaultLevel  slog.Level
-	Writer        io.Writer
+	Handler      Handler
+	Timestamp    bool
+	DefaultLevel slog.Level
+	Writer       io.Writer
 }
 
 func omitTimestamp(_ []string, a slog.Attr) slog.Attr {
@@ -59,7 +59,7 @@ func Init(opts *Options) {
 	debugCount.Store(0)
 
 	replaceAttr := omitTimestamp
-	if !opts.OmitTimestamp {
+	if opts.Timestamp {
 		replaceAttr = nil
 	}
 

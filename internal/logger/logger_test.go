@@ -20,10 +20,10 @@ func TestTextlog(t *testing.T) {
 	var b bytes.Buffer
 
 	opts := logger.Options{
-		Handler:       logger.Text,
-		OmitTimestamp: true,
-		DefaultLevel:  slog.LevelInfo,
-		Writer:        &b,
+		Handler:      logger.Text,
+		Timestamp:    false,
+		DefaultLevel: slog.LevelInfo,
+		Writer:       &b,
 	}
 
 	logger.Init(&opts)
@@ -84,10 +84,10 @@ func TestExitCode(t *testing.T) {
 	var b bytes.Buffer
 
 	opts := logger.Options{
-		Handler:       logger.Text,
-		OmitTimestamp: true,
-		DefaultLevel:  slog.LevelInfo,
-		Writer:        &b,
+		Handler:      logger.Text,
+		Timestamp:    false,
+		DefaultLevel: slog.LevelInfo,
+		Writer:       &b,
 	}
 
 	logger.Init(&opts)
