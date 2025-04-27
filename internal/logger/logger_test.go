@@ -7,7 +7,6 @@ package logger_test
 import (
 	"bytes"
 	"io"
-	"log/slog"
 	"testing"
 
 	"github.com/pwmorreale/rapid/internal/config"
@@ -15,18 +14,57 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestInit(t *testing.T) {
+
+	var b bytes.Buffer
+
+	for _, test := range []struct {
+		errText string
+		opts    logger.Options
+	}{
+		{
+			errText: "",
+			opts:    logger.Options{Handler: "text", Timestamp: false, Level: "info", Writer: &b},
+		},
+		{
+			errText: "",
+			opts:    logger.Options{Handler: "json", Timestamp: false, Level: "info", Writer: &b},
+		},
+		{
+			errText: "Unknown handler type: foo",
+			opts:    logger.Options{Handler: "foo", Timestamp: false, Level: "info", Writer: &b},
+		},
+		{
+			errText: "Missing Logger writer",
+			opts:    logger.Options{Handler: "text", Timestamp: false, Level: "info", Writer: nil},
+		},
+		{
+			errText: "slog: level string \"goo\": unknown name",
+			opts:    logger.Options{Handler: "text", Timestamp: false, Level: "goo", Writer: &b},
+		},
+	} {
+		err := logger.Init(&test.opts)
+		if test.errText == "" {
+			assert.Nil(t, err)
+		} else {
+			assert.ErrorContains(t, err, test.errText)
+		}
+	}
+}
+
 func TestTextlog(t *testing.T) {
 
 	var b bytes.Buffer
 
 	opts := logger.Options{
-		Handler:      logger.Text,
-		Timestamp:    false,
-		DefaultLevel: slog.LevelInfo,
-		Writer:       &b,
+		Handler:   "text",
+		Timestamp: false,
+		Level:     "info",
+		Writer:    &b,
 	}
 
-	logger.Init(&opts)
+	err := logger.Init(&opts)
+	assert.Nil(t, err)
 
 	logger.Debug(nil, nil, "foo")
 	actual, err := io.ReadAll(&b)
@@ -84,20 +122,29 @@ func TestExitCode(t *testing.T) {
 	var b bytes.Buffer
 
 	opts := logger.Options{
-		Handler:      logger.Text,
-		Timestamp:    false,
-		DefaultLevel: slog.LevelInfo,
-		Writer:       &b,
+		Handler:   "text",
+		Timestamp: false,
+		Level:     "info",
+		Writer:    &b,
 	}
 
 	logger.Init(&opts)
 	assert.Equal(t, 0, logger.ErrorCount())
+	assert.Equal(t, 0, logger.InfoCount())
+	assert.Equal(t, 0, logger.WarnCount())
+	assert.Equal(t, 0, logger.DebugCount())
 
 	logger.Error(nil, nil, "foo")
 	assert.Equal(t, 1, logger.ErrorCount())
+	assert.Equal(t, 0, logger.InfoCount())
+	assert.Equal(t, 0, logger.WarnCount())
+	assert.Equal(t, 0, logger.DebugCount())
 
 	logger.Error(nil, nil, "foo")
 	assert.Equal(t, 2, logger.ErrorCount())
+	assert.Equal(t, 0, logger.InfoCount())
+	assert.Equal(t, 0, logger.WarnCount())
+	assert.Equal(t, 0, logger.DebugCount())
 
 	// N.B. already have 2 errors reported
 	for i := 0; i < 138; i++ {

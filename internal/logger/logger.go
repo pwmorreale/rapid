@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"strings"
 	"sync/atomic"
 	"time"
 
@@ -20,15 +21,6 @@ import (
 // Handler is used to define a text or json handler.
 type Handler int
 
-const (
-
-	// Text specifies using the tinted text handler.
-	Text Handler = 1
-
-	// JSON specifies using the slog JSON handler.
-	JSON Handler = 2
-)
-
 var logHandle *slog.Logger
 var errCount atomic.Int32
 var infoCount atomic.Int32
@@ -37,10 +29,10 @@ var debugCount atomic.Int32
 
 // Options defines options for the new logger instance.
 type Options struct {
-	Handler      Handler
-	Timestamp    bool
-	DefaultLevel slog.Level
-	Writer       io.Writer
+	Handler   string
+	Timestamp bool
+	Level     string
+	Writer    io.Writer
 }
 
 func omitTimestamp(_ []string, a slog.Attr) slog.Attr {
@@ -51,7 +43,7 @@ func omitTimestamp(_ []string, a slog.Attr) slog.Attr {
 }
 
 // Init creates a new logger instance based on the options.
-func Init(opts *Options) {
+func Init(opts *Options) error {
 
 	errCount.Store(0)
 	infoCount.Store(0)
@@ -63,23 +55,34 @@ func Init(opts *Options) {
 		replaceAttr = nil
 	}
 
-	switch opts.Handler {
-	case Text:
+	if opts.Writer == nil {
+		return fmt.Errorf("missing Logger writer")
+	}
+
+	var sl slog.Level
+	err := sl.UnmarshalText([]byte(opts.Level))
+	if err != nil {
+		return err
+	}
+
+	switch strings.ToLower(opts.Handler) {
+	case "text":
 		topts := &tint.Options{
-			Level:       opts.DefaultLevel,
+			Level:       sl,
 			ReplaceAttr: replaceAttr,
 		}
 		logHandle = slog.New(tint.NewHandler(opts.Writer, topts))
-	case JSON:
+	case "json":
 		hopts := &slog.HandlerOptions{
-			Level:       opts.DefaultLevel,
+			Level:       sl,
 			ReplaceAttr: replaceAttr,
 		}
 		logHandle = slog.New(slog.NewJSONHandler(opts.Writer, hopts))
 	default:
-		panic(fmt.Sprintf("Unknown handler type: %v\n", opts.Handler))
+		return fmt.Errorf("unknown handler type: %v", opts.Handler)
 	}
 
+	return nil
 }
 
 func handleLog(level slog.Level, req *config.Request, rsp *config.Response, format string, args ...any) {
