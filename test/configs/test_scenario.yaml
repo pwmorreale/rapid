@@ -25,7 +25,7 @@ sequence:
         - value: "id=$full_name; Max-Age=42; SameSite=Strict"
         - value: "id=betsy_ross; Expires=Thu, 21 Oct 2080 07:28:00 GMT; SameSite=Strict"
       content: "various paint colors in $color"
-      content_type: text/html
+      content_type: text/plain
       responses:
         - status_code: 200
           name: success
