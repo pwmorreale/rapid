@@ -6,7 +6,6 @@
 package verify
 
 import (
-	"fmt"
 	"net/http"
 	"net/url"
 	"strings"
@@ -40,8 +39,6 @@ func CheckCookies(request *config.Request, response *config.Response, cookies []
 			}
 		}
 	}
-
-	fmt.Println(" ")
 }
 
 // CheckHeaders verifies headers
