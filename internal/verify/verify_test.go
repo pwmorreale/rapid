@@ -7,7 +7,6 @@ package verify_test
 
 import (
 	"io"
-	"log/slog"
 	"testing"
 
 	"github.com/pwmorreale/rapid/internal/config"
@@ -19,10 +18,10 @@ import (
 func initLogger() {
 
 	opts := logger.Options{
-		Handler:       logger.Text,
-		OmitTimestamp: true,
-		DefaultLevel:  slog.LevelInfo,
-		Writer:        io.Discard,
+		Handler:   "text",
+		Timestamp: false,
+		Level:     "Info",
+		Writer:    io.Discard,
 	}
 
 	logger.Init(&opts)

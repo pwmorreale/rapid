@@ -25,7 +25,7 @@ func init() {
 	rootCmd.AddCommand(verifyCmd)
 }
 
-// StartVerify starts the verify command.
+// DoVerify starts the verify command.
 func DoVerify(_ *cobra.Command, _ []string) error {
 
 	opts := logger.Options{
