@@ -21,7 +21,7 @@ func CheckCookies(request *config.Request, response *config.Response, cookies []
 	for i := range cookies {
 		cookie := cookies[i]
 
-		logger.Info(request, response, "Parsing cookie value: %s", cookie.Value)
+		logger.Info(request, response, "parsing cookie value: %s", cookie.Value)
 		cookies, err := http.ParseCookie(cookie.Value)
 		if err != nil {
 			logger.Error(request, response, "parsing cookie: %s", err)
@@ -45,8 +45,8 @@ func CheckCookies(request *config.Request, response *config.Response, cookies []
 func CheckHeaders(request *config.Request, response *config.Response, headers []config.HeaderData) {
 
 	for i := range headers {
-		if headers[i].Value != "" && headers[i].Name == "" {
-			logger.Error(request, response, "Missing header name, but have value: %s", headers[i].Value)
+		if headers[i].Value != "" || headers[i].Name == "" {
+			logger.Error(request, response, "missing header name, but have value: %s", headers[i].Value)
 		}
 	}
 }
@@ -54,13 +54,27 @@ func CheckHeaders(request *config.Request, response *config.Response, headers []
 // CheckRequestContent verifies content and content type.
 func CheckRequestContent(request *config.Request) {
 
+	logger.Info(request, nil, "checking content and content_type")
+
+	if request.Content == "" && request.ContentType == "" {
+		return
+	}
+
+	if request.Content != "" && request.ContentType == "" {
+		logger.Error(request, nil, "mismatched content/type, content_type is blank, but have content")
+	}
+
+	if request.Content == "" && request.ContentType != "" {
+		logger.Error(request, nil, "mismatched content/type, content is blank, but have content_type")
+	}
+
 	if !strings.Contains(request.ContentType, "/") {
-		logger.Warn(request, nil, "ContentType: %s not in form of type/subtype", request.ContentType)
+		logger.Warn(request, nil, "content_type: %s not in form of type/subtype", request.ContentType)
 	}
 
 	mime := mimetype.Lookup(request.ContentType)
 	if mime == nil {
-		logger.Error(request, nil, "invalid ContentType: %s not a recognized mime type", request.ContentType)
+		logger.Error(request, nil, "invalid content_type: %s not a recognized mime type", request.ContentType)
 		return
 	}
 
@@ -71,16 +85,53 @@ func CheckRequestContent(request *config.Request) {
 
 }
 
+// CheckResponseContent checks the response content.
+func CheckResponseContent(request *config.Request, response *config.Response) {
+
+	if response.Content.Expected && response.Content.MediaType == "" {
+		logger.Error(request, response, "response content expected, but no content_type specified")
+	}
+
+	if !response.Content.Expected && response.Content.MediaType != "" {
+		logger.Warn(request, response, "response content_type specifed, but no content.expected is false")
+	}
+
+	if response.Content.MediaType != "" {
+		mime := mimetype.Lookup(request.ContentType)
+		if mime == nil {
+			logger.Error(request, response, "invalid content_type: %s not a recognized mime type", response.Content.MediaType)
+		}
+	}
+
+	for i := range response.Content.Extract {
+
+		if response.Content.Extract[i].Type == "" {
+			logger.Error(request, response, "extract type must be defined")
+		}
+
+		if response.Content.Extract[i].Path == "" {
+			logger.Error(request, response, "extract path must be defined")
+		}
+
+		if response.Content.Extract[i].Name == "" {
+			logger.Error(request, response, "extract data_name must be defined")
+		}
+	}
+
+}
+
 // CheckResponse verifies a response
 func CheckResponse(request *config.Request, response *config.Response) {
 
 	if http.StatusText(response.StatusCode) == "" {
-		logger.Error(request, response, "INvalid status code: %d", response.StatusCode)
+		logger.Error(request, response, "invalid status code: %d", response.StatusCode)
 	}
 
 	CheckCookies(request, response, response.Cookies)
 
 	CheckHeaders(request, response, response.Headers)
+
+	CheckResponseContent(request, response)
 
 }
 
@@ -102,29 +153,21 @@ func CheckURL(request *config.Request) {
 func CheckRequest(request *config.Request) {
 
 	if request.Name == "" {
-		logger.Error(request, nil, "Missing request name")
+		logger.Error(request, nil, "missing request name")
 	}
 
 	if request.TimeLimit == 0 {
-		logger.Warn(request, nil, "Missing request time limit, default is infinity")
+		logger.Warn(request, nil, "missing request time limit, default is infinity")
 	}
 
 	CheckURL(request)
 
 	CheckCookies(request, nil, request.Cookies)
 
-	if request.Content == "" && request.ContentType != "" {
-		logger.Error(request, nil, "ContentType defined, but no content")
-	}
-
-	if request.Content != "" && request.ContentType == "" {
-		logger.Error(request, nil, "Content defined, but no ContentType specified")
-	}
-
 	CheckRequestContent(request)
 
 	if len(request.Responses) == 0 {
-		logger.Error(request, nil, "No responses defined")
+		logger.Error(request, nil, "no responses defined")
 	}
 
 	CheckHeaders(request, nil, request.ExtraHeaders)
@@ -140,28 +183,28 @@ func Check(scenarioFile string) error {
 	}
 
 	if sc.Name == "" {
-		logger.Error(nil, nil, "Missing scenario name")
+		logger.Error(nil, nil, "missing scenario name")
 	}
 
 	if sc.Version == "" {
-		logger.Warn(nil, nil, "Missing scenario version")
+		logger.Warn(nil, nil, "missing scenario version")
 	}
 
 	if len(sc.Sequence.Requests) == 0 {
-		logger.Error(nil, nil, "No requests defined")
+		logger.Error(nil, nil, "no requests defined")
 	}
 
 	for i := range sc.Sequence.Requests {
 
 		request := &sc.Sequence.Requests[i]
 
-		logger.Info(request, nil, "Request check started")
+		logger.Info(request, nil, "request check started")
 		CheckRequest(request)
 
 		for n := range request.Responses {
 			CheckResponse(request, &request.Responses[n])
 		}
-		logger.Info(request, nil, "Request check complete")
+		logger.Info(request, nil, "request check complete")
 	}
 
 	return nil

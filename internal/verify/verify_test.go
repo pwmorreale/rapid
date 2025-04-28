@@ -75,3 +75,16 @@ func TestRequestContent(t *testing.T) {
 	assert.Equal(t, 0, logger.WarnCount())
 
 }
+
+func TestCheck(t *testing.T) {
+
+	initLogger()
+
+	err := verify.Check("../../test/configs/verify_test.yaml")
+	assert.Nil(t, err)
+
+	assert.Equal(t, 13, logger.ErrorCount())
+	assert.Equal(t, 2, logger.WarnCount())
+	assert.Equal(t, 11, logger.InfoCount())
+	assert.Equal(t, 9, logger.DebugCount())
+}
