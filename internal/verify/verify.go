@@ -134,13 +134,12 @@ func CheckRequest(request *config.Request) {
 }
 
 // Check verifies a scenario configuration.
-func Check(scenarioFile string) int {
+func Check(scenarioFile string) error {
 
 	c := config.New()
 	sc, err := c.ParseFile(scenarioFile)
 	if err != nil {
-		logger.Error(nil, nil, "Parse: %s", err.Error())
-		return 1
+		return err
 	}
 
 	if sc.Name == "" {
@@ -168,5 +167,5 @@ func Check(scenarioFile string) int {
 		logger.Info(request, nil, "Request check complete")
 	}
 
-	return 0
+	return nil
 }
