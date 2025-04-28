@@ -35,7 +35,7 @@ func Execute() {
 func init() {
 
 	rootCmd.PersistentFlags().StringVarP(&logFormat, "log_format", "f", "text", `Log format: "text" or "json" `)
-	rootCmd.PersistentFlags().BoolVarP(&logTimestamp, "log_timestamp", "t", true, `Add timeStamp to log entries `)
+	rootCmd.PersistentFlags().BoolVarP(&logTimestamp, "log_timestamp", "t", false, `Add timeStamp to log entries `)
 	rootCmd.PersistentFlags().StringVarP(&logLevel, "log_level", "l", "info", `Log level, one of: "debug", "info", "warn", or "error"`)
 	rootCmd.PersistentFlags().StringVarP(&logFilename, "log_file", "", "", `Log to "filename" instead of stdout`)
 
