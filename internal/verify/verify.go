@@ -16,7 +16,7 @@ import (
 	"github.com/pwmorreale/rapid/internal/logger"
 )
 
-// CheckRequestCookies verifies cookie syntax.
+// CheckCookies verifies cookie syntax.
 func CheckCookies(request *config.Request, response *config.Response, cookies []config.CookieData) {
 
 	for i := range cookies {
