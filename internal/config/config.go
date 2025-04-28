@@ -153,5 +153,5 @@ func (rq *Request) LogValue() slog.Value {
 func (rp *Response) LogValue() slog.Value {
 	return slog.GroupValue(
 		slog.String("name", rp.Name),
-		slog.Int("method", rp.StatusCode))
+		slog.Int("status", rp.StatusCode))
 }
