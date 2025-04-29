@@ -173,6 +173,20 @@ func CheckRequest(request *config.Request) {
 	CheckHeaders(request, nil, request.ExtraHeaders)
 }
 
+// CheckReplacements verifies the replacement data.
+func CheckReplacements(r []config.ReplaceData) {
+
+	for i := range r {
+		if r[i].Keyword != "" && r[i].Value == "" {
+			logger.Error(nil, nil, "missing value for keyword: %s", r[i].Keyword)
+		}
+
+		if r[i].Keyword == "" && r[i].Value != "" {
+			logger.Error(nil, nil, "missing keyword for value: %s", r[i].Value)
+		}
+	}
+}
+
 // Check verifies a scenario configuration.
 func Check(scenarioFile string) error {
 
@@ -189,6 +203,8 @@ func Check(scenarioFile string) error {
 	if sc.Version == "" {
 		logger.Warn(nil, nil, "missing scenario version")
 	}
+
+	CheckReplacements(sc.Replacements)
 
 	if len(sc.Sequence.Requests) == 0 {
 		logger.Error(nil, nil, "no requests defined")

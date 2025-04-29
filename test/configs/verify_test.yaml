@@ -1,7 +1,6 @@
-data:
-  name1: value1
-  color: blue
-  full_name: bob_ross
+replacements:
+  - keyword: name1
+    value: value1
 sequence:
   iterations: 10
   time_limit: 1m
@@ -13,7 +12,7 @@ sequence:
       concurrent_duration: 1m
       time_limit: 1m
       method: post
-      url: https://$full_name.com/happy_little_trees
+      url: https://full_name.com/happy_little_trees
       extra_headers:
         - name: X-Paintbrush-for-sky
         - name: X-Paintbrush-for-trees
@@ -41,7 +40,7 @@ sequence:
             extract:
               - type: json
                 path: goo.moo.boo
-                data_name: foo
+                keyword: foo
               - type: text
         - status_code: 500
           name: server-failure
@@ -66,7 +65,7 @@ sequence:
             extract:
               - type: xml
                 path: //note/from
-                data_name: who
+                keyword: who
     - name: request2
       time_limit: 1m
       method: get

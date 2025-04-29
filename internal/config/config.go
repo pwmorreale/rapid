@@ -32,12 +32,18 @@ type Context struct {
 	id string
 }
 
+// ReplaceData defines keyword/value pairs for text substitutions.
+type ReplaceData struct {
+	Keyword string `mapstructure:"keyword"`
+	Value   string `mapstructure:"value"`
+}
+
 // Scenario defines the entire configuration.
 type Scenario struct {
-	Name     string            `mapstructure:"name"`
-	Version  string            `mapstructure:"version"`
-	Sequence Sequence          `mapstructure:"sequence"`
-	Data     map[string]string `mapstructure:"data"`
+	Name         string        `mapstructure:"name"`
+	Version      string        `mapstructure:"version"`
+	Sequence     Sequence      `mapstructure:"sequence"`
+	Replacements []ReplaceData `mapstructure:"replacements"`
 }
 
 // Sequence contains the sequence configuration.
@@ -54,7 +60,7 @@ type Sequence struct {
 type ExtractData struct {
 	Type string `mapstructure:"type"`
 	Path string `mapstructure:"path"`
-	Name string `mapstructure:"data_name"`
+	Name string `mapstructure:"keyword"`
 }
 
 // HeaderData contains user defined headers for inclusion with the request.
