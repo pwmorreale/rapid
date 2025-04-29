@@ -22,6 +22,8 @@ func TestReadInConfig(t *testing.T) {
 	assert.Equal(t, s.Name, "test-scenario")
 	assert.Equal(t, len(s.Sequence.Requests), 2)
 
+	assert.Equal(t, 2, len(s.Replacements))
+
 	assert.Equal(t, 2, len(s.Sequence.Requests[0].ExtraHeaders))
 	assert.Equal(t, 2, len(s.Sequence.Requests[0].Cookies))
 	assert.Equal(t, s.Sequence.Requests[0].ExtraHeaders[0].Name, "X-Paintbrush-for-sky")
@@ -61,5 +63,5 @@ func TestExtraFields(t *testing.T) {
 
 	s, err := c.ParseFile("../../test/configs/extra-fields.yaml")
 	assert.Nil(t, s)
-	assert.Equal(t, "decoding failed due to the following error(s):\n\n'sequence' has invalid keys: not_a_valid_field", err.Error())
+	assert.Equal(t, "decoding failed due to the following error(s):\n\n'sequence' has invalid keys: not_a_valid_field\n'' has invalid keys: data", err.Error())
 }
