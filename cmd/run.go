@@ -6,8 +6,9 @@
 package cmd
 
 import (
-	"fmt"
+	"os"
 
+	"github.com/pwmorreale/rapid/internal/logger"
 	"github.com/spf13/cobra"
 )
 
@@ -17,11 +18,35 @@ var runCmd = &cobra.Command{
 	Short: "Execute the scenario",
 	Long:  `The run command executes the specified scenario file.`,
 
-	Run: func(_ *cobra.Command, _ []string) {
-		fmt.Println("run called", scenarioFile)
-	},
+	RunE: RunScenario,
 }
 
 func init() {
 	rootCmd.AddCommand(runCmd)
+}
+
+// RunScenario executes the scenario.
+func RunScenario(_ *cobra.Command, _ []string) error {
+	opts := logger.Options{
+		Writer:    os.Stdout,
+		Handler:   logFormat,
+		Level:     logLevel,
+		Timestamp: logTimestamp,
+	}
+
+	if logFilename != "" {
+		file, err := os.OpenFile(logFilename, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
+		if err != nil {
+			return err
+		}
+		defer file.Close()
+		opts.Writer = file
+	}
+
+	err := logger.Init(&opts)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
