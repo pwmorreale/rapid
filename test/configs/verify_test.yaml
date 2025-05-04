@@ -8,9 +8,10 @@ sequence:
   ignore_duplicate_errors: true
   requests:
     - name: request1
-      concurrent_calls: 1
-      concurrent_duration: 1m
-      time_limit: 1m
+      once_only: true
+      thundering_herd:
+        maximum_requests: 2
+        active_size: 2
       method: post
       url: https://full_name.com/happy_little_trees
       extra_headers:
@@ -67,7 +68,6 @@ sequence:
                 path: //note/from
                 keyword: who
     - name: request2
-      time_limit: 1m
       method: get
       url: https://www.washingtonpost.com/articles
       content_type: goober

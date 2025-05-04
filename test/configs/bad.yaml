@@ -11,8 +11,6 @@ sequence:
   ignore_duplicate_errors: true
   requests:
     - name: request1
-      concurrent_calls: 1
-      concurrent_duration: 1m
       time_limit: 1m
       method: post
       url: https://$full_name.com/happy_little_trees

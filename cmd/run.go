@@ -9,6 +9,8 @@ import (
 	"os"
 
 	"github.com/pwmorreale/rapid/internal/logger"
+	"github.com/pwmorreale/rapid/internal/rest"
+	"github.com/pwmorreale/rapid/internal/sequence"
 	"github.com/spf13/cobra"
 )
 
@@ -48,5 +50,8 @@ func RunScenario(_ *cobra.Command, _ []string) error {
 		return err
 	}
 
-	return nil
+	r := rest.New()
+	s := sequence.New(r)
+
+	return s.Run(scenarioFile)
 }

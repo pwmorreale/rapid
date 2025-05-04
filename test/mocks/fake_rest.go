@@ -2,6 +2,7 @@
 package mocks
 
 import (
+	"context"
 	"sync"
 
 	"github.com/pwmorreale/rapid/internal/config"
@@ -9,25 +10,27 @@ import (
 )
 
 type FakeRest struct {
-	ExecuteStub        func(*config.Request)
+	ExecuteStub        func(context.Context, *config.Request)
 	executeMutex       sync.RWMutex
 	executeArgsForCall []struct {
-		arg1 *config.Request
+		arg1 context.Context
+		arg2 *config.Request
 	}
 	invocations      map[string][][]interface{}
 	invocationsMutex sync.RWMutex
 }
 
-func (fake *FakeRest) Execute(arg1 *config.Request) {
+func (fake *FakeRest) Execute(arg1 context.Context, arg2 *config.Request) {
 	fake.executeMutex.Lock()
 	fake.executeArgsForCall = append(fake.executeArgsForCall, struct {
-		arg1 *config.Request
-	}{arg1})
+		arg1 context.Context
+		arg2 *config.Request
+	}{arg1, arg2})
 	stub := fake.ExecuteStub
-	fake.recordInvocation("Execute", []interface{}{arg1})
+	fake.recordInvocation("Execute", []interface{}{arg1, arg2})
 	fake.executeMutex.Unlock()
 	if stub != nil {
-		fake.ExecuteStub(arg1)
+		fake.ExecuteStub(arg1, arg2)
 	}
 }
 
@@ -37,17 +40,17 @@ func (fake *FakeRest) ExecuteCallCount() int {
 	return len(fake.executeArgsForCall)
 }
 
-func (fake *FakeRest) ExecuteCalls(stub func(*config.Request)) {
+func (fake *FakeRest) ExecuteCalls(stub func(context.Context, *config.Request)) {
 	fake.executeMutex.Lock()
 	defer fake.executeMutex.Unlock()
 	fake.ExecuteStub = stub
 }
 
-func (fake *FakeRest) ExecuteArgsForCall(i int) *config.Request {
+func (fake *FakeRest) ExecuteArgsForCall(i int) (context.Context, *config.Request) {
 	fake.executeMutex.RLock()
 	defer fake.executeMutex.RUnlock()
 	argsForCall := fake.executeArgsForCall[i]
-	return argsForCall.arg1
+	return argsForCall.arg1, argsForCall.arg2
 }
 
 func (fake *FakeRest) Invocations() map[string][][]interface{} {
