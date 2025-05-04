@@ -149,6 +149,18 @@ func CheckURL(request *config.Request) {
 	}
 }
 
+// CheckThunderingHerd checks the herd configuration
+func CheckThunderingHerd(request *config.Request) {
+
+	if request.ThunderingHerd.Max == 0 {
+		logger.Warn(request, nil, "missing thundering_herd.maximum_requests, default is 1")
+	}
+
+	if request.ThunderingHerd.Size == 0 {
+		logger.Warn(request, nil, "missing thundering_herd.active_size, default is 1")
+	}
+}
+
 // CheckRequest verifies a request
 func CheckRequest(request *config.Request) {
 
@@ -156,15 +168,13 @@ func CheckRequest(request *config.Request) {
 		logger.Error(request, nil, "missing request name")
 	}
 
-	if request.TimeLimit == 0 {
-		logger.Warn(request, nil, "missing request time limit, default is infinity")
-	}
-
 	CheckURL(request)
 
 	CheckCookies(request, nil, request.Cookies)
 
 	CheckRequestContent(request)
+
+	CheckThunderingHerd(request)
 
 	if len(request.Responses) == 0 {
 		logger.Error(request, nil, "no responses defined")

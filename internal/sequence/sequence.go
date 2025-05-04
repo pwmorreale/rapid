@@ -23,14 +23,21 @@ type Sequence interface {
 	Run(string) error
 }
 
+// Statistics defines sequence execution statistics.
+type Statistics struct {
+	Iterations   int
+	Calls        int64
+	RestCallTime time.Duration
+	ElaspedTime  time.Duration
+}
+
 // Context defines a sequence
 type Context struct {
 	rest rest.Rest
 
 	// Stats
-	iterations   int64
-	requests     int64
-	restCalls    int64
+	iterations   int
+	calls        int64
 	restCallTime int64 // So we can use atomics directly...
 	elaspedTime  time.Duration
 }
@@ -43,6 +50,16 @@ func New(r rest.Rest) *Context {
 	}
 }
 
+// GetStats returns current statistics.
+func (s *Context) GetStats() *Statistics {
+	return &Statistics{
+		Iterations:   s.iterations,
+		Calls:        s.calls,
+		RestCallTime: time.Duration(s.restCallTime),
+		ElaspedTime:  s.elaspedTime,
+	}
+}
+
 // Run executes the sequence.
 func (s *Context) Run(scenarioFile string) error {
 
@@ -52,26 +69,23 @@ func (s *Context) Run(scenarioFile string) error {
 		return err
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(sc.Sequence.Limit))
-	defer cancel()
-
 	start := time.Now()
+
+	ctx, cancel := context.WithTimeout(context.Background(), sc.Sequence.Limit)
+	defer cancel()
 
 	for i := 0; i < sc.Sequence.Iterations; i++ {
 
 		s.ExecuteSequence(ctx, sc)
-
-		err := ctx.Err()
-		if err != nil {
-			logger.Error(nil, nil, "sequence %v on iteration: %d", err, i)
-			break
-		}
-
-		atomic.AddInt64(&s.iterations, 1)
-
+		s.iterations++
 	}
 
 	s.elaspedTime = time.Since(start)
+
+	err = ctx.Err()
+	if err != nil {
+		logger.Error(nil, nil, "sequence %v on iteration: %d", err, s.iterations)
+	}
 
 	return nil
 }
@@ -79,18 +93,21 @@ func (s *Context) Run(scenarioFile string) error {
 // ExecuteSequence runs the sequence of requests
 func (s *Context) ExecuteSequence(ctx context.Context, sc *config.Scenario) {
 
+Loop:
 	for i := range sc.Sequence.Requests {
-
-		s.ExecuteRequest(ctx, &sc.Sequence.Requests[i])
 
 		// Did we timeout?
 		select {
 		case <-ctx.Done():
-			return
+			break Loop
 		default:
 		}
 
-		atomic.AddInt64(&s.requests, 1)
+		request := &sc.Sequence.Requests[i]
+
+		logger.Info(request, nil, "execution started")
+		s.ExecuteRequest(ctx, request)
+		logger.Info(request, nil, "execution complete")
 
 	}
 
@@ -99,36 +116,46 @@ func (s *Context) ExecuteSequence(ctx context.Context, sc *config.Scenario) {
 // ExecuteRequest ezxecutes a request
 func (s *Context) ExecuteRequest(ctx context.Context, request *config.Request) {
 
-	// Create a timeout context for the thundering herd...
-	timeout, cancel := context.WithTimeout(context.Background(), time.Duration(request.ConcurrentDuration))
-	defer cancel()
-
-	wp := workerpool.New(request.ConcurrentCalls)
-
-	napTime := time.Millisecond * 100
-
-	for i := 0; i < request.ConcurrentCalls; i++ {
-
-		// Did we timeout?
-		select {
-		case <-ctx.Done(): // Iteration timeout
+	// Is this a once only request?
+	if request.OnceOnly {
+		if request.Executed {
+			logger.Info(request, nil, "once_only request already executed, ignoring")
 			return
-		case <-timeout.Done(): // 'Thundering herd' timeout.
-			logger.Error(request, nil, "concurrent timeout: %s", timeout.Err())
-			return
-		default:
+		}
+		request.Executed = true
+
+	}
+
+	// Default to one if not specified...
+	workerPoolSize := request.ThunderingHerd.Size
+	if workerPoolSize == 0 {
+		workerPoolSize++
+	}
+	wp := workerpool.New(request.ThunderingHerd.Size)
+
+	// Default to one if not specified...
+	numRequests := request.ThunderingHerd.Max
+	if numRequests == 0 {
+		numRequests = 1
+	}
+
+Loop:
+	for i := 0; i < numRequests; i++ {
+		if wp.WaitingQueueSize() > 0 {
+			time.Sleep(time.Millisecond * 100)
 		}
 
-		// We only want one (give or take, racy...) waiting task.
-		if wp.WaitingQueueSize() == 0 {
-			wp.Submit(func() {
-				atomic.AddInt64(&s.requests, 1)
-				start := time.Now()
-				s.rest.Execute(request)
-				atomic.AddInt64(&s.restCallTime, int64(time.Since(start)))
-			})
-		} else {
-			time.Sleep(napTime)
+		wp.Submit(func() {
+			atomic.AddInt64(&s.calls, 1)
+			start := time.Now()
+			s.rest.Execute(ctx, request)
+			atomic.AddInt64(&s.restCallTime, int64(time.Since(start)))
+		})
+
+		select {
+		case <-ctx.Done():
+			break Loop
+		default:
 		}
 	}
 

@@ -24,6 +24,9 @@ func TestReadInConfig(t *testing.T) {
 
 	assert.Equal(t, 2, len(s.Replacements))
 
+	assert.Equal(t, 1, s.Sequence.Requests[0].ThunderingHerd.Max)
+	assert.Equal(t, 2, s.Sequence.Requests[0].ThunderingHerd.Size)
+
 	assert.Equal(t, 2, len(s.Sequence.Requests[0].ExtraHeaders))
 	assert.Equal(t, 2, len(s.Sequence.Requests[0].Cookies))
 	assert.Equal(t, s.Sequence.Requests[0].ExtraHeaders[0].Name, "X-Paintbrush-for-sky")
@@ -54,7 +57,7 @@ func TestBadSyntax(t *testing.T) {
 
 	s, err := c.ParseFile("../../test/configs/bad.yaml")
 	assert.Nil(t, s)
-	assert.Equal(t, "While parsing config: yaml: line 19: could not find expected ':'", err.Error())
+	assert.Equal(t, "While parsing config: yaml: line 17: could not find expected ':'", err.Error())
 }
 
 func TestExtraFields(t *testing.T) {

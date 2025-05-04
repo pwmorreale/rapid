@@ -92,19 +92,27 @@ type Response struct {
 	Content    ContentData  `mapstructure:"content"`
 }
 
+// Stampede defines a thundering herd configuration
+type Stampede struct {
+	Max  int `mapstructure:"maximum_requests"`
+	Size int `mapstructure:"active_size"`
+}
+
 // Request defines the a request/response
 type Request struct {
-	Name               string        `mapstructure:"name"`
-	ConcurrentCalls    int           `mapstructure:"concurrent_calls"`
-	ConcurrentDuration time.Duration `mapstructure:"concurrent_duration"`
-	TimeLimit          time.Duration `mapstructure:"time_limit"`
-	Method             string        `mapstructure:"method"`
-	URL                string        `mapstructure:"url"`
-	ExtraHeaders       []HeaderData  `mapstructure:"extra_headers"`
-	Cookies            []CookieData  `mapstructure:"cookies"`
-	Content            string        `mapstructure:"content"`
-	ContentType        string        `mapstructure:"content_type"`
-	Responses          []Response    `mapstructure:"responses"`
+	Name           string       `mapstructure:"name"`
+	OnceOnly       bool         `mapstructure:"once_only"`
+	ThunderingHerd Stampede     `mapstructure:"thundering_herd"`
+	Method         string       `mapstructure:"method"`
+	URL            string       `mapstructure:"url"`
+	ExtraHeaders   []HeaderData `mapstructure:"extra_headers"`
+	Cookies        []CookieData `mapstructure:"cookies"`
+	Content        string       `mapstructure:"content"`
+	ContentType    string       `mapstructure:"content_type"`
+	Responses      []Response   `mapstructure:"responses"`
+
+	// Did we execute this one?
+	Executed bool
 }
 
 // New creates a new context instance

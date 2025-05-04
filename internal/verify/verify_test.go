@@ -15,13 +15,13 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func initLogger() {
+func initLogger(wr io.Writer) {
 
 	opts := logger.Options{
 		Handler:   "text",
 		Timestamp: false,
 		Level:     "Info",
-		Writer:    io.Discard,
+		Writer:    wr,
 	}
 
 	logger.Init(&opts)
@@ -37,7 +37,7 @@ func TestCheckRequestCookiesGood(t *testing.T) {
 		Cookies: []config.CookieData{Cookie},
 	}
 
-	initLogger()
+	initLogger(io.Discard)
 
 	verify.CheckCookies(request, nil, request.Cookies)
 	assert.Equal(t, 0, logger.ErrorCount())
@@ -54,7 +54,7 @@ func TestCheckRequestCookiesBad(t *testing.T) {
 		Cookies: []config.CookieData{Cookie},
 	}
 
-	initLogger()
+	initLogger(io.Discard)
 
 	verify.CheckCookies(request, nil, request.Cookies)
 	assert.Equal(t, 1, logger.ErrorCount())
@@ -68,7 +68,7 @@ func TestRequestContent(t *testing.T) {
 		Content:     "some text",
 	}
 
-	initLogger()
+	initLogger(io.Discard)
 
 	verify.CheckRequestContent(request)
 	assert.Equal(t, 0, logger.ErrorCount())
@@ -78,13 +78,13 @@ func TestRequestContent(t *testing.T) {
 
 func TestCheck(t *testing.T) {
 
-	initLogger()
+	initLogger(io.Discard)
 
 	err := verify.Check("../../test/configs/verify_test.yaml")
 	assert.Nil(t, err)
 
 	assert.Equal(t, 13, logger.ErrorCount())
-	assert.Equal(t, 2, logger.WarnCount())
+	assert.Equal(t, 4, logger.WarnCount())
 	assert.Equal(t, 11, logger.InfoCount())
 	assert.Equal(t, 9, logger.DebugCount())
 }
