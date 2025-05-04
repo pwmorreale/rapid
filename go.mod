@@ -4,6 +4,7 @@ go 1.24.2
 
 require (
 	github.com/gabriel-vasile/mimetype v1.4.9
+	github.com/gammazero/workerpool v1.1.3
 	github.com/google/uuid v1.6.0
 	github.com/lmittmann/tint v1.0.7
 	github.com/spf13/cobra v1.9.1
@@ -14,6 +15,7 @@ require (
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/fsnotify/fsnotify v1.9.0 // indirect
+	github.com/gammazero/deque v0.2.0 // indirect
 	github.com/go-viper/mapstructure/v2 v2.2.1 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/maxbrunsfeld/counterfeiter/v6 v6.11.2 // indirect
