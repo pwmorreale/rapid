@@ -9,6 +9,7 @@ import (
 	"os"
 
 	"github.com/pwmorreale/rapid/internal/config"
+	"github.com/pwmorreale/rapid/internal/data"
 	"github.com/pwmorreale/rapid/internal/logger"
 	"github.com/pwmorreale/rapid/internal/rest"
 	"github.com/pwmorreale/rapid/internal/sequence"
@@ -56,6 +57,22 @@ func initLogger() (*os.File, error) {
 	return &file, nil
 }
 
+func initData(sc *config.Scenario) (data.Data, error) {
+
+	var err error
+
+	d := data.New()
+	for i := 0; i < len(sc.Replacements); i++ {
+		r := sc.Replacements[i]
+		err = d.AddReplacement(r.Regex, r.Value)
+		if err != nil {
+			break
+		}
+	}
+
+	return d, err
+}
+
 // RunScenario executes the scenario.
 func RunScenario(_ *cobra.Command, _ []string) error {
 
@@ -71,7 +88,12 @@ func RunScenario(_ *cobra.Command, _ []string) error {
 		return err
 	}
 
-	r := rest.New()
+	d, err := initData(sc)
+	if err != nil {
+		return err
+	}
+
+	r := rest.New(d)
 	s := sequence.New(r)
 
 	return s.Run(sc)

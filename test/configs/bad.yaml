@@ -1,9 +1,8 @@
 name: test-scenario
 version: 1.0
-data:
-  name1: value1
-  color: blue
-  full_name: bob_ross
+data_replacements:
+  - match: value1
+    replace: blue
 sequence:
   iterations: 10
   time_limit: 1m

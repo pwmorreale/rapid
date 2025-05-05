@@ -2,21 +2,25 @@
 //  Copyright © 2025 Peter W. Morreale. All Rights Reserved.
 //
 
-// Package replacements contins text substituion routines.
-package replacements
+// Package data contins data substituion routines.
+package data
 
 import (
+	"io"
 	"regexp"
 )
 
-// Replacements defines interfaces for executing scenarios
+// Data defines interfaces for executing scenarios
 //
-//go:generate go tool counterfeiter -o ../../test/mocks/fake_replacements.go . Replacements
-type Replacements interface {
+//go:generate go tool counterfeiter -o ../../test/mocks/fake_data.go . Data
+type Data interface {
 	AddReplacement(string, string) error
 	Replace(string) string
 	Lookup(string) string
 	Len() int
+	ExtractJSON(string, io.Reader) (string, error)
+	ExtractXML(string, io.Reader) (string, error)
+	ExtractRegex(string, io.Reader) (string, error)
 }
 
 // Replacement defines a compiled regex and its associated replacement string

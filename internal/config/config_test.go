@@ -57,7 +57,7 @@ func TestBadSyntax(t *testing.T) {
 
 	s, err := c.ParseFile("../../test/configs/bad.yaml")
 	assert.Nil(t, s)
-	assert.Equal(t, "While parsing config: yaml: line 17: could not find expected ':'", err.Error())
+	assert.Equal(t, "While parsing config: yaml: line 16: could not find expected ':'", err.Error())
 }
 
 func TestExtraFields(t *testing.T) {

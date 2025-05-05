@@ -1,6 +1,6 @@
-replacements:
-  - keyword: name1
-    value: value1
+data_replacements:
+  - match: name1
+    replace: value1
 sequence:
   iterations: 10
   time_limit: 1m
@@ -41,7 +41,7 @@ sequence:
             extract:
               - type: json
                 path: goo.moo.boo
-                keyword: foo
+                match: foo
               - type: text
         - status_code: 500
           name: server-failure
@@ -66,7 +66,7 @@ sequence:
             extract:
               - type: xml
                 path: //note/from
-                keyword: who
+                match: who
     - name: request2
       method: get
       url: https://www.washingtonpost.com/articles

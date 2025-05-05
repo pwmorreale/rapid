@@ -9,6 +9,7 @@ import (
 	"context"
 
 	"github.com/pwmorreale/rapid/internal/config"
+	"github.com/pwmorreale/rapid/internal/data"
 )
 
 // Rest  defines the interface for managing requests and responses
@@ -20,11 +21,12 @@ type Rest interface {
 
 // Context defines a scenario context.
 type Context struct {
+	data data.Data
 }
 
 // New creates a new instance.
-func New() *Context {
-	return &Context{}
+func New(d data.Data) *Context {
+	return &Context{d}
 }
 
 // Execute creates and executes the request then validates the response.

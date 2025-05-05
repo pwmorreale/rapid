@@ -187,11 +187,11 @@ func CheckRequest(request *config.Request) {
 func CheckReplacements(r []config.ReplaceData) {
 
 	for i := range r {
-		if r[i].Keyword != "" && r[i].Value == "" {
-			logger.Error(nil, nil, "missing value for keyword: %s", r[i].Keyword)
+		if r[i].Regex != "" && r[i].Value == "" {
+			logger.Error(nil, nil, "missing value for keyword: %s", r[i].Regex)
 		}
 
-		if r[i].Keyword == "" && r[i].Value != "" {
+		if r[i].Regex == "" && r[i].Value != "" {
 			logger.Error(nil, nil, "missing keyword for value: %s", r[i].Value)
 		}
 	}
