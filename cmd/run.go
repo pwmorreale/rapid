@@ -8,6 +8,7 @@ package cmd
 import (
 	"os"
 
+	"github.com/pwmorreale/rapid/internal/config"
 	"github.com/pwmorreale/rapid/internal/logger"
 	"github.com/pwmorreale/rapid/internal/rest"
 	"github.com/pwmorreale/rapid/internal/sequence"
@@ -27,8 +28,10 @@ func init() {
 	rootCmd.AddCommand(runCmd)
 }
 
-// RunScenario executes the scenario.
-func RunScenario(_ *cobra.Command, _ []string) error {
+func initLogger() (*os.File, error) {
+
+	var file os.File
+
 	opts := logger.Options{
 		Writer:    os.Stdout,
 		Handler:   logFormat,
@@ -39,13 +42,31 @@ func RunScenario(_ *cobra.Command, _ []string) error {
 	if logFilename != "" {
 		file, err := os.OpenFile(logFilename, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
 		if err != nil {
-			return err
+			return nil, err
 		}
-		defer file.Close()
 		opts.Writer = file
 	}
 
 	err := logger.Init(&opts)
+	if err != nil {
+		file.Close()
+		return nil, err
+	}
+
+	return &file, nil
+}
+
+// RunScenario executes the scenario.
+func RunScenario(_ *cobra.Command, _ []string) error {
+
+	file, err := initLogger()
+	if err != nil {
+		return nil
+	}
+	defer (*file).Close()
+
+	c := config.New()
+	sc, err := c.ParseFile(scenarioFile)
 	if err != nil {
 		return err
 	}
@@ -53,5 +74,5 @@ func RunScenario(_ *cobra.Command, _ []string) error {
 	r := rest.New()
 	s := sequence.New(r)
 
-	return s.Run(scenarioFile)
+	return s.Run(sc)
 }

@@ -34,15 +34,9 @@ func initLogger(wr io.Writer) {
 	logger.Init(&opts)
 }
 
-func TestBadConfig(t *testing.T) {
-
-	r := &mocks.FakeRest{}
-	s := sequence.New(r)
-	assert.NotNil(t, s)
-
-	err := s.Run("../../test/configs/bad.yaml")
-	assert.Equal(t, "While parsing config: yaml: line 17: could not find expected ':'", err.Error())
-
+func initConfig(flnm string) (*config.Scenario, error) {
+	c := config.New()
+	return c.ParseFile(flnm)
 }
 
 func TestOnceOnly(t *testing.T) {
@@ -153,7 +147,10 @@ func TestRun(t *testing.T) {
 	s := sequence.New(r)
 	assert.NotNil(t, s)
 
-	err := s.Run("../../test/configs/test_scenario.yaml")
+	sc, err := initConfig("../../test/configs/test_scenario.yaml")
+	assert.Nil(t, err)
+
+	err = s.Run(sc)
 	assert.Nil(t, err)
 
 	// N.B. OnceOnly is set for the first request,

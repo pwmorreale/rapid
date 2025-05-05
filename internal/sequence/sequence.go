@@ -20,7 +20,7 @@ import (
 //
 //go:generate go tool counterfeiter -o ../../test/mocks/fake_sequence.go . Sequence
 type Sequence interface {
-	Run(string) error
+	Run(*config.Scenario) error
 }
 
 // Statistics defines sequence execution statistics.
@@ -61,13 +61,7 @@ func (s *Context) GetStats() *Statistics {
 }
 
 // Run executes the sequence.
-func (s *Context) Run(scenarioFile string) error {
-
-	c := config.New()
-	sc, err := c.ParseFile(scenarioFile)
-	if err != nil {
-		return err
-	}
+func (s *Context) Run(sc *config.Scenario) error {
 
 	start := time.Now()
 
@@ -82,7 +76,7 @@ func (s *Context) Run(scenarioFile string) error {
 
 	s.elaspedTime = time.Since(start)
 
-	err = ctx.Err()
+	err := ctx.Err()
 	if err != nil {
 		logger.Error(nil, nil, "sequence %v on iteration: %d", err, s.iterations)
 	}
