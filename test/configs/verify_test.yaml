@@ -3,7 +3,7 @@ data_replacements:
     replace: value1
 sequence:
   iterations: 10
-  time_limit: 1m
+  iteration_time_limit: 1m
   abort_on_error: true
   ignore_duplicate_errors: true
   requests:

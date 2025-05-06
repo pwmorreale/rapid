@@ -65,23 +65,31 @@ func (s *Context) Run(sc *config.Scenario) error {
 
 	start := time.Now()
 
-	ctx, cancel := context.WithTimeout(context.Background(), sc.Sequence.Limit)
-	defer cancel()
-
 	for i := 0; i < sc.Sequence.Iterations; i++ {
-
-		s.ExecuteSequence(ctx, sc)
+		s.ExecuteIteration(sc)
 		s.iterations++
 	}
 
 	s.elaspedTime = time.Since(start)
 
-	err := ctx.Err()
-	if err != nil {
-		logger.Error(nil, nil, "sequence %v on iteration: %d", err, s.iterations)
+	return nil
+}
+
+// ExecuteIteration exeutes a single iteration
+func (s *Context) ExecuteIteration(sc *config.Scenario) {
+
+	ctx, cancel := context.WithTimeout(context.Background(), sc.Sequence.Limit)
+	defer cancel()
+
+	s.ExecuteSequence(ctx, sc)
+	s.iterations++
+
+	select {
+	case <-ctx.Done():
+		logger.Error(nil, nil, "sequence %v on iteration: %d", ctx.Err(), s.iterations)
+	default:
 	}
 
-	return nil
 }
 
 // ExecuteSequence runs the sequence of requests

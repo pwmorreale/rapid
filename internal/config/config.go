@@ -49,7 +49,7 @@ type Scenario struct {
 // Sequence contains the sequence configuration.
 type Sequence struct {
 	Iterations   int           `mapstructure:"iterations"`
-	Limit        time.Duration `mapstructure:"time_limit"`
+	Limit        time.Duration `mapstructure:"iteration_time_limit"`
 	Delay        time.Duration `mapstructure:"delay"`
 	AbortOnError bool          `mapstructure:"abort_on_error"`
 	IgnoreDups   bool          `mapstructure:"ignore_duplicate_errors"`
