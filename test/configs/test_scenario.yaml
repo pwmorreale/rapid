@@ -1,6 +1,6 @@
 name: test-scenario
 version: 1.0
-data_replacements:
+find_replace:
   - match: HUE
     replace: blue
   - match: full_name

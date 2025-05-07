@@ -43,7 +43,7 @@ type Scenario struct {
 	Name         string        `mapstructure:"name"`
 	Version      string        `mapstructure:"version"`
 	Sequence     Sequence      `mapstructure:"sequence"`
-	Replacements []ReplaceData `mapstructure:"data_replacements"`
+	Replacements []ReplaceData `mapstructure:"find_replace"`
 }
 
 // Sequence contains the sequence configuration.
