@@ -1,4 +1,4 @@
-data_replacements:
+find_replace:
   - match: name1
     replace: value1
 sequence:
