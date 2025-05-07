@@ -26,13 +26,17 @@ type Rest interface {
 type Context struct {
 	datum        data.Data
 	roundTripper http.RoundTripper
+	sc           *config.Scenario
+
+	// For unit tests to set a mock roundtripper...
+	testing bool
 }
 
 // New creates a new instance.
-func New(d data.Data) *Context {
+func New(sc *config.Scenario, d data.Data) *Context {
 	return &Context{
-		datum:        d,
-		roundTripper: nil, // N.B. Used by the test package to mock out the default
+		datum: d,
+		sc:    sc,
 	}
 }
 

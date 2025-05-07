@@ -93,7 +93,7 @@ func RunScenario(_ *cobra.Command, _ []string) error {
 		return err
 	}
 
-	r := rest.New(d)
+	r := rest.New(sc, d)
 	s := sequence.New(r)
 
 	return s.Run(sc)
