@@ -8,7 +8,6 @@ package rest
 import (
 	"context"
 	"net/http"
-	"strconv"
 	"strings"
 
 	"github.com/pwmorreale/rapid/internal/config"
@@ -79,7 +78,7 @@ func (r *Context) createRequest(ctx context.Context, request *config.Request) (*
 
 	if rdr != nil {
 		req.Header.Add("Content-Type", request.ContentType)
-		req.Header.Add("Content-Length", strconv.FormatInt(rdr.Size(), 10))
+		req.ContentLength = rdr.Size()
 	}
 
 	if err != nil {
