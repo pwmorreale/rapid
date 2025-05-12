@@ -15,7 +15,7 @@ import (
 	"time"
 
 	"github.com/lmittmann/tint"
-	"github.com/pwmorreale/rapid/internal/config"
+	"github.com/pwmorreale/rapid/config"
 )
 
 // Handler is used to define a text or json handler.

@@ -11,14 +11,14 @@ import (
 	"time"
 
 	"github.com/gammazero/workerpool"
-	"github.com/pwmorreale/rapid/internal/config"
-	"github.com/pwmorreale/rapid/internal/logger"
-	"github.com/pwmorreale/rapid/internal/rest"
+	"github.com/pwmorreale/rapid/config"
+	"github.com/pwmorreale/rapid/logger"
+	"github.com/pwmorreale/rapid/rest"
 )
 
 // Sequence defines interfaces for executing scenarios
 //
-//go:generate go tool counterfeiter -o ../../test/mocks/fake_sequence.go . Sequence
+//go:generate go tool counterfeiter -o ../test/mocks/fake_sequence.go . Sequence
 type Sequence interface {
 	Run(*config.Scenario) error
 }

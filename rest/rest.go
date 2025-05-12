@@ -13,14 +13,14 @@ import (
 	"os"
 	"strings"
 
-	"github.com/pwmorreale/rapid/internal/config"
-	"github.com/pwmorreale/rapid/internal/data"
-	"github.com/pwmorreale/rapid/internal/logger"
+	"github.com/pwmorreale/rapid/config"
+	"github.com/pwmorreale/rapid/data"
+	"github.com/pwmorreale/rapid/logger"
 )
 
 // Rest  defines the interface for managing requests and responses
 //
-//go:generate go tool counterfeiter -o ../../test/mocks/fake_rest.go . Rest
+//go:generate go tool counterfeiter -o ../test/mocks/fake_rest.go . Rest
 type Rest interface {
 	Execute(context.Context, *config.Request)
 }

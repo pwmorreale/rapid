@@ -14,7 +14,7 @@ import (
 	"regexp"
 
 	"github.com/gabriel-vasile/mimetype"
-	"github.com/pwmorreale/rapid/internal/config"
+	"github.com/pwmorreale/rapid/config"
 )
 
 func cookieExists(expected string, all []string) bool {

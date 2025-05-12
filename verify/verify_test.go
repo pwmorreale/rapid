@@ -9,9 +9,9 @@ import (
 	"io"
 	"testing"
 
-	"github.com/pwmorreale/rapid/internal/config"
-	"github.com/pwmorreale/rapid/internal/logger"
-	"github.com/pwmorreale/rapid/internal/verify"
+	"github.com/pwmorreale/rapid/config"
+	"github.com/pwmorreale/rapid/logger"
+	"github.com/pwmorreale/rapid/verify"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -80,7 +80,7 @@ func TestCheck(t *testing.T) {
 
 	initLogger(io.Discard)
 
-	err := verify.Check("../../test/configs/verify_test.yaml")
+	err := verify.Check("../test/configs/verify_test.yaml")
 	assert.Nil(t, err)
 
 	assert.Equal(t, 13, logger.ErrorCount())

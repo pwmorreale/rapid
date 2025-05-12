@@ -9,8 +9,8 @@ import (
 	"io"
 	"testing"
 
-	"github.com/pwmorreale/rapid/internal/config"
-	"github.com/pwmorreale/rapid/internal/logger"
+	"github.com/pwmorreale/rapid/config"
+	"github.com/pwmorreale/rapid/logger"
 	"github.com/stretchr/testify/assert"
 )
 

@@ -8,8 +8,8 @@ package cmd
 import (
 	"os"
 
-	"github.com/pwmorreale/rapid/internal/logger"
-	"github.com/pwmorreale/rapid/internal/verify"
+	"github.com/pwmorreale/rapid/logger"
+	"github.com/pwmorreale/rapid/verify"
 	"github.com/spf13/cobra"
 )
 

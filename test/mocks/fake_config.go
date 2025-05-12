@@ -4,7 +4,7 @@ package mocks
 import (
 	"sync"
 
-	"github.com/pwmorreale/rapid/internal/config"
+	"github.com/pwmorreale/rapid/config"
 )
 
 type FakeConfiguration struct {

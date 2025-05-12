@@ -11,8 +11,8 @@ import (
 	"strings"
 
 	"github.com/gabriel-vasile/mimetype"
-	"github.com/pwmorreale/rapid/internal/config"
-	"github.com/pwmorreale/rapid/internal/logger"
+	"github.com/pwmorreale/rapid/config"
+	"github.com/pwmorreale/rapid/logger"
 )
 
 // CheckCookies verifies cookie syntax.

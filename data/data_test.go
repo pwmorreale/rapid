@@ -10,7 +10,7 @@ import (
 	"testing"
 	"testing/iotest"
 
-	"github.com/pwmorreale/rapid/internal/data"
+	"github.com/pwmorreale/rapid/data"
 	"github.com/stretchr/testify/assert"
 )
 
