@@ -5,6 +5,12 @@ find_replace:
     replace: blue
   - match: full_name
     replace: bob_ross
+tls_configuration:
+  client_cert_path: /tmp/cert.pem
+  client_key_path: /tmp/key.pem
+  ca_cert_path: /tmp/ca.pem
+  insecure_skip_verify: false
+use_single_http_client: false
 sequence:
   iterations: 10
   iteration_time_limit: 1m
