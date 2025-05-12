@@ -5,8 +5,8 @@ import (
 	"context"
 	"sync"
 
-	"github.com/pwmorreale/rapid/internal/config"
-	"github.com/pwmorreale/rapid/internal/rest"
+	"github.com/pwmorreale/rapid/config"
+	"github.com/pwmorreale/rapid/rest"
 )
 
 type FakeRest struct {

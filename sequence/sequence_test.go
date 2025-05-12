@@ -11,9 +11,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/pwmorreale/rapid/internal/config"
-	"github.com/pwmorreale/rapid/internal/logger"
-	"github.com/pwmorreale/rapid/internal/sequence"
+	"github.com/pwmorreale/rapid/config"
+	"github.com/pwmorreale/rapid/logger"
+	"github.com/pwmorreale/rapid/sequence"
 	"github.com/pwmorreale/rapid/test/mocks"
 	"github.com/stretchr/testify/assert"
 )
@@ -147,7 +147,7 @@ func TestRun(t *testing.T) {
 	s := sequence.New(r)
 	assert.NotNil(t, s)
 
-	sc, err := initConfig("../../test/configs/test_scenario.yaml")
+	sc, err := initConfig("../test/configs/test_scenario.yaml")
 	assert.Nil(t, err)
 
 	err = s.Run(sc)

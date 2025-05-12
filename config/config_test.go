@@ -7,7 +7,7 @@ package config_test
 import (
 	"testing"
 
-	"github.com/pwmorreale/rapid/internal/config"
+	"github.com/pwmorreale/rapid/config"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -15,7 +15,7 @@ func TestReadInConfig(t *testing.T) {
 
 	c := config.New()
 
-	s, err := c.ParseFile("../../test/configs/test_scenario.yaml")
+	s, err := c.ParseFile("../test/configs/test_scenario.yaml")
 	assert.NotNil(t, s)
 	assert.Nil(t, err)
 
@@ -55,7 +55,7 @@ func TestBadSyntax(t *testing.T) {
 
 	c := config.New()
 
-	s, err := c.ParseFile("../../test/configs/bad.yaml")
+	s, err := c.ParseFile("../test/configs/bad.yaml")
 	assert.Nil(t, s)
 	assert.Equal(t, "While parsing config: yaml: line 16: could not find expected ':'", err.Error())
 }
@@ -64,7 +64,7 @@ func TestExtraFields(t *testing.T) {
 
 	c := config.New()
 
-	s, err := c.ParseFile("../../test/configs/extra-fields.yaml")
+	s, err := c.ParseFile("../test/configs/extra-fields.yaml")
 	assert.Nil(t, s)
 	assert.Equal(t, "decoding failed due to the following error(s):\n\n'sequence' has invalid keys: not_a_valid_field\n'' has invalid keys: data", err.Error())
 }

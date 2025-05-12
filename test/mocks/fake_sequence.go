@@ -4,8 +4,8 @@ package mocks
 import (
 	"sync"
 
-	"github.com/pwmorreale/rapid/internal/config"
-	"github.com/pwmorreale/rapid/internal/sequence"
+	"github.com/pwmorreale/rapid/config"
+	"github.com/pwmorreale/rapid/sequence"
 )
 
 type FakeSequence struct {

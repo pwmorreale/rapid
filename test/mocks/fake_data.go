@@ -5,7 +5,7 @@ import (
 	"io"
 	"sync"
 
-	"github.com/pwmorreale/rapid/internal/data"
+	"github.com/pwmorreale/rapid/data"
 )
 
 type FakeData struct {

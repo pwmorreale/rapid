@@ -12,7 +12,7 @@ import (
 
 // Data defines interfaces for executing scenarios
 //
-//go:generate go tool counterfeiter -o ../../test/mocks/fake_data.go . Data
+//go:generate go tool counterfeiter -o ../test/mocks/fake_data.go . Data
 type Data interface {
 	AddReplacement(string, string) error
 	Replace(string) string

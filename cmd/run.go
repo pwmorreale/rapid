@@ -8,11 +8,11 @@ package cmd
 import (
 	"os"
 
-	"github.com/pwmorreale/rapid/internal/config"
-	"github.com/pwmorreale/rapid/internal/data"
-	"github.com/pwmorreale/rapid/internal/logger"
-	"github.com/pwmorreale/rapid/internal/rest"
-	"github.com/pwmorreale/rapid/internal/sequence"
+	"github.com/pwmorreale/rapid/config"
+	"github.com/pwmorreale/rapid/data"
+	"github.com/pwmorreale/rapid/logger"
+	"github.com/pwmorreale/rapid/rest"
+	"github.com/pwmorreale/rapid/sequence"
 	"github.com/spf13/cobra"
 )
 
