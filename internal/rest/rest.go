@@ -7,7 +7,10 @@ package rest
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/pwmorreale/rapid/internal/config"
@@ -24,12 +27,12 @@ type Rest interface {
 
 // Context defines a scenario context.
 type Context struct {
-	datum        data.Data
-	roundTripper http.RoundTripper
-	sc           *config.Scenario
+	datum      data.Data
+	sc         *config.Scenario
+	httpClient *http.Client
 
 	// For unit tests to set a mock roundtripper...
-	testing bool
+	mockRoundTripper http.RoundTripper
 }
 
 // New creates a new instance.
@@ -38,6 +41,39 @@ func New(sc *config.Scenario, d data.Data) *Context {
 		datum: d,
 		sc:    sc,
 	}
+}
+
+func (r *Context) createTLSConfig() (*tls.Config, error) {
+
+	// No TLS config...
+	if r.sc.TLS.CertFilePath == "" && r.sc.TLS.KeyFilePath == "" {
+		return nil, nil
+	}
+
+	cert, err := tls.LoadX509KeyPair(r.sc.TLS.CertFilePath, r.sc.TLS.KeyFilePath)
+	if err != nil {
+		return nil, err
+	}
+
+	// If we have a CA cert path, use it and create a private pool,
+	// otherwise the system pool will be used.
+	var caCertPool *x509.CertPool
+	if r.sc.TLS.CACertFilePath != "" {
+
+		caCert, err := os.ReadFile(r.sc.TLS.CACertFilePath)
+		if err != nil {
+			return nil, err
+		}
+		caCertPool = x509.NewCertPool()
+		caCertPool.AppendCertsFromPEM(caCert)
+	}
+
+	// Configure TLS
+	return &tls.Config{
+		Certificates:       []tls.Certificate{cert},
+		RootCAs:            caCertPool,
+		InsecureSkipVerify: r.sc.TLS.InsecureSkipVerify, // Set to true only for testing purposes
+	}, nil
 }
 
 func (r *Context) addCookies(req *http.Request, request *config.Request) error {
@@ -106,6 +142,42 @@ func (r *Context) createRequest(ctx context.Context, request *config.Request) (*
 	return req, nil
 }
 
+func (r *Context) createClient() (*http.Client, error) {
+
+	client := &http.Client{}
+
+	// If we are configured for a single client for all requests,
+	// use the cached client.
+	if r.sc.UseSingleClient && r.httpClient != nil {
+		return r.httpClient, nil
+	}
+
+	// If we are testing, then use the mock round tripper...
+	if r.mockRoundTripper != nil {
+		client.Transport = r.mockRoundTripper
+		r.httpClient = client
+		return client, nil
+	}
+
+	// If we have a TLS config, create and use it.
+	tlsConfig, err := r.createTLSConfig()
+	if err != nil {
+		return nil, err
+	}
+	if tlsConfig != nil {
+		client.Transport = &http.Transport{
+			TLSClientConfig: tlsConfig,
+		}
+	}
+
+	// If we are using a single client, cache it...
+	if r.sc.UseSingleClient {
+		r.httpClient = client
+	}
+
+	return client, nil
+}
+
 // Execute creates and executes the request then validates the response.
 func (r *Context) Execute(ctx context.Context, request *config.Request) {
 
@@ -115,11 +187,10 @@ func (r *Context) Execute(ctx context.Context, request *config.Request) {
 		return
 	}
 
-	// N.B.  We specify the transport solely to enble testing for this
-	// routine.  In the normal path r.roundTrippe will be nil, which implies the
-	// default transport.  Tests will specify a mock transport.
-	client := &http.Client{
-		Transport: r.roundTripper,
+	client, err := r.createClient()
+	if err != nil {
+		logger.Error(request, nil, "createClient: %v", err)
+		return
 	}
 
 	resp, err := client.Do(req)
@@ -127,7 +198,6 @@ func (r *Context) Execute(ctx context.Context, request *config.Request) {
 		logger.Error(request, nil, "client.Do: %v", err)
 		return
 	}
-	defer client.CloseIdleConnections()
 	defer resp.Body.Close()
 
 	err = r.validateResponse(resp, request)

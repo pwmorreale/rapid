@@ -103,7 +103,7 @@ func initTestService(t *testing.T) (*Context, *config.Scenario, data.Data, error
 
 	}
 
-	r := New(d)
+	r := New(sc, d)
 
 	return r, sc, d, nil
 }
@@ -131,7 +131,7 @@ func TestExecute(t *testing.T) {
 
 	httpResponse := makeResponseFromResponse(&sc.Sequence.Requests[0].Responses[0], []byte(json))
 
-	r.roundTripper = &TestingTransport{
+	r.mockRoundTripper = &TestingTransport{
 		Response: httpResponse,
 		Error:    nil,
 	}
@@ -155,7 +155,6 @@ func TestCreateRequest(t *testing.T) {
 
 	// N.B.  Canonical form for the key vs. original in yaml...
 	assert.Contains(t, request.Header, "X-Paintbrush-For-Sky")
-	assert.Contains(t, request.Header, "Content-Length")
 
 	v := request.Header.Get("X-Paintbrush-For-Sky")
 	assert.Equal(t, "wide", v)

@@ -38,12 +38,22 @@ type ReplaceData struct {
 	Value string `mapstructure:"replace"`
 }
 
+// TLSConfig defines TLS configuration
+type TLSConfig struct {
+	CertFilePath       string `mapstructure:"client_cert_path"`
+	KeyFilePath        string `mapstructure:"client_key_path"`
+	CACertFilePath     string `mapstructure:"ca_cert_path"`
+	InsecureSkipVerify bool   `mapstructure:"insecure_skip_verify"`
+}
+
 // Scenario defines the entire configuration.
 type Scenario struct {
-	Name         string        `mapstructure:"name"`
-	Version      string        `mapstructure:"version"`
-	Sequence     Sequence      `mapstructure:"sequence"`
-	Replacements []ReplaceData `mapstructure:"find_replace"`
+	Name            string        `mapstructure:"name"`
+	Version         string        `mapstructure:"version"`
+	Sequence        Sequence      `mapstructure:"sequence"`
+	Replacements    []ReplaceData `mapstructure:"find_replace"`
+	TLS             TLSConfig     `mapstructure:"tls_configuration"`
+	UseSingleClient bool          `mapstructure:"use_single_http_client"`
 }
 
 // Sequence contains the sequence configuration.

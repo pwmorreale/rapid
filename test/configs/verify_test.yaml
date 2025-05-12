@@ -1,6 +1,11 @@
 find_replace:
   - match: name1
     replace: value1
+tls_configuration:
+  client_cert_path: /tmp/cert.pem
+  client_key_path: /tmp/key.pem
+  ca_cert_path: /tmp/ca.pem
+  insecure_skip_verify: false
 sequence:
   iterations: 10
   iteration_time_limit: 1m
