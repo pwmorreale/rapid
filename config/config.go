@@ -50,6 +50,7 @@ type TLSConfig struct {
 type Scenario struct {
 	Name            string        `mapstructure:"name"`
 	Version         string        `mapstructure:"version"`
+	Comment         string        `mapstructure:"comment"`
 	Sequence        Sequence      `mapstructure:"sequence"`
 	Replacements    []ReplaceData `mapstructure:"find_replace"`
 	TLS             TLSConfig     `mapstructure:"tls_configuration"`
@@ -60,7 +61,6 @@ type Scenario struct {
 type Sequence struct {
 	Iterations   int           `mapstructure:"iterations"`
 	Limit        time.Duration `mapstructure:"iteration_time_limit"`
-	Delay        time.Duration `mapstructure:"delay"`
 	AbortOnError bool          `mapstructure:"abort_on_error"`
 	IgnoreDups   bool          `mapstructure:"ignore_duplicate_errors"`
 	Requests     []Request     `mapstructure:"requests"`
@@ -104,8 +104,10 @@ type Response struct {
 
 // Stampede defines a thundering herd configuration
 type Stampede struct {
-	Max  int `mapstructure:"maximum_requests"`
-	Size int `mapstructure:"active_size"`
+	Max       int           `mapstructure:"maximum_requests"`
+	Size      int           `mapstructure:"concurrent_requests"`
+	TimeLimit time.Duration `mapstructure:"time_limit"`
+	Delay     time.Duration `mapstructure:"delay"`
 }
 
 // Request defines the a request/response
