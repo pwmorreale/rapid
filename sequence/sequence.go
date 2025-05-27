@@ -135,24 +135,34 @@ func (s *Context) ExecuteRequest(ctx context.Context, request *config.Request) {
 	}
 	wp := workerpool.New(request.ThunderingHerd.Size)
 
-	// Default to one if not specified...
-	numRequests := request.ThunderingHerd.Max
-	if numRequests == 0 {
-		numRequests = 1
-	}
+	start := time.Now()
 
+	i := 0
 Loop:
-	for i := 0; i < numRequests; i++ {
+	for {
 		if wp.WaitingQueueSize() > 0 {
-			time.Sleep(time.Millisecond * 100)
+			time.Sleep(time.Millisecond * 10)
 		}
 
 		wp.Submit(func() {
 			atomic.AddInt64(&s.calls, 1)
-			start := time.Now()
+			requestStart := time.Now()
 			s.rest.Execute(ctx, request)
-			atomic.AddInt64(&s.restCallTime, int64(time.Since(start)))
+			atomic.AddInt64(&s.restCallTime, int64(time.Since(requestStart)))
 		})
+
+		// Inter-request delay
+		time.Sleep(request.ThunderingHerd.Delay)
+
+		i++
+
+		if request.ThunderingHerd.TimeLimit > 0 {
+			if time.Since(start) >= request.ThunderingHerd.TimeLimit {
+				break
+			}
+		} else if i > request.ThunderingHerd.Max {
+			break
+		}
 
 		select {
 		case <-ctx.Done():

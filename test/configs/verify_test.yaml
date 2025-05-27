@@ -16,7 +16,7 @@ sequence:
       once_only: true
       thundering_herd:
         maximum_requests: 2
-        active_size: 2
+        concurrent_requests: 2
       method: post
       url: https://full_name.com/happy_little_trees
       extra_headers:

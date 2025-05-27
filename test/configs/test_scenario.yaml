@@ -1,5 +1,6 @@
 name: test-scenario
 version: 1.0
+comment: "Test scenario"
 find_replace:
   - match: HUE
     replace: blue
@@ -21,7 +22,9 @@ sequence:
       once_only: true
       thundering_herd:
         maximum_requests: 1
-        active_size: 2
+        concurrent_requests: 2
+        time_limit: 1ms
+        delay: 1ms
       method: post
       url: https://full_name.com/happy_little_trees
       extra_headers:
