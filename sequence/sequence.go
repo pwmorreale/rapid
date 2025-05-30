@@ -7,7 +7,6 @@ package sequence
 
 import (
 	"context"
-	"sync/atomic"
 	"time"
 
 	"github.com/gammazero/workerpool"
@@ -23,72 +22,47 @@ type Sequence interface {
 	Run(*config.Scenario) error
 }
 
-// Statistics defines sequence execution statistics.
-type Statistics struct {
-	Iterations   int
-	Calls        int64
-	RestCallTime time.Duration
-	ElaspedTime  time.Duration
-}
-
 // Context defines a sequence
 type Context struct {
 	rest rest.Rest
-
-	// Stats
-	iterations   int
-	calls        int64
-	restCallTime int64 // So we can use atomics directly...
-	elaspedTime  time.Duration
 }
 
 // New creates a new context instance
 func New(r rest.Rest) *Context {
-
 	return &Context{
 		rest: r,
-	}
-}
-
-// GetStats returns current statistics.
-func (s *Context) GetStats() *Statistics {
-	return &Statistics{
-		Iterations:   s.iterations,
-		Calls:        s.calls,
-		RestCallTime: time.Duration(s.restCallTime),
-		ElaspedTime:  s.elaspedTime,
 	}
 }
 
 // Run executes the sequence.
 func (s *Context) Run(sc *config.Scenario) error {
 
-	start := time.Now()
-
 	for i := 0; i < sc.Sequence.Iterations; i++ {
-		s.ExecuteIteration(sc)
-		s.iterations++
+		s.ExecuteIteration(sc, i)
 	}
-
-	s.elaspedTime = time.Since(start)
 
 	return nil
 }
 
 // ExecuteIteration exeutes a single iteration
-func (s *Context) ExecuteIteration(sc *config.Scenario) {
+func (s *Context) ExecuteIteration(sc *config.Scenario, i int) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), sc.Sequence.Limit)
 	defer cancel()
 
+	start := time.Now()
+
 	s.ExecuteSequence(ctx, sc)
-	s.iterations++
 
 	select {
 	case <-ctx.Done():
-		logger.Error(nil, nil, "sequence %v on iteration: %d", ctx.Err(), s.iterations)
+		sc.Sequence.Stats.Error(start)
+		logger.Error(nil, nil, "sequence %v on iteration: %d", ctx.Err(), i)
+		return
 	default:
 	}
+
+	sc.Sequence.Stats.Success(start)
 
 }
 
@@ -145,10 +119,7 @@ Loop:
 		}
 
 		wp.Submit(func() {
-			atomic.AddInt64(&s.calls, 1)
-			requestStart := time.Now()
 			s.rest.Execute(ctx, request)
-			atomic.AddInt64(&s.restCallTime, int64(time.Since(requestStart)))
 		})
 
 		// Inter-request delay

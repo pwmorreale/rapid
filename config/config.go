@@ -7,9 +7,11 @@ package config
 
 import (
 	"log/slog"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/pwmorreale/rapid/stats"
 	"github.com/spf13/viper"
 )
 
@@ -64,6 +66,7 @@ type Sequence struct {
 	AbortOnError bool          `mapstructure:"abort_on_error"`
 	IgnoreDups   bool          `mapstructure:"ignore_duplicate_errors"`
 	Requests     []Request     `mapstructure:"requests"`
+	Stats        stats.Statistics
 }
 
 // ExtractData defines response data extraction.
@@ -100,6 +103,7 @@ type Response struct {
 	Headers    []HeaderData `mapstructure:"headers"`
 	Cookies    []CookieData `mapstructure:"cookies"`
 	Content    ContentData  `mapstructure:"content"`
+	Stats      stats.Statistics
 }
 
 // Stampede defines a thundering herd configuration
@@ -112,16 +116,19 @@ type Stampede struct {
 
 // Request defines the a request/response
 type Request struct {
-	Name           string       `mapstructure:"name"`
-	OnceOnly       bool         `mapstructure:"once_only"`
-	ThunderingHerd Stampede     `mapstructure:"thundering_herd"`
-	Method         string       `mapstructure:"method"`
-	URL            string       `mapstructure:"url"`
-	ExtraHeaders   []HeaderData `mapstructure:"extra_headers"`
-	Cookies        []CookieData `mapstructure:"cookies"`
-	Content        string       `mapstructure:"content"`
-	ContentType    string       `mapstructure:"content_type"`
-	Responses      []Response   `mapstructure:"responses"`
+	Name             string       `mapstructure:"name"`
+	OnceOnly         bool         `mapstructure:"once_only"`
+	ThunderingHerd   Stampede     `mapstructure:"thundering_herd"`
+	Method           string       `mapstructure:"method"`
+	URL              string       `mapstructure:"url"`
+	ExtraHeaders     []HeaderData `mapstructure:"extra_headers"`
+	Cookies          []CookieData `mapstructure:"cookies"`
+	Content          string       `mapstructure:"content"`
+	ContentType      string       `mapstructure:"content_type"`
+	Responses        []*Response  `mapstructure:"responses"`
+	Stats            stats.Statistics
+	UnknownResponses []*Response // Unconfigured responses received...
+	Mutex            sync.Mutex
 
 	// Did we execute this one?
 	Executed bool

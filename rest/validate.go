@@ -12,6 +12,7 @@ import (
 	"mime"
 	"net/http"
 	"regexp"
+	"time"
 
 	"github.com/gabriel-vasile/mimetype"
 	"github.com/pwmorreale/rapid/config"
@@ -182,14 +183,42 @@ func (r *Context) verifyContentAndExtract(httpResponse *http.Response, response 
 	return nil
 }
 
-func (r *Context) findResponse(httpResponse *http.Response, request *config.Request) *config.Response {
+func lookupResponse(statusCode int, r []*config.Response) *config.Response {
 
-	for i := range request.Responses {
-		if httpResponse.StatusCode == request.Responses[i].StatusCode {
-			return &request.Responses[i]
+	for i := range r {
+		if statusCode == r[i].StatusCode {
+			return r[i]
 		}
 	}
+
 	return nil
+}
+
+func (r *Context) findResponse(httpResponse *http.Response, request *config.Request) *config.Response {
+
+	resp := lookupResponse(httpResponse.StatusCode, request.Responses)
+	if resp != nil {
+		return resp
+	}
+
+	// Not found on the configured array, so find/add to the unkowns array.
+
+	request.Mutex.Lock()
+	defer request.Mutex.Unlock()
+
+	resp = lookupResponse(httpResponse.StatusCode, request.UnknownResponses)
+	if resp != nil {
+		return resp
+	}
+
+	resp = new(config.Response)
+
+	request.UnknownResponses = append(request.UnknownResponses, resp)
+
+	resp.Name = "omitted"
+	resp.StatusCode = httpResponse.StatusCode
+
+	return resp
 }
 
 func (r *Context) verifyResponse(httpResponse *http.Response, response *config.Response) error {
@@ -212,14 +241,16 @@ func (r *Context) verifyResponse(httpResponse *http.Response, response *config.R
 	return nil
 }
 
-func (r *Context) validateResponse(httpResponse *http.Response, request *config.Request) error {
+func (r *Context) validateResponse(httpResponse *http.Response, request *config.Request, start time.Time) error {
 
 	response := r.findResponse(httpResponse, request)
-	if response == nil {
-		return fmt.Errorf("response not found for status code: %d for request: %s", response.StatusCode, request.Name)
-	}
 
 	err := r.verifyResponse(httpResponse, response)
+	if err == nil {
+		response.Stats.Success(start)
+	} else {
+		response.Stats.Error(start)
+	}
 
 	return err
 }

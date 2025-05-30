@@ -228,7 +228,7 @@ func Check(scenarioFile string) error {
 		CheckRequest(request)
 
 		for n := range request.Responses {
-			CheckResponse(request, &request.Responses[n])
+			CheckResponse(request, request.Responses[n])
 		}
 		logger.Info(request, nil, "request check complete")
 	}
