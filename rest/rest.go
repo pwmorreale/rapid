@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/pwmorreale/rapid/config"
 	"github.com/pwmorreale/rapid/data"
@@ -193,14 +194,19 @@ func (r *Context) Execute(ctx context.Context, request *config.Request) {
 		return
 	}
 
+	start := time.Now()
+
 	resp, err := client.Do(req)
 	if err != nil {
+		request.Stats.Error(start)
 		logger.Error(request, nil, "client.Do: %v", err)
 		return
 	}
 	defer resp.Body.Close()
 
-	err = r.validateResponse(resp, request)
+	request.Stats.Success(start)
+
+	err = r.validateResponse(resp, request, start)
 	if err != nil {
 		logger.Error(request, nil, "validateResponse: %v", err)
 	}

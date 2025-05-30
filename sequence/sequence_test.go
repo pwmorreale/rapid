@@ -203,8 +203,7 @@ func TestExecuteRequestDefaults(t *testing.T) {
 
 	assert.Nil(t, ctx.Err())
 
-	stats := s.GetStats()
-	assert.Equal(t, int64(1), stats.Calls)
+	assert.Equal(t, 1, r.ExecuteCallCount())
 
 }
 

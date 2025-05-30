@@ -129,7 +129,7 @@ func TestExecute(t *testing.T) {
 
 	initLogger(os.Stdout)
 
-	httpResponse := makeResponseFromResponse(&sc.Sequence.Requests[0].Responses[0], []byte(json))
+	httpResponse := makeResponseFromResponse(sc.Sequence.Requests[0].Responses[0], []byte(json))
 
 	r.mockRoundTripper = &TestingTransport{
 		Response: httpResponse,
@@ -183,7 +183,7 @@ func TestHeaderMultipleValues(t *testing.T) {
 		{Name: "header3", Value: "value3"}}
 	response := makeResponse(200, "", []byte{}, 0, &headers, nil)
 
-	configResponse := &sc.Sequence.Requests[0].Responses[0]
+	configResponse := sc.Sequence.Requests[0].Responses[0]
 
 	err = r.verifyHeaders(response, configResponse)
 	assert.Nil(t, err)
@@ -199,7 +199,7 @@ func TestHeaderMissingHeader(t *testing.T) {
 	headers := []config.HeaderData{}
 	response := makeResponse(200, "", []byte{}, 0, &headers, nil)
 
-	configResponse := &sc.Sequence.Requests[0].Responses[0]
+	configResponse := sc.Sequence.Requests[0].Responses[0]
 
 	err = r.verifyHeaders(response, configResponse)
 	assert.Equal(t, "header: Header1 not found", err.Error())
@@ -216,7 +216,7 @@ func TestHeaderBadValue(t *testing.T) {
 	headers := []config.HeaderData{{Name: "header1", Value: "foobar"}}
 	response := makeResponse(200, "", []byte{}, 0, &headers, nil)
 
-	configResponse := &sc.Sequence.Requests[0].Responses[0]
+	configResponse := sc.Sequence.Requests[0].Responses[0]
 
 	err = r.verifyHeaders(response, configResponse)
 	assert.Equal(t, "header: Header1, expected value (value1) not found", err.Error())
@@ -232,7 +232,7 @@ func TestHeaders(t *testing.T) {
 
 	response := makeResponse(200, "", []byte{}, 0, nil, nil)
 
-	configResponse := &sc.Sequence.Requests[0].Responses[0]
+	configResponse := sc.Sequence.Requests[0].Responses[0]
 
 	// Missing...
 	err = r.verifyHeaders(response, configResponse)
@@ -254,7 +254,7 @@ func TestVerifyCookies(t *testing.T) {
 	assert.NotNil(t, sc)
 	assert.Nil(t, err)
 
-	configResponse := &sc.Sequence.Requests[0].Responses[0]
+	configResponse := sc.Sequence.Requests[0].Responses[0]
 
 	response := &http.Response{}
 
@@ -285,7 +285,7 @@ func TestVerifyNoContent(t *testing.T) {
 
 	response := makeResponse(200, "", []byte{}, 0, nil, nil)
 
-	configResponse := &sc.Sequence.Requests[0].Responses[1]
+	configResponse := sc.Sequence.Requests[0].Responses[1]
 
 	// No content...
 	err = r.verifyContentAndExtract(response, configResponse)
@@ -301,7 +301,7 @@ func TestVerifyJSONContent(t *testing.T) {
 	assert.Nil(t, err)
 
 	response := makeResponse(200, "application/json", []byte(json), -1, nil, nil)
-	configResponse := &sc.Sequence.Requests[0].Responses[0]
+	configResponse := sc.Sequence.Requests[0].Responses[0]
 
 	err = r.verifyContentAndExtract(response, configResponse)
 	assert.Nil(t, err)
@@ -317,10 +317,31 @@ func TestVerifyXMLContent(t *testing.T) {
 	assert.Nil(t, err)
 
 	response := makeResponse(200, "text/xml", []byte(xml), int64(len(xml)), nil, nil)
-	configResponse := &sc.Sequence.Requests[0].Responses[2]
+	configResponse := sc.Sequence.Requests[0].Responses[2]
 
 	err = r.verifyContentAndExtract(response, configResponse)
 	assert.Nil(t, err)
 
 	assert.Equal(t, "Bob Ross", d.Lookup("who"))
+}
+
+func TestFindResponse(t *testing.T) {
+
+	r, sc, _, err := initTestService(t)
+	assert.NotNil(t, r)
+	assert.NotNil(t, sc)
+	assert.Nil(t, err)
+
+	httpResponse := makeResponse(501, "", []byte(""), 0, nil, nil)
+	assert.NotNil(t, httpResponse)
+
+	request := &sc.Sequence.Requests[1]
+	assert.Empty(t, request.UnknownResponses)
+
+	resp := r.findResponse(httpResponse, request)
+	assert.NotNil(t, resp)
+
+	assert.Equal(t, 1, len(request.UnknownResponses))
+	assert.Equal(t, 501, request.UnknownResponses[0].StatusCode)
+
 }
