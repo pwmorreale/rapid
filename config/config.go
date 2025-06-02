@@ -50,13 +50,12 @@ type TLSConfig struct {
 
 // Scenario defines the entire configuration.
 type Scenario struct {
-	Name            string        `mapstructure:"name"`
-	Version         string        `mapstructure:"version"`
-	Comment         string        `mapstructure:"comment"`
-	Sequence        Sequence      `mapstructure:"sequence"`
-	Replacements    []ReplaceData `mapstructure:"find_replace"`
-	TLS             TLSConfig     `mapstructure:"tls_configuration"`
-	UseSingleClient bool          `mapstructure:"use_single_http_client"`
+	Name         string        `mapstructure:"name"`
+	Version      string        `mapstructure:"version"`
+	Comment      string        `mapstructure:"comment"`
+	Sequence     Sequence      `mapstructure:"sequence"`
+	Replacements []ReplaceData `mapstructure:"find_replace"`
+	TLS          TLSConfig     `mapstructure:"tls_configuration"`
 }
 
 // Sequence contains the sequence configuration.
