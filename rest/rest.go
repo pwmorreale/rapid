@@ -28,9 +28,8 @@ type Rest interface {
 
 // Context defines a scenario context.
 type Context struct {
-	datum      data.Data
-	sc         *config.Scenario
-	httpClient *http.Client
+	datum data.Data
+	sc    *config.Scenario
 
 	// For unit tests to set a mock roundtripper...
 	mockRoundTripper http.RoundTripper
@@ -147,16 +146,9 @@ func (r *Context) createClient() (*http.Client, error) {
 
 	client := &http.Client{}
 
-	// If we are configured for a single client for all requests,
-	// use the cached client.
-	if r.sc.UseSingleClient && r.httpClient != nil {
-		return r.httpClient, nil
-	}
-
 	// If we are testing, then use the mock round tripper...
 	if r.mockRoundTripper != nil {
 		client.Transport = r.mockRoundTripper
-		r.httpClient = client
 		return client, nil
 	}
 
@@ -169,11 +161,6 @@ func (r *Context) createClient() (*http.Client, error) {
 		client.Transport = &http.Transport{
 			TLSClientConfig: tlsConfig,
 		}
-	}
-
-	// If we are using a single client, cache it...
-	if r.sc.UseSingleClient {
-		r.httpClient = client
 	}
 
 	return client, nil
