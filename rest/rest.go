@@ -44,14 +44,14 @@ func New(sc *config.Scenario, d data.Data) *Context {
 }
 
 // CreateTLSConfig creates a TLS configuration
-func (r *Context) CreateTLSConfig() (*tls.Config, error) {
+func (r *Context) CreateTLSConfig(certPath, keyPath, caPath string, enableInsecure bool) (*tls.Config, error) {
 
 	// No TLS config...
-	if r.sc.TLS.CertFilePath == "" && r.sc.TLS.KeyFilePath == "" {
+	if certPath == "" && keyPath == "" {
 		return nil, nil
 	}
 
-	cert, err := tls.LoadX509KeyPair(r.sc.TLS.CertFilePath, r.sc.TLS.KeyFilePath)
+	cert, err := tls.LoadX509KeyPair(certPath, keyPath)
 	if err != nil {
 		return nil, err
 	}
@@ -59,9 +59,9 @@ func (r *Context) CreateTLSConfig() (*tls.Config, error) {
 	// If we have a CA cert path, use it and create a private pool,
 	// otherwise the system pool will be used.
 	var caCertPool *x509.CertPool
-	if r.sc.TLS.CACertFilePath != "" {
+	if caPath != "" {
 
-		caCert, err := os.ReadFile(r.sc.TLS.CACertFilePath)
+		caCert, err := os.ReadFile(caPath)
 		if err != nil {
 			return nil, err
 		}
@@ -73,7 +73,7 @@ func (r *Context) CreateTLSConfig() (*tls.Config, error) {
 	return &tls.Config{
 		Certificates:       []tls.Certificate{cert},
 		RootCAs:            caCertPool,
-		InsecureSkipVerify: r.sc.TLS.InsecureSkipVerify, // Set to true only for testing purposes
+		InsecureSkipVerify: enableInsecure, // Set to true only for testing purposes
 	}, nil
 }
 
@@ -149,7 +149,8 @@ func (r *Context) createClient() (*http.Client, error) {
 	}
 
 	// Get the TLC config if present...
-	tls, err := r.CreateTLSConfig()
+	tls, err := r.CreateTLSConfig(r.sc.TLS.CertFilePath, r.sc.TLS.KeyFilePath,
+		r.sc.TLS.CACertFilePath, r.sc.TLS.InsecureSkipVerify)
 
 	// Probably should expose these in config...
 	client.Transport = &http.Transport{
