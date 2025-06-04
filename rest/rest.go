@@ -162,8 +162,8 @@ func (r *Context) createClient() (*http.Client, error) {
 	return client, err
 }
 
-// Execute creates and executes the request then validates the response.
-func (r *Context) gestalt(ctx context.Context, request *config.Request, start time.Time) error {
+// Gestalt creates and executes the request then validates the response.
+func (r *Context) Gestalt(ctx context.Context, request *config.Request, start time.Time) error {
 
 	req, err := r.createRequest(ctx, request)
 	if err != nil {
@@ -194,7 +194,7 @@ func (r *Context) Execute(ctx context.Context, request *config.Request) {
 
 	start := time.Now()
 
-	err := r.gestalt(ctx, request, start)
+	err := r.Gestalt(ctx, request, start)
 	if err != nil {
 		logger.Error(request, nil, "%v", err)
 		request.Stats.Error(start)
