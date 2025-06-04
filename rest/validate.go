@@ -37,12 +37,18 @@ func cookieExists(expected string, all []string) bool {
 
 func readContent(httpResponse *http.Response, response *config.Response) (int, []byte, error) {
 
-	maxSize := httpResponse.ContentLength
-	if maxSize < 0 || maxSize > int64(response.Content.MaxSize) {
+	// Default if not specified
+	maxSize := int64(4096)
+	if response.Content.MaxSize != 0 {
 		maxSize = int64(response.Content.MaxSize)
 	}
 
-	buf := make([]byte, maxSize)
+	size := httpResponse.ContentLength
+	if size < 0 || size > maxSize {
+		size = maxSize
+	}
+
+	buf := make([]byte, size)
 	n, err := httpResponse.Body.Read(buf)
 	if err != nil && err != io.EOF {
 		return 0, nil, err
