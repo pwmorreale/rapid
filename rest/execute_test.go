@@ -154,7 +154,6 @@ func TestRequestToTestServer(t *testing.T) {
 		assert.Nil(t, err)
 
 		ts := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			io.WriteString(w, "Hello")
 		}))
 		assert.NotNil(t, ts, test.name)
 
