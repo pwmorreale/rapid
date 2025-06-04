@@ -43,7 +43,8 @@ func New(sc *config.Scenario, d data.Data) *Context {
 	}
 }
 
-func (r *Context) createTLSConfig() (*tls.Config, error) {
+// CreateTLSConfig creates a TLS configuration
+func (r *Context) CreateTLSConfig() (*tls.Config, error) {
 
 	// No TLS config...
 	if r.sc.TLS.CertFilePath == "" && r.sc.TLS.KeyFilePath == "" {
@@ -100,12 +101,7 @@ func (r *Context) getContentReader(request *config.Request) *strings.Reader {
 
 	// Perform any substitutions on cookie values.
 	content := r.datum.Replace(request.Content)
-
-	rdr := strings.NewReader(content)
-	if rdr.Size() != 0 {
-		return rdr
-	}
-	return nil
+	return strings.NewReader(content)
 }
 
 func (r *Context) createRequest(ctx context.Context, request *config.Request) (*http.Request, error) {
@@ -152,49 +148,58 @@ func (r *Context) createClient() (*http.Client, error) {
 		return client, nil
 	}
 
-	// If we have a TLS config, create and use it.
-	tlsConfig, err := r.createTLSConfig()
-	if err != nil {
-		return nil, err
-	}
-	if tlsConfig != nil {
-		client.Transport = &http.Transport{
-			TLSClientConfig: tlsConfig,
-		}
+	// Get the TLC config if present...
+	tls, err := r.CreateTLSConfig()
+
+	// Probably should expose these in config...
+	client.Transport = &http.Transport{
+		DisableKeepAlives:   true, // Always, one request per connection.
+		TLSClientConfig:     tls,  // May be nil...
+		TLSHandshakeTimeout: 10 * time.Second,
+		ForceAttemptHTTP2:   true,
 	}
 
-	return client, nil
+	return client, err
+}
+
+// Execute creates and executes the request then validates the response.
+func (r *Context) gestalt(ctx context.Context, request *config.Request, start time.Time) error {
+
+	req, err := r.createRequest(ctx, request)
+	if err != nil {
+		return err
+	}
+
+	client, err := r.createClient()
+	if err != nil {
+		return err
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	err = r.validateResponse(resp, request, start)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // Execute creates and executes the request then validates the response.
 func (r *Context) Execute(ctx context.Context, request *config.Request) {
 
-	req, err := r.createRequest(ctx, request)
-	if err != nil {
-		logger.Error(request, nil, "createRequest: %v", err)
-		return
-	}
-
-	client, err := r.createClient()
-	if err != nil {
-		logger.Error(request, nil, "createClient: %v", err)
-		return
-	}
-
 	start := time.Now()
 
-	resp, err := client.Do(req)
+	err := r.gestalt(ctx, request, start)
 	if err != nil {
+		logger.Error(request, nil, "%v", err)
 		request.Stats.Error(start)
-		logger.Error(request, nil, "client.Do: %v", err)
 		return
 	}
-	defer resp.Body.Close()
 
 	request.Stats.Success(start)
-
-	err = r.validateResponse(resp, request, start)
-	if err != nil {
-		logger.Error(request, nil, "validateResponse: %v", err)
-	}
 }
