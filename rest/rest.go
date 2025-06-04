@@ -112,9 +112,8 @@ func (r *Context) createRequest(ctx context.Context, request *config.Request) (*
 	rdr := r.getContentReader(request)
 	req, err := http.NewRequestWithContext(ctx, request.Method, url, rdr)
 
-	if rdr != nil {
+	if request.ContentType != "" {
 		req.Header.Add("Content-Type", request.ContentType)
-		req.ContentLength = rdr.Size()
 	}
 
 	if err != nil {
