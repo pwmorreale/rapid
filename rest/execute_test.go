@@ -54,8 +54,9 @@ func TestRequestToTestServer(t *testing.T) {
 	for _, test := range []struct {
 		name string
 
-		sc      config.Scenario
-		request config.Request
+		scenario  config.Scenario
+		request   config.Request
+		serverTLS config.TLSConfig
 
 		tlsError string
 		count    int64
@@ -75,7 +76,7 @@ func TestRequestToTestServer(t *testing.T) {
 			tlsError: "",
 			count:    1,
 			errors:   0,
-			sc: config.Scenario{
+			scenario: config.Scenario{
 				TLS: config.TLSConfig{
 					CertFilePath:   "../test/certs/dev.crt",
 					KeyFilePath:    "../test/certs/dev.key",
@@ -85,10 +86,70 @@ func TestRequestToTestServer(t *testing.T) {
 			request: config.Request{
 				Method: "POST",
 			},
+			serverTLS: config.TLSConfig{
+				CertFilePath:   "../test/certs/dev.crt",
+				KeyFilePath:    "../test/certs/dev.key",
+				CACertFilePath: "../test/certs/devCA.pem",
+			},
+		},
+		{
+			name:   "https no CA",
+			count:  0,
+			errors: 1,
+			scenario: config.Scenario{
+				TLS: config.TLSConfig{
+					CertFilePath: "../test/certs/dev.crt",
+					KeyFilePath:  "../test/certs/dev.key",
+				},
+			},
+			request: config.Request{
+				Method: "POST",
+			},
+			serverTLS: config.TLSConfig{
+				CertFilePath:   "../test/certs/dev.crt",
+				KeyFilePath:    "../test/certs/dev.key",
+				CACertFilePath: "../test/certs/devCA.pem",
+			},
+		},
+		{
+			name:   "https no CA, w/skip verify",
+			count:  1,
+			errors: 0,
+			scenario: config.Scenario{
+				TLS: config.TLSConfig{
+					CertFilePath:       "../test/certs/dev.crt",
+					KeyFilePath:        "../test/certs/dev.key",
+					InsecureSkipVerify: true,
+				},
+			},
+			request: config.Request{
+				Method: "POST",
+			},
+		},
+		{
+			name:     "https bad client key",
+			tlsError: "",
+			count:    0,
+			errors:   1,
+			scenario: config.Scenario{
+				TLS: config.TLSConfig{
+					CertFilePath:   "../test/certs/dev.crt",
+					KeyFilePath:    "../test/certs/bad.key",
+					CACertFilePath: "../test/certs/devCA.pem",
+				},
+			},
+			request: config.Request{
+				Method: "POST",
+			},
+			serverTLS: config.TLSConfig{
+				CertFilePath:   "../test/certs/dev.crt",
+				KeyFilePath:    "../test/certs/dev.key",
+				CACertFilePath: "../test/certs/devCA.pem",
+			},
 		},
 	} {
 		// Always... to start fresh on each test.
-		r, err := initTest(&test.sc)
+		r, err := initTest(&test.scenario)
 		assert.NotNil(t, r)
 		assert.Nil(t, err)
 
@@ -97,9 +158,11 @@ func TestRequestToTestServer(t *testing.T) {
 		}))
 		assert.NotNil(t, ts, test.name)
 
-		ts.TLS, err = r.CreateTLSConfig()
+		ts.TLS, err = r.CreateTLSConfig(test.serverTLS.CertFilePath, test.serverTLS.KeyFilePath,
+			test.serverTLS.CACertFilePath, test.serverTLS.InsecureSkipVerify)
 		if err != nil {
 			assert.Equal(t, test.tlsError, err.Error())
+			return
 		}
 
 		if ts.TLS != nil {
