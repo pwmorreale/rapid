@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/pwmorreale/rapid/config"
 	"github.com/pwmorreale/rapid/data"
@@ -51,6 +52,11 @@ func TestRequestToTestServer(t *testing.T) {
 
 	initLogger(io.Discard)
 
+	type header struct {
+		name  string
+		value string
+	}
+
 	for _, test := range []struct {
 		name string
 
@@ -58,15 +64,17 @@ func TestRequestToTestServer(t *testing.T) {
 		request   config.Request
 		serverTLS config.TLSConfig
 
+		serverHeaders []header
+
+		responseStatus int
+
+		requestError string
+
 		tlsError string
-		count    int64
-		errors   int64
 	}{
 		{
 			name:     "http",
 			tlsError: "",
-			count:    1,
-			errors:   0,
 			request: config.Request{
 				Method: "POST",
 			},
@@ -74,8 +82,6 @@ func TestRequestToTestServer(t *testing.T) {
 		{
 			name:     "https (TLS)",
 			tlsError: "",
-			count:    1,
-			errors:   0,
 			scenario: config.Scenario{
 				TLS: config.TLSConfig{
 					CertFilePath:   "../test/certs/dev.crt",
@@ -93,15 +99,14 @@ func TestRequestToTestServer(t *testing.T) {
 			},
 		},
 		{
-			name:   "https no CA",
-			count:  0,
-			errors: 1,
+			name: "https no CA",
 			scenario: config.Scenario{
 				TLS: config.TLSConfig{
 					CertFilePath: "../test/certs/dev.crt",
 					KeyFilePath:  "../test/certs/dev.key",
 				},
 			},
+			requestError: "tls: failed to verify certificate: x509: “RAPID Test”",
 			request: config.Request{
 				Method: "POST",
 			},
@@ -112,9 +117,7 @@ func TestRequestToTestServer(t *testing.T) {
 			},
 		},
 		{
-			name:   "https no CA, w/skip verify",
-			count:  1,
-			errors: 0,
+			name: "https no CA, w/skip verify",
 			scenario: config.Scenario{
 				TLS: config.TLSConfig{
 					CertFilePath:       "../test/certs/dev.crt",
@@ -127,10 +130,9 @@ func TestRequestToTestServer(t *testing.T) {
 			},
 		},
 		{
-			name:     "https bad client key",
-			tlsError: "",
-			count:    0,
-			errors:   1,
+			name:         "https bad client key",
+			tlsError:     "",
+			requestError: "tls: failed to parse private key",
 			scenario: config.Scenario{
 				TLS: config.TLSConfig{
 					CertFilePath:   "../test/certs/dev.crt",
@@ -147,20 +149,70 @@ func TestRequestToTestServer(t *testing.T) {
 				CACertFilePath: "../test/certs/devCA.pem",
 			},
 		},
+		{
+			name:     "server side headers",
+			tlsError: "",
+			serverHeaders: []header{
+				{name: "MyHeader", value: "myvalue"},
+			},
+			responseStatus: http.StatusOK,
+			request: config.Request{
+				Method: "POST",
+				ExtraHeaders: []config.HeaderData{
+					{Name: "MyHeader", Value: "myvalue"},
+				},
+				Responses: []*config.Response{
+					&config.Response{
+						StatusCode: http.StatusOK,
+						Headers: []config.HeaderData{
+							{Name: "MyHeader", Value: "myvalue"},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:           "missing expected header",
+			tlsError:       "",
+			responseStatus: http.StatusOK,
+			requestError:   "header: Myheader not found",
+			request: config.Request{
+				Method: "POST",
+				ExtraHeaders: []config.HeaderData{
+					{Name: "MyHeader", Value: "myvalue"},
+				},
+				Responses: []*config.Response{
+					&config.Response{
+						StatusCode: http.StatusOK,
+						Headers: []config.HeaderData{
+							{Name: "MyHeader", Value: "myvalue"},
+						},
+					},
+				},
+			},
+		},
 	} {
 		// Always... to start fresh on each test.
 		r, err := initTest(&test.scenario)
-		assert.NotNil(t, r)
-		assert.Nil(t, err)
+		assert.NotNil(t, r, test.name)
+		assert.Nil(t, err, test.name)
 
 		ts := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+			for i := range test.serverHeaders {
+				w.Header().Set(test.serverHeaders[i].name, test.serverHeaders[i].value)
+			}
+
+			if test.responseStatus != 0 {
+				w.WriteHeader(test.responseStatus)
+			}
 		}))
 		assert.NotNil(t, ts, test.name)
 
 		ts.TLS, err = r.CreateTLSConfig(test.serverTLS.CertFilePath, test.serverTLS.KeyFilePath,
 			test.serverTLS.CACertFilePath, test.serverTLS.InsecureSkipVerify)
 		if err != nil {
-			assert.Equal(t, test.tlsError, err.Error())
+			assert.Contains(t, err.Error(), test.tlsError, test.name)
 			return
 		}
 
@@ -173,10 +225,12 @@ func TestRequestToTestServer(t *testing.T) {
 		ctx := context.Background()
 
 		test.request.URL = ts.URL
-		r.Execute(ctx, &test.request)
-
-		assert.Equal(t, test.count, test.request.Stats.GetCount(), test.name)
-		assert.Equal(t, test.errors, test.request.Stats.GetErrors(), test.name)
+		err = r.Gestalt(ctx, &test.request, time.Now())
+		if test.requestError != "" {
+			assert.Contains(t, err.Error(), test.requestError, test.name)
+		} else {
+			assert.Nil(t, err, test.name)
+		}
 
 		ts.Close()
 
