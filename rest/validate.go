@@ -12,11 +12,17 @@ import (
 	"mime"
 	"net/http"
 	"regexp"
+	"sync"
 	"time"
 
 	"github.com/gabriel-vasile/mimetype"
 	"github.com/pwmorreale/rapid/config"
 )
+
+// Used for adding unknown response structs to a request.
+// Using a global lock here prevents 'vet' warnings for atomic noCopy.
+// While less than perfect, the only contention is ffrom the same request. (eg: thundering herd resolutions)
+var unknownResponseMutex sync.Mutex
 
 func cookieExists(expected string, all []string) bool {
 
@@ -203,8 +209,8 @@ func (r *Context) findResponse(httpResponse *http.Response, request *config.Requ
 
 	// Not found on the configured array, so find/add to the unkowns array.
 
-	request.Mutex.Lock()
-	defer request.Mutex.Unlock()
+	unknownResponseMutex.Lock()
+	defer unknownResponseMutex.Unlock()
 
 	resp = lookupResponse(httpResponse.StatusCode, request.UnknownResponses)
 	if resp != nil {
