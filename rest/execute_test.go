@@ -199,10 +199,18 @@ func TestRequestToTestServer(t *testing.T) {
 
 		ts := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
+			// Ensure whatever headers configured actually arrive.
+			for i := range test.request.ExtraHeaders {
+				v := r.Header.Get(test.request.ExtraHeaders[i].Name)
+				assert.Equal(t, v, test.request.ExtraHeaders[i].Value)
+			}
+
+			// Set any return headers.
 			for i := range test.serverHeaders {
 				w.Header().Set(test.serverHeaders[i].name, test.serverHeaders[i].value)
 			}
 
+			// Set the response status.
 			if test.responseStatus != 0 {
 				w.WriteHeader(test.responseStatus)
 			}
