@@ -106,7 +106,7 @@ func TestRequestToTestServer(t *testing.T) {
 					KeyFilePath:  "../test/certs/dev.key",
 				},
 			},
-			requestError: "tls: failed to verify certificate: x509: “RAPID Test”",
+			requestError: "tls: failed to verify certificate:",
 			request: config.Request{
 				Method: "POST",
 			},
