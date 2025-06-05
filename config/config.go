@@ -7,7 +7,6 @@ package config
 
 import (
 	"log/slog"
-	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -127,7 +126,6 @@ type Request struct {
 	Responses        []*Response  `mapstructure:"responses"`
 	Stats            stats.Statistics
 	UnknownResponses []*Response // Unconfigured responses received...
-	Mutex            sync.Mutex
 
 	// Did we execute this one?
 	Executed bool

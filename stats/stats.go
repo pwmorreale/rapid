@@ -12,20 +12,20 @@ import (
 
 // Statistics defines measured statistics.
 type Statistics struct {
-	count     atomic.Uint64
-	errors    atomic.Uint64
-	totalTime atomic.Int64
-	minTime   atomic.Int64
-	maxTime   atomic.Int64
+	count     int64
+	errors    int64
+	totalTime int64
+	minTime   int64
+	maxTime   int64
 }
 
 func (s *Statistics) setMin(d int64) {
 	for {
-		current := s.minTime.Load()
+		current := atomic.LoadInt64(&s.minTime)
 		if current > 0 && d >= current {
 			return
 		}
-		if s.minTime.CompareAndSwap(current, d) {
+		if atomic.CompareAndSwapInt64(&s.minTime, current, d) {
 			return
 		}
 	}
@@ -33,11 +33,11 @@ func (s *Statistics) setMin(d int64) {
 
 func (s *Statistics) setMax(d int64) {
 	for {
-		current := s.maxTime.Load()
+		current := atomic.LoadInt64(&s.maxTime)
 		if d <= current {
 			return
 		}
-		if s.maxTime.CompareAndSwap(current, d) {
+		if atomic.CompareAndSwapInt64(&s.maxTime, current, d) {
 			return
 		}
 	}
@@ -46,7 +46,7 @@ func (s *Statistics) setMax(d int64) {
 func (s *Statistics) updateTimes(start time.Time) {
 
 	d := int64(time.Since(start))
-	s.totalTime.Add(d)
+	atomic.AddInt64(&s.totalTime, d)
 	s.setMin(d)
 	s.setMax(d)
 
@@ -54,37 +54,37 @@ func (s *Statistics) updateTimes(start time.Time) {
 
 // Success updates statistics and the recorded execution times.
 func (s *Statistics) Success(start time.Time) {
-	s.count.Add(1)
+	atomic.AddInt64(&s.count, 1)
 	s.updateTimes(start)
 }
 
 // Error updates statistics and the recorded execution times.
 func (s *Statistics) Error(start time.Time) {
-	s.errors.Add(1)
+	atomic.AddInt64(&s.errors, 1)
 	s.updateTimes(start)
 }
 
 // GetCount returns the count.
 func (s *Statistics) GetCount() int64 {
-	return int64(s.count.Load())
+	return atomic.LoadInt64(&s.count)
 }
 
 // GetErrors returns the errors.
 func (s *Statistics) GetErrors() int64 {
-	return int64(s.errors.Load())
+	return atomic.LoadInt64(&s.errors)
 }
 
 // GetMinDuration returns the minimum duration.
 func (s *Statistics) GetMinDuration() time.Duration {
-	return time.Duration(s.minTime.Load())
+	return time.Duration(atomic.LoadInt64(&s.minTime))
 }
 
 // GetDuration returns the total time duration.
 func (s *Statistics) GetDuration() time.Duration {
-	return time.Duration(s.totalTime.Load())
+	return time.Duration(atomic.LoadInt64(&s.totalTime))
 }
 
 // GetMaxDuration returns the maximum duration.
 func (s *Statistics) GetMaxDuration() time.Duration {
-	return time.Duration(s.maxTime.Load())
+	return time.Duration(atomic.LoadInt64(&s.maxTime))
 }
