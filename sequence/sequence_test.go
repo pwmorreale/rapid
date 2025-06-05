@@ -20,7 +20,7 @@ import (
 
 var RequestDuration = time.Millisecond * 100
 
-func fakeExecuteStub(ctx context.Context, request *config.Request) {
+func fakeExecuteStub(_ context.Context, _ *config.Request) {
 	time.Sleep(RequestDuration)
 }
 
