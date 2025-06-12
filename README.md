@@ -69,23 +69,23 @@ sequence:
   requests:
     - name:
       once_only:
+      method:
+      url:
+      content:
+      content_type:
       thundering_herd:
         maximum_requests:
         concurrent_requests:
         time_limit:
         delay:
-      method:
-      url:
       extra_headers:
         - name:
           value:
       cookies:
         - value:
-      content:
-      content_type:
       responses:
-        - status_code:
-          name:
+        - name:
+          status_code:
           headers:
             - name:
               value:
@@ -102,7 +102,7 @@ sequence:
                 path:
                 match:
 ```
-## Scenario fields
+### Scenario fields
 The *name*, *version* and *comment* fields are optional and if present will appear in the report.  Use these fields to identify the test run, server instance, etc.
 
 ```yaml
@@ -111,13 +111,13 @@ version:
 comment:
 ```
 
-| Field | Notes| Type|
-|-------|---|---|
-|name | Optional name for this  scenario | string |
-|version | Optional version for the scenario, or whatever you choose | string |
-| comment | Optional comment | string |
+| Field | Notes| Default |Type|
+|-------|---|---|--|
+|name | Optional name for this  scenario || string |
+|version | Optional version for the scenario, or whatever you choose | |string |
+| comment | Optional comment || string |
 
-## Find&Replace Configuration
+### Find&Replace Configuration
 Find&Replace allows you to define fields for replacement during execution of the scenario.  Headers (names and values), cookies, and URLs  are passed through this module for expansion prior to being referenced.  
 
 Use https://golang.org/s/re2syntax for the *match* regular expression.  **Note you must take care to avoid any collisions between the match string and data within the field being modified**  Rapid will indescriminately replace all successful matches within the field.
@@ -130,12 +130,12 @@ find_replace:
   replace:
 ```
 
- |Field | Notes| Type|
-|-------|---|---|
-|match | Regex2 to match | string |
-|replace | Replacement value for a successful match | string |
+ |Field | Notes| Default| Type|
+|-------|---|---|--|
+|match | Regex2 to match | | string |
+|replace | Replacement value for a successful match || string |
 
-## TLS Configuration
+### TLS Configuration
 This section allows you to specify the certificates used for TLS connections.  This configuration is used for all requests in the configuration. 
 If this configuration is omitted, then TLS on the client will not be enabled.
 
@@ -151,14 +151,14 @@ tls_configuration:
   insecure_skip_verify:
 ```
 
- |Field | Notes| Type|
-|-------|---|---|
-|client_cert_path | Path to client certificate file in PEM format. | string |
-|client_key_path |Path to client key certificate file in PEM format| string |
-|ca_cert_path | Path to CA certificate file in PEM format.  | string |
-|insecure_skip_verify| If set to *true*, then the client will not attempt to verify the server certificate. | boolean |
+ |Field | Notes| Default| Type|
+|-------|---|---|--|
+|client_cert_path | Path to client certificate file in PEM format. | |string |
+|client_key_path |Path to client key certificate file in PEM format|| string |
+|ca_cert_path | Path to CA certificate file in PEM format.  | | string |
+|insecure_skip_verify| If set to *true*, then the client will not attempt to verify the server certificate. |false| boolean |
 
-## Sequence Configuration
+### Sequence Configuration
 The *sequence* section defines iterations of the *requests*. 
 ```yaml
 sequence:
@@ -178,7 +178,7 @@ sequence:
 | requests| The array of requests, see next section| | array |
 
 
-## Request Configuration
+### Request Configuration
 The *requests* array defines the *requests*.
 ```yaml
   requests:
@@ -186,6 +186,8 @@ The *requests* array defines the *requests*.
       once_only:
       method:
       url:
+      content:
+      content_type:
       thundering_herd:
         maximum_requests:
         concurrent_requests:
@@ -196,31 +198,72 @@ The *requests* array defines the *requests*.
           value:
       cookies:
         - value:
-      content:
-      content_type:
+      responses:
 ```
 
 | Field | Notes| Default| Type|
 |-------|---|---|---|
-|name | The name for this request.  Used in logging and reqports|""| string |
-|only_only | Execute this request exactly one time, regardless of the *iterations* count, and/or the subsequent *thundering_herd* configuration. |false| boolean |
-|method  | The [HTTP method](http://www.w3schools.com/TAgs/ref_httpmethods.asp).  This will be converted to upper case.|""| string |
-|url | The complete URL of the request.  Include and query parameters, fragments, etc.  The URL is only passed to the **Find&Replace** module for modification.  No other modifications are made. |""| string |
-|Thndering_herd | See next section||  |
+|name | The name for this request.  Used in logging and reports|| string |
+|once_only | Execute this request exactly one time, regardless of the *iterations* count, and/or the subsequent *thundering_herd* configuration. |false| boolean |
+|method  | The [HTTP method](http://www.w3schools.com/TAgs/ref_httpmethods.asp).  This will be converted to upper case.|| string |
+|url | The complete URL of the request.  Include and query parameters, fragments, etc.  The URL is only passed to the **Find&Replace** module for modification.  No other modifications are made. || string |
+|content |Content for this request.  If present, the contents of this parameter becomes the body of the request. This parameter is passed through the **Find&Replace** module for modification.|| string |
+|content_type | The [mime type](https://developer.mozilla.org/en-US/docs/Glossary/MIME_type) of the *content* parameter.  If defined, a *Content-Type* header will be added to the request with this value. || string |
+|thndering_herd | See next section||  |
 
-### Thundering Herd Configuration
+#### Thundering Herd Configuration
 The *thundering_herd* configuration allows you to control concurrent execution of this request within the current iteration. 
 
+If this configuration is omitted, then exactly one instance of the request will be executed for each iteration.
 
+Note that Rapid always creates a separate client for each request.  This means that, by design, rapid will use a separate system socket for each transaction with the implied server.  Consequently, the actual number of concurrent requests that can be created can be limited by the platform used to execute Rapid.  The intent here is to mimic real world application where a HTTP server is handling multiple concurrent requests from multiple separate clients.  
+
+```yaml
+thundering_herd:
+  maximum_requests:
+  concurrent_requests:
+  time_limit:
+  delay:
+```
 
 | Field | Notes| Default| Type|
 |-------|---|---|---|
-|iterations | jj|0| integer |
-|iterations | jj|0| integer |
-|iterations | jj|0| integer |
-|iterations | jj|0| integer |
-|iterations | jj|0| integer |
-|iterations | jj|0| integer |
+|maximum_requests |The total number of requests to execute.  Note that *maximum_requests* is ignored if *time_limit* is configured |1| integer |
+|concurrent_requests |The number of requests to execute concurrently.  Rapid will maintain this number of active requests until one of the limits is reached. |1| integer |
+|time_limit | The time limit for the herd. Specify an integer with a modifier of *s* (seconds), *m* (minutes), *h* (hours).  If this parameter is set, then *maximum_requests* is ignored.|0| string |
+|delay | Optional delay between starting each of the *concurrent_requests*. Specify an integer with a modifier of *ms* (milliseconds), *s* (minutes) or  *m* (minutes). |0| integer |
+
+#### Extra Headers
+This section allows you to specify an array of additional headers to the request.  Header names and values are passed through the **Find&Replace** module for expansion prior to being added to the request.
+
+```yaml
+extra_headers:
+  - name:
+    value:
+```
+
+| Field | Notes| Default| Type|
+|-------|---|---|---|
+|name | The header name|| string |
+|value |The header content|| string |
+
+#### Cookies Configuration
+The *cookies* section allows you to define an array of cookies sent with the request.  Each value is added to the *Cookie* header with an intevening semicolon (;).
+
+```yaml
+cookies:
+  - value:
+```
+
+| Field | Notes| Default| Type|
+|-------|---|---|---|
+|value | The cookie string|| string |
+
+#### Response Configuration
+The *responses* section of *request* configuration is an array of the possible responses to this request. 
+
+You can define 
+
 |iterations | jj|0| integer |
 |iterations | jj|0| integer |
 |iterations | jj|0| integer |
