@@ -1,0 +1,51 @@
+name:
+version:
+comment:
+find_replace:
+  - match:
+    replace:
+tls_configuration:
+  client_cert_path: 
+  client_key_path:
+  ca_cert_path: 
+  insecure_skip_verify:
+sequence:
+  iterations: 
+  iteration_time_limit:
+  abort_on_error:
+  ignore_duplicate_errors:
+  requests:
+    - name: 
+      once_only:
+      thundering_herd:
+        maximum_requests:
+        concurrent_requests:
+        time_limit:
+        delay:
+      method:
+      url:
+      extra_headers:
+        - name:
+          value:
+      cookies:
+        - value: 
+      content:
+      content_type:
+      responses:
+        - status_code:
+          name:
+          headers:
+            - name:
+              value:
+          cookies:
+            - value: 
+          content:
+            expected:
+            content_type:
+            max_content:
+            contains:
+              - ""
+            extract:
+              - type:
+                path:
+                match:
