@@ -103,6 +103,7 @@ sequence:
                 match:
 ```
 ## Scenario fields
+The *name*, *version* and *comment* fields are optional and if present will appear in the report.  Use these fields to identify the test run, server instance, etc.
 
 ```yaml
 name:
@@ -116,9 +117,12 @@ comment:
 |version | Optional version for the scenario, or whatever you choose | string |
 | comment | Optional comment | string |
 
-The *name*, *version* and *comment* fields are optional and if present will appear in the report.  Use these fields to identify the test run, server instance, etc.
+## Find&Replace Configuration
+Find&Replace allows you to define fields for replacement during execution of the scenario.  Headers (names and values), cookies, and URLs  are passed through this module for expansion prior to being referenced.  
 
-## Find&Replace fields
+Use https://golang.org/s/re2syntax for the *match* regular expression.  **Note you must take care to avoid any collisions between the match string and data within the field being modified**  Rapid will indescriminately replace all successful matches within the field.
+
+Also see the *extract* configuration below.
 
 ```yaml
 find_replace:
@@ -131,7 +135,102 @@ find_replace:
 |match | Regex2 to match | string |
 |replace | Replacement value for a successful match | string |
 
-FInd&Replace allows you to define fields for replacement during execution of the scenario.  Headers (names and values), cookies, and URLs  are passed through this module for expansion prior to being referenced.  
+## TLS Configuration
+This section allows you to specify the certificates used for TLS connections.  This configuration is used for all requests in the configuration. 
+If this configuration is omitted, then TLS on the client will not be enabled.
 
-Use https://golang.org/s/re2syntax for the *match* regular expression.  **Note you must take care to avoid any collisions between the match string and data within the field being modified**  Rapid will indescriminately replace all successful matches within the field.
+If you specify a CA certificate, it will be used to verify the identify of the server certificate during the TLS handshake and the system certificates will be ignored.
+
+The *insecure_skip_verify* field tells the client to ignore attempts to verify the server certificate.  This can be useful when you do not have a CA certificate from the server.
+
+```yaml
+tls_configuration:
+  client_cert_path:
+  client_key_path:
+  ca_cert_path:
+  insecure_skip_verify:
+```
+
+ |Field | Notes| Type|
+|-------|---|---|
+|client_cert_path | Path to client certificate file in PEM format. | string |
+|client_key_path |Path to client key certificate file in PEM format| string |
+|ca_cert_path | Path to CA certificate file in PEM format.  | string |
+|insecure_skip_verify| If set to *true*, then the client will not attempt to verify the server certificate. | boolean |
+
+## Sequence Configuration
+The *sequence* section defines iterations of the *requests*. 
+```yaml
+sequence:
+  iterations:
+  iteration_time_limit:
+  abort_on_error:
+  ignore_duplicate_errors:
+  requests:
+```
+
+| Field | Notes| Default| Type|
+|-------|---|---|---|
+|iterations | The number of times to iterate through the array of requests.  There is no defaiult. |0| integer |
+|iteration_time_limit | The maximum amount of time to allow an iteration to complete. Specify an integer with a modifier of *s* (seconds), *m* (minutes), or *h* (hours) | 0 | string |
+| abort_on_error | currently unimplemented | false| boolean |
+| ignore_duplicste_errors | currently unimplemented | false | boolean |
+| requests| The array of requests, see next section| | array |
+
+
+## Request Configuration
+The *requests* array defines the *requests*.
+```yaml
+  requests:
+    - name:
+      once_only:
+      method:
+      url:
+      thundering_herd:
+        maximum_requests:
+        concurrent_requests:
+        time_limit:
+        delay:
+      extra_headers:
+        - name:
+          value:
+      cookies:
+        - value:
+      content:
+      content_type:
+```
+
+| Field | Notes| Default| Type|
+|-------|---|---|---|
+|name | The name for this request.  Used in logging and reqports|""| string |
+|only_only | Execute this request exactly one time, regardless of the *iterations* count, and/or the subsequent *thundering_herd* configuration. |false| boolean |
+|method  | The [HTTP method](http://www.w3schools.com/TAgs/ref_httpmethods.asp).  This will be converted to upper case.|""| string |
+|url | The complete URL of the request.  Include and query parameters, fragments, etc.  The URL is only passed to the **Find&Replace** module for modification.  No other modifications are made. |""| string |
+|Thndering_herd | See next section||  |
+
+### Thundering Herd Configuration
+The *thundering_herd* configuration allows you to control concurrent execution of this request within the current iteration. 
+
+
+
+| Field | Notes| Default| Type|
+|-------|---|---|---|
+|iterations | jj|0| integer |
+|iterations | jj|0| integer |
+|iterations | jj|0| integer |
+|iterations | jj|0| integer |
+|iterations | jj|0| integer |
+|iterations | jj|0| integer |
+|iterations | jj|0| integer |
+|iterations | jj|0| integer |
+|iterations | jj|0| integer |
+|iterations | jj|0| integer |
+|iterations | jj|0| integer |
+|iterations | jj|0| integer |
+|iterations | jj|0| integer |
+|iterations | jj|0| integer |
+|iterations | jj|0| integer |
+|iterations | jj|0| integer |
+|iterations | jj|0| integer |
+|iterations | jj|0| integer |
 
