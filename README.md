@@ -46,13 +46,92 @@ Rapid allows you to create *thundering herd* configurations that allow you to sp
 
 
 ## Configuration
-A scenario is the basic unit that describes a test case for RAPID.  A scenario is wholly contained within a single YAML file.  
+A scenario is the basic unit that describes a test case for RAPID.  A scenario is wholly contained within a single YAML file.  Scenarios consist of a *sequence* of one or more *requests* and their expected *responses*.
 
-Scenarios consist of a *sequence* of one or more *requests* and their expected *responses*.
+A complete list of scenario fields can be found in the docs/template file.  A listing and discussion of the fields follows:
+```yaml
+name:
+version:
+comment:
+find_replace:
+  - match:
+    replace:
+tls_configuration:
+  client_cert_path:
+  client_key_path:
+  ca_cert_path:
+  insecure_skip_verify:
+sequence:
+  iterations:
+  iteration_time_limit:
+  abort_on_error:
+  ignore_duplicate_errors:
+  requests:
+    - name:
+      once_only:
+      thundering_herd:
+        maximum_requests:
+        concurrent_requests:
+        time_limit:
+        delay:
+      method:
+      url:
+      extra_headers:
+        - name:
+          value:
+      cookies:
+        - value:
+      content:
+      content_type:
+      responses:
+        - status_code:
+          name:
+          headers:
+            - name:
+              value:
+          cookies:
+            - value:
+          content:
+            expected:
+            content_type:
+            max_content:
+            contains:
+              - ""
+            extract:
+              - type:
+                path:
+                match:
+```
+## Scenario fields
 
-A request is a definition of a REST API instance.  You can define the parameters of the URL and query parameters, and any additional headers, cookies and/or payload for the request and define the possible responses.
+```yaml
+name:
+version:
+comment:
+```
 
- A 
+| Field | Notes| Type|
+|-------|---|---|
+|name | Optional name for this  scenario | string |
+|version | Optional version for the scenario, or whatever you choose | string |
+| comment | Optional comment | string |
 
+The *name*, *version* and *comment* fields are optional and if present will appear in the report.  Use these fields to identify the test run, server instance, etc.
 
+## Find&Replace fields
+
+```yaml
+find_replace:
+  match:
+  replace:
+```
+
+ |Field | Notes| Type|
+|-------|---|---|
+|match | Regex2 to match | string |
+|replace | Replacement value for a successful match | string |
+
+FInd&Replace allows you to define fields for replacement during execution of the scenario.  Headers (names and values), cookies, and URLs  are passed through this module for expansion prior to being referenced.  
+
+Use https://golang.org/s/re2syntax for the *match* regular expression.  **Note you must take care to avoid any collisions between the match string and data within the field being modified**  Rapid will indescriminately replace all successful matches within the field.
 
