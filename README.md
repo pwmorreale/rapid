@@ -10,6 +10,8 @@ Rapid works entirely through a YAML configuration file.   The configuration is c
 
 You define content, headers, and cookies for both requests and the responses.  Rapid compares the actual response data with the expected response configuration and informs you of any discrepancies.  
 
+In addition, Rapid allows you to dynamically extract data from previous responses and insert that data into future requests.  This allows you to create dynamic paths through your service infrastructure.
+
 ## Install
 To install:
 
@@ -18,10 +20,11 @@ To install:
 ```
 
 ## Usage
-To execute a scenario, use the ***run*** command:
+
+Rapid has two commands.  To execute a scenario, use the ***run*** command:
 
 ```bash
-% rapid -s ./scenario.yaml
+% rapid run -s ./scenario.yaml
 ```
 You can also check a scenario configuration to find common typos/etc by using the ***verify*** command:
 
@@ -174,7 +177,7 @@ sequence:
 |iterations | The number of times to iterate through the array of requests.  There is no defaiult. |0| integer |
 |iteration_time_limit | The maximum amount of time to allow an iteration to complete. Specify an integer with a modifier of *s* (seconds), *m* (minutes), or *h* (hours) | 0 | string |
 | abort_on_error | currently unimplemented | false| boolean |
-| ignore_duplicste_errors | currently unimplemented | false | boolean |
+| ignore_duplicate_errors | currently unimplemented | false | boolean |
 | requests| The array of requests, see next section| | array |
 
 
@@ -209,7 +212,7 @@ The *requests* array defines the *requests*.
 |url | The complete URL of the request.  Include and query parameters, fragments, etc.  The URL is only passed to the **Find&Replace** module for modification.  No other modifications are made. || string |
 |content |Content for this request.  If present, the contents of this parameter becomes the body of the request. This parameter is passed through the **Find&Replace** module for modification.|| string |
 |content_type | The [mime type](https://developer.mozilla.org/en-US/docs/Glossary/MIME_type) of the *content* parameter.  If defined, a *Content-Type* header will be added to the request with this value. || string |
-|thndering_herd | See next section||  |
+|thundering_herd | See next section||  |
 
 #### Thundering Herd Configuration
 The *thundering_herd* configuration allows you to control concurrent execution of this request within the current iteration. 
@@ -260,12 +263,65 @@ cookies:
 |value | The cookie string|| string |
 
 #### Response Configuration
-The *responses* section of *request* configuration is an array of the possible responses to this request. 
+The *responses* section of *request* configuration is an array of the possible responses to this request. Here you configure the expected data associated with a particular response.  Rapid will compare the actual response against what is expected and report any discrepencies.
 
-You can define 
+```yaml
+responses:
+  - name:
+    status_code:
+    headers:
+      - name:
+        value:
+    cookies:
+      - value:
+    content:
+      expected:
+      content_type:
+      max_content:
+      contains:
+        - ""
+      extract:
+        - type:
+          path:
+          match:
+```
 
-|iterations | jj|0| integer |
-|iterations | jj|0| integer |
+| Field | Notes| Default| Type|
+|-------|---|---|---|
+|name | The name for this response.  Used in logs and reports|| string |
+|status_code | The HTTP status code for this response.|0| integer |
+|headers | See next section|| array |
+
+###### Headers
+These are headers expected to be set by the server in the reponse.  Rapid will perform exact, case sensitive matches and report any discrepencies.
+
+```yaml
+headers:
+  - name:
+    value:
+cookies:
+```
+
+| Field | Notes| Default| Type|
+|-------|---|---|---|
+|name | The case-sensitive name for this header.|| string |
+|value | The expected case-sensitive contents of this header.|| string |
+|cookies| See next section|| array |
+
+###### Cookies
+The array of Cookies expected to be returned from the server.  Rapid will parse the cookie(s) and compare both the cookie and its attributes against those returned by the server.
+
+```yaml
+cookies:
+  - value:
+content:
+```
+
+| Field | Notes| Default| Type|
+|-------|---|---|---|
+|value | The expected cookie|| string |
+|content| See next section||  |
+
 |iterations | jj|0| integer |
 |iterations | jj|0| integer |
 |iterations | jj|0| integer |
