@@ -262,7 +262,7 @@ cookies:
 |-------|---|---|---|
 |value | The cookie string|| string |
 
-#### Response Configuration
+### Response Configuration
 The *responses* section of *request* configuration is an array of the possible responses to this request. Here you configure the expected data associated with a particular response.  Rapid will compare the actual response against what is expected and report any discrepencies.
 
 ```yaml
@@ -292,7 +292,7 @@ responses:
 |status_code | The HTTP status code for this response.|0| integer |
 |headers | See next section|| array |
 
-###### Headers
+##### Headers
 These are headers expected to be set by the server in the reponse.  Rapid will perform exact, case sensitive matches and report any discrepencies.
 
 ```yaml
@@ -308,7 +308,7 @@ cookies:
 |value | The expected case-sensitive contents of this header.|| string |
 |cookies| See next section|| array |
 
-###### Cookies
+##### Cookies
 The array of Cookies expected to be returned from the server.  Rapid will parse the cookie(s) and compare both the cookie and its attributes against those returned by the server.
 
 ```yaml
@@ -322,8 +322,26 @@ content:
 |value | The expected cookie|| string |
 |content| See next section||  |
 
-|iterations | jj|0| integer |
-|iterations | jj|0| integer |
+#### Content
+
+```yaml
+content:
+  expected:
+  content_type:
+  max_content:
+  contains:
+    - ""
+  extract:
+    - type:
+      path:
+      match:
+```
+
+| Field | Notes| Default| Type|
+|-------|---|---|---|
+|expected | Whether the body of the response should contain content. This can be useful to check for data leaks from the server. |false| boolean |
+|content_type | The [mime type](https://developer.mozilla.org/en-US/docs/Glossary/MIME_type) of the content.  If defined, the value is verified against the *Content-Type* header || string |
+
 |iterations | jj|0| integer |
 |iterations | jj|0| integer |
 |iterations | jj|0| integer |
