@@ -99,6 +99,20 @@ func TestRequestToTestServer(t *testing.T) {
 			},
 		},
 		{
+			name:     "http - server TLS, but no client TLS",
+			tlsError: "",
+			scenario: config.Scenario{
+				TLS: config.TLSConfig{
+					CertFilePath:   "../test/certs/dev.crt",
+					KeyFilePath:    "../test/certs/dev.key",
+					CACertFilePath: "../test/certs/devCA.pem",
+				},
+			},
+			request: config.Request{
+				Method: "POST",
+			},
+		},
+		{
 			name: "https no CA",
 			scenario: config.Scenario{
 				TLS: config.TLSConfig{
