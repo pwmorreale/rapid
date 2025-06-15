@@ -174,7 +174,7 @@ sequence:
 
 | Field | Notes| Default| Type|
 |-------|---|---|---|
-|iterations | The number of times to iterate through the array of requests.  There is no defaiult. |0| integer |
+|iterations | The number of times to iterate through the array of requests.  Specify at least '1' to execute the requests. |0| integer |
 |iteration_time_limit | The maximum amount of time to allow an iteration to complete. Specify an integer with a modifier of *s* (seconds), *m* (minutes), or *h* (hours) | 0 | string |
 | abort_on_error | currently unimplemented | false| boolean |
 | ignore_duplicate_errors | currently unimplemented | false | boolean |
@@ -210,14 +210,14 @@ The *requests* array defines the *requests*.
 |once_only | Execute this request exactly one time, regardless of the *iterations* count, and/or the subsequent *thundering_herd* configuration. |false| boolean |
 |method  | The [HTTP method](http://www.w3schools.com/TAgs/ref_httpmethods.asp).  This will be converted to upper case.|| string |
 |url | The complete URL of the request.  Include and query parameters, fragments, etc.  The URL is only passed to the **Find&Replace** module for modification.  No other modifications are made. || string |
-|content |Content for this request.  If present, the contents of this parameter becomes the body of the request. This parameter is passed through the **Find&Replace** module for modification.|| string |
+|content |Content for this request.  If present, the contents of this parameter becomes the body of the request. This parameter is passed through the **Find&Replace** module for modification. Note that Rapid will automatically set the *Content-Length* header. || string |
 |content_type | The [mime type](https://developer.mozilla.org/en-US/docs/Glossary/MIME_type) of the *content* parameter.  If defined, a *Content-Type* header will be added to the request with this value. || string |
 |thundering_herd | See next section||  |
 
 #### Thundering Herd Configuration
-The *thundering_herd* configuration allows you to control concurrent execution of this request within the current iteration. 
+The *thundering_herd* configuration allows you to control concurrent execution of this request within the current iteration.
 
-If this configuration is omitted, then exactly one instance of the request will be executed for each iteration.
+If this configuration is omitted, then exactly one instance of the request will be executed for each iteration.  Also be aware that regardless of this configuration for any of the requests in the array, the iteration time limit will be enforced.
 
 Note that Rapid always creates a separate client for each request.  This means that, by design, rapid will use a separate system socket for each transaction with the implied server.  Consequently, the actual number of concurrent requests that can be created can be limited by the platform used to execute Rapid.  The intent here is to mimic real world application where a HTTP server is handling multiple concurrent requests from multiple separate clients.  
 
@@ -251,7 +251,7 @@ extra_headers:
 |value |The header content|| string |
 
 #### Cookies Configuration
-The *cookies* section allows you to define an array of cookies sent with the request.  Each value is added to the *Cookie* header with an intevening semicolon (;).
+The *cookies* section allows you to define an array of cookies sent with the request.  An appropriate *Cookie* header will be constructed and sent with the request.
 
 ```yaml
 cookies:
@@ -292,38 +292,34 @@ responses:
 |status_code | The HTTP status code for this response.|0| integer |
 |headers | See next section|| array |
 
-##### Headers
+#### Headers
 These are headers expected to be set by the server in the reponse.  Rapid will perform exact, case sensitive matches and report any discrepencies.
 
 ```yaml
 headers:
   - name:
     value:
-cookies:
 ```
 
 | Field | Notes| Default| Type|
 |-------|---|---|---|
 |name | The case-sensitive name for this header.|| string |
 |value | The expected case-sensitive contents of this header.|| string |
-|cookies| See next section|| array |
 
-##### Cookies
+#### Cookies
 The array of Cookies expected to be returned from the server.  Rapid will parse the cookie(s) and compare both the cookie and its attributes against those returned by the server.
 
 ```yaml
 cookies:
   - value:
-content:
 ```
 
 | Field | Notes| Default| Type|
 |-------|---|---|---|
 |value | The expected cookie|| string |
-|content| See next section||  |
 
 #### Content
-
+This section allows you to verify content returned from the server.   
 ```yaml
 content:
   expected:
@@ -331,23 +327,29 @@ content:
   max_content:
   contains:
     - ""
-  extract:
-    - type:
-      path:
-      match:
 ```
 
 | Field | Notes| Default| Type|
 |-------|---|---|---|
 |expected | Whether the body of the response should contain content. This can be useful to check for data leaks from the server. |false| boolean |
-|content_type | The [mime type](https://developer.mozilla.org/en-US/docs/Glossary/MIME_type) of the content.  If defined, the value is verified against the *Content-Type* header || string |
+|content_type | The expected [mime type](https://developer.mozilla.org/en-US/docs/Glossary/MIME_type) of the content.  If defined, the value is verified against the *Content-Type* header || string |
+|max_content | A maximum length of the expected content.  The actual content length (if it can be detected) will be compared to this value if defined |false| integer |
+|contains | An array of [regular expressions](https://golang.org/s/re2syntax) used to verify the content. || string |
 
-|iterations | jj|0| integer |
-|iterations | jj|0| integer |
-|iterations | jj|0| integer |
-|iterations | jj|0| integer |
-|iterations | jj|0| integer |
-|iterations | jj|0| integer |
-|iterations | jj|0| integer |
-|iterations | jj|0| integer |
+#### Extract
+Use this configuration to extract data from the response body and insert it into the **Find&Replace** module for future use in headers/URLs/bodies/etc. 
+
+Rapid supports extraction from three different types of data:  text, JSON, or XML.  Note that the type you specify in the cnfiguration below is independent of the MIME type present in the *Content-Type* header.  Thus you can mix and match extraction types from the same response body.
+
+```yaml
+  extract:
+    - type:
+      path:
+      match:
+```
+| Field | Notes| Default| Type|
+|-------|---|---|---|
+|type | Specify 'text', 'json', or 'xml'. || string |
+|path | The path to search.  If *type* is 'text', then specify a [regular expression](https://golang.org/s/re2syntax). If *type* is 'json', then specify a [GJSON](https://github.com/tidwall/gjson) path.  If *type* is 'xml', then specify a suitable [XPATH](https://github.com/antchfx/xmlquery).   || string |
+|match | A **Find&Replace** *match* [regular expression](https://golang.org/s/re2syntax) for future modifications in headers/URLs/bodies/etc.  The extracted data will be used as the replacement text on matches to this expression.|| string |
 
