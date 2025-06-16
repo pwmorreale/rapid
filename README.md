@@ -37,7 +37,7 @@ You can also check a scenario configuration to find common typos/etc by using th
 Rapid provides several features:
 
 ### Iterations
-You can define an iteration count and iteration time limit.  Each iteration will loop through all configured in order and each iteration must complete within the specified time limit.
+You can define an iteration count and iteration time limit.  Each iteration will loop through all configured requests in order and each iteration must complete within the specified time limit.
 
 ### *Find&Replace*
 Find&replace allows you to predefine a set of regex terms and their associated replacement strings.  When a regex matches in a header value, cookie, or the URL, the replacement term is inserted in its place.  This allows you to define a term once, and have it referenced throughout the entire configuration.
