@@ -18,6 +18,27 @@ To install:
 ```bash
 % go install github.com/pwmorreale/rapid@latest
 ```
+## Build
+Rapid uses a Makefile for building.  The Makefile references three other tools: [staticcheck](https://github.com/dominikh/go-tools), [counterfeiter](https://github.com/maxbrunsfeld/counterfeiter) and [revive](https://github.com/mgechev/revive).  
+
+THe executable will be located in the *target* directory.
+
+The Makefile targets are:
+
+```bash
+$ make help
+help                           Display this help screen
+tests                          Run all tests/lints
+generate                       Generate test mocks
+lint                           Lint the files
+test                           Run unit tests
+race                           Run race detector
+staticcheck                    Run staticcheck
+build                          Build
+clean                          Remove previous build
+coverage                       Display test coverage
+$
+```
 
 ## Usage
 
@@ -50,6 +71,8 @@ This allows for example, extraction of a security token from an authorization re
 ### *Thundering Herd* 
 Rapid allows you to create *thundering herd* configurations that allow you to specify a number of concurrent requests for a specific duration of time, or a maximum number of requests.  For example, you could configure Rapid to execute 1000 requests concurrently for 5 minutes, or 20 concurrent requests until 500 requests have completed.  This can be useful to test circuit breaking, rate limiting, and other infrastructure behaviors.
 
+### Prometheus metrics
+When configured, rapid will collect prometheus metrics and at push them to a Prometheus server at normal termination.  The metrics collected follow the [RED](https://grafana.com/blog/2018/08/02/the-red-method-how-to-instrument-your-services/) (Requests, Errors, Durations) paradigm with Prometheus counters and a historgram.
 
 ## Configuration
 A scenario is the basic unit that describes a test case for RAPID.  A scenario is wholly contained within a single YAML file.  Scenarios consist of a *sequence* of one or more *requests* and their expected *responses*.
