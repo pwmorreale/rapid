@@ -227,7 +227,7 @@ func (r *Context) findResponse(httpResponse *http.Response, request *config.Requ
 
 	request.UnknownResponses = append(request.UnknownResponses, resp)
 
-	resp.Name = "omitted"
+	resp.Name = config.DefaultResponseName
 	resp.StatusCode = httpResponse.StatusCode
 
 	return resp

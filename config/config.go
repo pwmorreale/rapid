@@ -19,6 +19,8 @@ const (
 	DefaultContentLimit = 4096
 
 	TypeRegex = "regex"
+
+	DefaultResponseName = "unconfigured"
 )
 
 // Configuration defines the interface for managing the scenario
@@ -55,6 +57,23 @@ type Scenario struct {
 	Sequence     Sequence      `mapstructure:"sequence"`
 	Replacements []ReplaceData `mapstructure:"find_replace"`
 	TLS          TLSConfig     `mapstructure:"tls_configuration"`
+	Prom         PromConfig    `mapstructure:"prometheus_configuration"`
+}
+
+// BucketConfig defines parameters for the prometheus historgram buckets.
+type BucketConfig struct {
+	MinBucket time.Duration `mapstructure:"minimum_bucket_duration"`
+	MaxBucket time.Duration `mapstructure:"maximum_bucket_duration"`
+	Count     int           `mapstructure:"count"`
+}
+
+// PromConfig contains prometheus configuration
+type PromConfig struct {
+	JobName string       `mapstructure:"job_name"`
+	PushURL string       `mapstructure:"push_gateway_url"`
+	TLS     TLSConfig    `mapstructure:"tls_configuration"`
+	Bucket  BucketConfig `mapstructure:"buckets"`
+	Headers []HeaderData `mapstructure:"headers"`
 }
 
 // Sequence contains the sequence configuration.
