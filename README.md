@@ -1,4 +1,4 @@
-# REST API Diagnostic (RAPID) tool
+# REST API Testing and Diagnostic (RAPID) tool
 
 ## *RAPID is under construction and is incomplete at this time.*
 
@@ -17,6 +17,27 @@ To install:
 
 ```bash
 % go install github.com/pwmorreale/rapid@latest
+```
+## Build
+Rapid uses a Makefile for building.  The Makefile references three other tools: [staticcheck](https://github.com/dominikh/go-tools), [counterfeiter](https://github.com/maxbrunsfeld/counterfeiter) and [revive](https://github.com/mgechev/revive).  
+
+THe executable will be located in the *target* directory.
+
+The Makefile targets are:
+
+```bash
+$ make help
+help                           Display this help screen
+tests                          Run all tests/lints
+generate                       Generate test mocks
+lint                           Lint the files
+test                           Run unit tests
+race                           Run race detector
+staticcheck                    Run staticcheck
+build                          Build
+clean                          Remove previous build
+coverage                       Display test coverage
+$
 ```
 
 ## Usage
@@ -50,6 +71,8 @@ This allows for example, extraction of a security token from an authorization re
 ### *Thundering Herd* 
 Rapid allows you to create *thundering herd* configurations that allow you to specify a number of concurrent requests for a specific duration of time, or a maximum number of requests.  For example, you could configure Rapid to execute 1000 requests concurrently for 5 minutes, or 20 concurrent requests until 500 requests have completed.  This can be useful to test circuit breaking, rate limiting, and other infrastructure behaviors.
 
+### Prometheus metrics
+When configured, rapid can collect prometheus metrics and at completion push them to a [Prometheus PushGateway](https://prometheus.io/docs/instrumenting/pushing/).  The metrics collected follow the [RED](https://grafana.com/blog/2018/08/02/the-red-method-how-to-instrument-your-services/) (Requests, Errors, Durations) paradigm with Prometheus counters for requests and erros counts and a historgram for request durations.
 
 ## Configuration
 A scenario is the basic unit that describes a test case for RAPID.  A scenario is wholly contained within a single YAML file.  Scenarios consist of a *sequence* of one or more *requests* and their expected *responses*.
@@ -67,6 +90,20 @@ tls_configuration:
   client_key_path:
   ca_cert_path:
   insecure_skip_verify:
+prometheus:
+  push_url:
+  tls_configuration:
+    client_cert_path:
+    client_key_path:
+    ca_cert_path:
+    insecure_skip_verify:
+  historgram_buckets:
+    minimum_duration:
+    maximum_duration:
+    count:
+  headers:
+    - name:
+      value:
 sequence:
   iterations:
   iteration_time_limit:
@@ -163,6 +200,67 @@ tls_configuration:
 |client_key_path |Path to client key certificate file in PEM format|| string |
 |ca_cert_path | Path to CA certificate file in PEM format.  | | string |
 |insecure_skip_verify| If set to *true*, then the client will not attempt to verify the server certificate. |false| boolean |
+
+### Prometheus Configuration
+You can configure Rapid to collect and send metrics to your Prometheus server (eg: Push).   Rapid follws the [RED](https://grafana.com/blog/2018/08/02/the-red-method-how-to-instrument-your-services/) (Requests, Errors, Durations) paradigm with two counters for requests and errors, and a histogram of request durations.  
+
+To avoid prometheus metrics gathering, omit the configuration entirely.
+
+```yaml
+prometheus:
+  push_url:
+  tls_configuration:
+    client_cert_path:
+    client_key_path:
+    ca_cert_path:
+    insecure_skip_verify:
+  histogram_buckets:
+    minimum_duration:
+    maximum_duration:
+    count:
+  headers:
+    - name:
+      value:
+```
+
+|Field | Notes| Default| Type|
+|-------|---|---|--| 
+|push_url | URL to your Prometheus PushGateway server. If omitted, Rapid will not gather metrics. | |string |
+| tls_configuration| Identical to [TLS](#TLS_Configuration) above, however these certificates are only specific to your Prometheus Pushgateway server.  Omit for non-TLS connections. || |string|
+|histogram_buckets| Configuration for the histogram.|||
+
+#### Histogram Buckets
+Bucket configuration for the histogram.  Rapid will use Prometheus' [ExponentialBucketsRange](https://pkg.go.dev/github.com/prometheus/client_golang/prometheus#ExponentialBucketsRange) to generate the array of buckets.
+
+```yaml
+histogram_buckets:
+    minimum_duration:
+    maximum_duration:
+    count:
+headers:
+```
+
+| Field | Notes| Default| Type|
+|--|--|--|--|
+|minimum_duration | Minimum request duration, specify an integer with a modifier of *us* (microseconds), *ms* (milliseconds), *s* (seconds), *m* (minutes), *h* (hours). | 1ms |string |
+| maximum_duration| Same as above, however for a maximum request duration.  Must be non-zero.| 1m | string|
+| count| Number of buckets to create.  Note that Prometheus will automatically add an +Inf bucket for outliers| 5| integer|
+|headers| See next section|||
+
+#### Headers
+Any additional headers required by your Promesheus server.
+
+```yaml
+headers:
+  - name:
+    value:
+```
+
+| Field | Notes| Default| Type|
+|-------|---|---|---|
+|name | The header name|| string |
+|value |The header content|| string |
+
 
 ### Sequence Configuration
 The *sequence* section defines iterations of the *requests*. 
