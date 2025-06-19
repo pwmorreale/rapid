@@ -1,4 +1,4 @@
-# REST API Diagnostic (RAPID) tool
+# REST API Testing and Diagnostic (RAPID) tool
 
 ## *RAPID is under construction and is incomplete at this time.*
 
