@@ -90,6 +90,20 @@ tls_configuration:
   client_key_path:
   ca_cert_path:
   insecure_skip_verify:
+prometheus:
+  push_url:
+  tls_configuration:
+    client_cert_path:
+    client_key_path:
+    ca_cert_path:
+    insecure_skip_verify:
+  historgram_buckets:
+    minimum_duration:
+    maximum_duration:
+    count:
+  headers:
+    - name:
+      value:
 sequence:
   iterations:
   iteration_time_limit:
@@ -186,6 +200,67 @@ tls_configuration:
 |client_key_path |Path to client key certificate file in PEM format|| string |
 |ca_cert_path | Path to CA certificate file in PEM format.  | | string |
 |insecure_skip_verify| If set to *true*, then the client will not attempt to verify the server certificate. |false| boolean |
+
+### Prometheus Configuration
+You can configure Rapid to collect and send metrics to your Prometheus server (eg: Push).   Rapid follws the [RED](https://grafana.com/blog/2018/08/02/the-red-method-how-to-instrument-your-services/) (Requests, Errors, Durations) paradigm with two counters for requests and errors, and a histogram of request durations.  
+
+To avoid prometheus metrics gathering, omit the configuration entirely.
+
+```yaml
+prometheus:
+  push_url:
+  tls_configuration:
+    client_cert_path:
+    client_key_path:
+    ca_cert_path:
+    insecure_skip_verify:
+  histogram_buckets:
+    minimum_duration:
+    maximum_duration:
+    count:
+  headers:
+    - name:
+      value:
+```
+
+|Field | Notes| Default| Type|
+|-------|---|---|--|
+|push_url | URL to your Prometheus server. If omitted, Rapid will not gather metrics. | |string |
+| tls_configuration| Identical to [TLS](#TLS_Configuration) above, however these certificates are only specific to your Prometheus server.  Omit for non-TLS connections. || |string|
+|histogram_buckets| Configuration for the histogram.|||
+
+#### Histogram Buckets
+Bucket configuration for the histogram.  Rapid will use Prometheus' [ExponentialBucketsRange](https://pkg.go.dev/github.com/prometheus/client_golang/prometheus#ExponentialBucketsRange) to generate the array of buckets.
+
+```yaml
+histogram_buckets:
+    minimum_duration:
+    maximum_duration:
+    count:
+headers:
+```
+
+| Field | Notes| Default| Type|
+|--|--|--|--|
+|minimum_duration | Minimum request duration, specify an integer with a modifier of *us* (microseconds), *ms* (milliseconds), *s* (seconds), *m* (minutes), *h* (hours). | 1ms |string |
+| maximum_duration| Same as above, however for a maximum request duration.  Must be non-zero.| 1m | string|
+| count| Number of buckets to create.  Note that Prometheus will automatically add an +Inf bucket for outliers| 5| integer|
+|headers| See next section|||
+
+#### Headers
+Any additional headers required by your Promesheus server.
+
+```yaml
+headers:
+  - name:
+    value:
+```
+
+| Field | Notes| Default| Type|
+|-------|---|---|---|
+|name | The header name|| string |
+|value |The header content|| string |
+
 
 ### Sequence Configuration
 The *sequence* section defines iterations of the *requests*. 
