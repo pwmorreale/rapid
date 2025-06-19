@@ -72,7 +72,7 @@ This allows for example, extraction of a security token from an authorization re
 Rapid allows you to create *thundering herd* configurations that allow you to specify a number of concurrent requests for a specific duration of time, or a maximum number of requests.  For example, you could configure Rapid to execute 1000 requests concurrently for 5 minutes, or 20 concurrent requests until 500 requests have completed.  This can be useful to test circuit breaking, rate limiting, and other infrastructure behaviors.
 
 ### Prometheus metrics
-When configured, rapid will collect prometheus metrics and at push them to a Prometheus server at normal termination.  The metrics collected follow the [RED](https://grafana.com/blog/2018/08/02/the-red-method-how-to-instrument-your-services/) (Requests, Errors, Durations) paradigm with Prometheus counters and a historgram.
+When configured, rapid can collect prometheus metrics and at completion push them to a [Prometheus PushGateway](https://prometheus.io/docs/instrumenting/pushing/).  The metrics collected follow the [RED](https://grafana.com/blog/2018/08/02/the-red-method-how-to-instrument-your-services/) (Requests, Errors, Durations) paradigm with Prometheus counters for requests and erros counts and a historgram for request durations.
 
 ## Configuration
 A scenario is the basic unit that describes a test case for RAPID.  A scenario is wholly contained within a single YAML file.  Scenarios consist of a *sequence* of one or more *requests* and their expected *responses*.
@@ -224,9 +224,9 @@ prometheus:
 ```
 
 |Field | Notes| Default| Type|
-|-------|---|---|--|
-|push_url | URL to your Prometheus server. If omitted, Rapid will not gather metrics. | |string |
-| tls_configuration| Identical to [TLS](#TLS_Configuration) above, however these certificates are only specific to your Prometheus server.  Omit for non-TLS connections. || |string|
+|-------|---|---|--| 
+|push_url | URL to your Prometheus PushGateway server. If omitted, Rapid will not gather metrics. | |string |
+| tls_configuration| Identical to [TLS](#TLS_Configuration) above, however these certificates are only specific to your Prometheus Pushgateway server.  Omit for non-TLS connections. || |string|
 |histogram_buckets| Configuration for the histogram.|||
 
 #### Histogram Buckets
