@@ -69,7 +69,8 @@ type BucketConfig struct {
 
 // PromConfig contains prometheus configuration
 type PromConfig struct {
-	PushURL string       `mapstructure:"push_gateway"`
+	JobName string       `mapstructure:"job_name"`
+	PushURL string       `mapstructure:"push_gateway_url"`
 	TLS     TLSConfig    `mapstructure:"tls_configuration"`
 	Bucket  BucketConfig `mapstructure:"buckets"`
 	Headers []HeaderData `mapstructure:"headers"`
