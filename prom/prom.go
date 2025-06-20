@@ -144,6 +144,7 @@ func (p *Context) createClient() (*http.Client, error) {
 	return client, err
 }
 
+// createTLS creates a TLS config for an http client.
 func (p *Context) createTLS() (*tls.Config, error) {
 
 	// No TLS config...
