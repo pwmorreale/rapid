@@ -60,7 +60,7 @@ func TestMetrics(t *testing.T) {
 	assert.NotNil(t, pc)
 
 	pc.Requests(1, "req1", "resp1", "200")
-	pc.Errors(0, "req1")
+	pc.Errors(0, "req1", "resp1")
 
 	start := time.Now()
 	time.Sleep(time.Millisecond * 10)
@@ -139,7 +139,7 @@ func TestTLSMetrics(t *testing.T) {
 	assert.NotNil(t, pc)
 
 	pc.Requests(1, "req1", "resp1", "200")
-	pc.Errors(0, "req1")
+	pc.Errors(0, "req1", "resp1")
 
 	start := time.Now()
 	time.Sleep(time.Millisecond * 10)
@@ -183,7 +183,7 @@ func TestNoPrometheus(t *testing.T) {
 	assert.Nil(t, pc.Reg)
 
 	pc.Requests(1, "req1", "resp1", "200")
-	pc.Errors(0, "req1")
+	pc.Errors(0, "req1", "resp1")
 
 	start := time.Now()
 	time.Sleep(time.Millisecond * 10)

@@ -20,12 +20,15 @@ import (
 
 const (
 	namespace = "rapid"
+
+	// NoResponseName is for error metrics that ocurr prior to receiving a response
+	NoResponseName = "n/a"
 )
 
 // Metrics defines the interface.
 type Metrics interface {
 	Requests(int, string, string, string)
-	Errors(int, string)
+	Errors(int, string, string)
 	Durations(time.Time, int, string, string, string, string)
 	Push() error
 }
@@ -75,7 +78,7 @@ func New(sc *config.Scenario) *Context {
 			Name:      "errors",
 			Help:      "How many HTTP client/transmission errors, partitioned by iteration and request name",
 		},
-		[]string{"iteration", "request"},
+		[]string{"iteration", "request", "response"},
 	)
 
 	ctx.Reg.MustRegister(ctx.errors)
@@ -119,10 +122,10 @@ func (p *Context) Requests(iteration int, requestName, responseName, status stri
 }
 
 // Errors is the counter for errors.
-func (p *Context) Errors(iteration int, requestName string) {
+func (p *Context) Errors(iteration int, requestName, responseName string) {
 
 	if p.Reg != nil {
-		p.errors.WithLabelValues(strconv.Itoa(iteration), requestName).Add(1)
+		p.errors.WithLabelValues(strconv.Itoa(iteration), requestName, responseName).Add(1)
 	}
 }
 
