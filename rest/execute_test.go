@@ -11,7 +11,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
-	"time"
 
 	"github.com/pwmorreale/rapid/config"
 	"github.com/pwmorreale/rapid/data"
@@ -247,7 +246,7 @@ func TestRequestToTestServer(t *testing.T) {
 		ctx := context.Background()
 
 		test.request.URL = ts.URL
-		err = r.Gestalt(ctx, &test.request, time.Now())
+		_, err = r.Gestalt(ctx, &test.request)
 		if test.requestError != "" {
 			assert.Contains(t, err.Error(), test.requestError, test.name)
 		} else {

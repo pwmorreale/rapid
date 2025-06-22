@@ -10,27 +10,29 @@ import (
 )
 
 type FakeRest struct {
-	ExecuteStub        func(context.Context, *config.Request)
+	ExecuteStub        func(context.Context, int, *config.Request)
 	executeMutex       sync.RWMutex
 	executeArgsForCall []struct {
 		arg1 context.Context
-		arg2 *config.Request
+		arg2 int
+		arg3 *config.Request
 	}
 	invocations      map[string][][]interface{}
 	invocationsMutex sync.RWMutex
 }
 
-func (fake *FakeRest) Execute(arg1 context.Context, arg2 *config.Request) {
+func (fake *FakeRest) Execute(arg1 context.Context, arg2 int, arg3 *config.Request) {
 	fake.executeMutex.Lock()
 	fake.executeArgsForCall = append(fake.executeArgsForCall, struct {
 		arg1 context.Context
-		arg2 *config.Request
-	}{arg1, arg2})
+		arg2 int
+		arg3 *config.Request
+	}{arg1, arg2, arg3})
 	stub := fake.ExecuteStub
-	fake.recordInvocation("Execute", []interface{}{arg1, arg2})
+	fake.recordInvocation("Execute", []interface{}{arg1, arg2, arg3})
 	fake.executeMutex.Unlock()
 	if stub != nil {
-		fake.ExecuteStub(arg1, arg2)
+		fake.ExecuteStub(arg1, arg2, arg3)
 	}
 }
 
@@ -40,17 +42,17 @@ func (fake *FakeRest) ExecuteCallCount() int {
 	return len(fake.executeArgsForCall)
 }
 
-func (fake *FakeRest) ExecuteCalls(stub func(context.Context, *config.Request)) {
+func (fake *FakeRest) ExecuteCalls(stub func(context.Context, int, *config.Request)) {
 	fake.executeMutex.Lock()
 	defer fake.executeMutex.Unlock()
 	fake.ExecuteStub = stub
 }
 
-func (fake *FakeRest) ExecuteArgsForCall(i int) (context.Context, *config.Request) {
+func (fake *FakeRest) ExecuteArgsForCall(i int) (context.Context, int, *config.Request) {
 	fake.executeMutex.RLock()
 	defer fake.executeMutex.RUnlock()
 	argsForCall := fake.executeArgsForCall[i]
-	return argsForCall.arg1, argsForCall.arg2
+	return argsForCall.arg1, argsForCall.arg2, argsForCall.arg3
 }
 
 func (fake *FakeRest) Invocations() map[string][][]interface{} {

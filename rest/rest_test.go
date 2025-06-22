@@ -138,7 +138,7 @@ func TestExecute(t *testing.T) {
 
 	ctx := context.Background()
 
-	r.Execute(ctx, &sc.Sequence.Requests[0])
+	r.Execute(ctx, 1, &sc.Sequence.Requests[0])
 }
 func TestCreateRequest(t *testing.T) {
 
