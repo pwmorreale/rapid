@@ -45,19 +45,19 @@ func (s *Context) Run(sc *config.Scenario) error {
 }
 
 // ExecuteIteration exeutes a single iteration
-func (s *Context) ExecuteIteration(sc *config.Scenario, i int) {
+func (s *Context) ExecuteIteration(sc *config.Scenario, iteration int) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), sc.Sequence.Limit)
 	defer cancel()
 
 	start := time.Now()
 
-	s.ExecuteSequence(ctx, sc)
+	s.ExecuteSequence(ctx, iteration, sc)
 
 	select {
 	case <-ctx.Done():
 		sc.Sequence.Stats.Error(start)
-		logger.Error(nil, nil, "sequence %v on iteration: %d", ctx.Err(), i)
+		logger.Error(nil, nil, "sequence %v on iteration: %d", ctx.Err(), iteration)
 		return
 	default:
 	}
@@ -67,7 +67,7 @@ func (s *Context) ExecuteIteration(sc *config.Scenario, i int) {
 }
 
 // ExecuteSequence runs the sequence of requests
-func (s *Context) ExecuteSequence(ctx context.Context, sc *config.Scenario) {
+func (s *Context) ExecuteSequence(ctx context.Context, iteration int, sc *config.Scenario) {
 
 Loop:
 	for i := range sc.Sequence.Requests {
@@ -82,7 +82,7 @@ Loop:
 		request := &sc.Sequence.Requests[i]
 
 		logger.Info(request, nil, "execution started")
-		s.ExecuteRequest(ctx, request)
+		s.ExecuteRequest(ctx, iteration, request)
 		logger.Info(request, nil, "execution complete")
 
 	}
@@ -90,7 +90,7 @@ Loop:
 }
 
 // ExecuteRequest ezxecutes a request
-func (s *Context) ExecuteRequest(ctx context.Context, request *config.Request) {
+func (s *Context) ExecuteRequest(ctx context.Context, iteration int, request *config.Request) {
 
 	// Is this a once only request?
 	if request.OnceOnly {
@@ -119,7 +119,7 @@ Loop:
 		}
 
 		wp.Submit(func() {
-			s.rest.Execute(ctx, request)
+			s.rest.Execute(ctx, iteration, request)
 		})
 
 		// Inter-request delay

@@ -11,25 +11,28 @@ import (
 	"crypto/x509"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/pwmorreale/rapid/config"
 	"github.com/pwmorreale/rapid/data"
 	"github.com/pwmorreale/rapid/logger"
+	"github.com/pwmorreale/rapid/metrics"
 )
 
 // Rest  defines the interface for managing requests and responses
 //
 //go:generate go tool counterfeiter -o ../test/mocks/fake_rest.go . Rest
 type Rest interface {
-	Execute(context.Context, *config.Request)
+	Execute(context.Context, int, *config.Request)
 }
 
 // Context defines a scenario context.
 type Context struct {
-	datum data.Data
-	sc    *config.Scenario
+	datum   data.Data
+	sc      *config.Scenario
+	metrics metrics.Metrics
 
 	// For unit tests to set a mock roundtripper...
 	mockRoundTripper http.RoundTripper
@@ -38,8 +41,9 @@ type Context struct {
 // New creates a new instance.
 func New(sc *config.Scenario, d data.Data) *Context {
 	return &Context{
-		datum: d,
-		sc:    sc,
+		datum:   d,
+		sc:      sc,
+		metrics: metrics.New(sc),
 	}
 }
 
@@ -163,43 +167,49 @@ func (r *Context) createClient() (*http.Client, error) {
 }
 
 // Gestalt creates and executes the request then validates the response.
-func (r *Context) Gestalt(ctx context.Context, request *config.Request, start time.Time) error {
+func (r *Context) Gestalt(ctx context.Context, request *config.Request) (*config.Response, error) {
 
 	req, err := r.createRequest(ctx, request)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	client, err := r.createClient()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer resp.Body.Close()
 
-	err = r.validateResponse(resp, request, start)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return r.validateResponse(resp, request)
 }
 
 // Execute creates and executes the request then validates the response.
-func (r *Context) Execute(ctx context.Context, request *config.Request) {
+func (r *Context) Execute(ctx context.Context, iteration int, request *config.Request) {
 
 	start := time.Now()
 
-	err := r.Gestalt(ctx, request, start)
+	response, err := r.Gestalt(ctx, request)
 	if err != nil {
 		logger.Error(request, nil, "%v", err)
-		request.Stats.Error(start)
+
+		if response == nil {
+			r.metrics.Errors(iteration, request.Name, metrics.NoResponseName)
+			request.Stats.Error(start)
+		} else {
+			r.metrics.Errors(iteration, request.Name, response.Name)
+			response.Stats.Error(start)
+		}
 		return
 	}
 
+	status := strconv.Itoa(response.StatusCode)
+
+	r.metrics.Durations(start, iteration, request.Name, request.Method, response.Name, status)
+	r.metrics.Requests(iteration, request.Name, response.Name, status)
 	request.Stats.Success(start)
 }

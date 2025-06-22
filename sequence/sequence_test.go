@@ -20,7 +20,7 @@ import (
 
 var RequestDuration = time.Millisecond * 100
 
-func fakeExecuteStub(_ context.Context, _ *config.Request) {
+func fakeExecuteStub(_ context.Context, _ int, _ *config.Request) {
 	time.Sleep(RequestDuration)
 }
 
@@ -57,7 +57,7 @@ func TestOnceOnly(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Hour)
 	defer cancel()
 
-	s.ExecuteRequest(ctx, &request)
+	s.ExecuteRequest(ctx, 1, &request)
 	assert.Equal(t, 0, logger.ErrorCount())
 	assert.Equal(t, 0, logger.WarnCount())
 	assert.Equal(t, 0, logger.DebugCount())
@@ -85,7 +85,7 @@ func TestExecuteRequest(t *testing.T) {
 	start := time.Now()
 	expected := start.Add(RequestDuration)
 
-	s.ExecuteRequest(ctx, &request)
+	s.ExecuteRequest(ctx, 1, &request)
 
 	actual := time.Now()
 	assert.WithinDuration(t, expected, actual, time.Millisecond*10)
@@ -113,7 +113,7 @@ func TestThunderingHerdTimeout(t *testing.T) {
 	start := time.Now()
 	expected := start.Add(TestDuration)
 
-	s.ExecuteRequest(ctx, &request)
+	s.ExecuteRequest(ctx, 1, &request)
 
 	actual := time.Now()
 
@@ -148,8 +148,7 @@ func TestThunderingHerdCount(t *testing.T) {
 	start := time.Now()
 	expected := start.Add(TestDuration)
 
-	s.ExecuteRequest(ctx, &request)
-
+	s.ExecuteRequest(ctx, 1, &request)
 	actual := time.Now()
 
 	// Require finish within 10% of the duration
@@ -178,7 +177,7 @@ func TestExecuteRequestSequenceTimeout(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*500)
 	defer cancel()
 
-	s.ExecuteRequest(ctx, &request)
+	s.ExecuteRequest(ctx, 1, &request)
 
 	assert.NotNil(t, ctx.Err())
 
@@ -199,7 +198,7 @@ func TestExecuteRequestDefaults(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*500)
 	defer cancel()
 
-	s.ExecuteRequest(ctx, &request)
+	s.ExecuteRequest(ctx, 1, &request)
 
 	assert.Nil(t, ctx.Err())
 

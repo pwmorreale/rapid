@@ -13,7 +13,6 @@ import (
 	"net/http"
 	"regexp"
 	"sync"
-	"time"
 
 	"github.com/gabriel-vasile/mimetype"
 	"github.com/pwmorreale/rapid/config"
@@ -245,24 +244,12 @@ func (r *Context) verifyResponse(httpResponse *http.Response, response *config.R
 		return err
 	}
 
-	err = r.verifyContentAndExtract(httpResponse, response)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return r.verifyContentAndExtract(httpResponse, response)
 }
 
-func (r *Context) validateResponse(httpResponse *http.Response, request *config.Request, start time.Time) error {
+func (r *Context) validateResponse(httpResponse *http.Response, request *config.Request) (*config.Response, error) {
 
 	response := r.findResponse(httpResponse, request)
-
 	err := r.verifyResponse(httpResponse, response)
-	if err == nil {
-		response.Stats.Success(start)
-	} else {
-		response.Stats.Error(start)
-	}
-
-	return err
+	return response, err
 }
