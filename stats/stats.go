@@ -6,6 +6,7 @@
 package stats
 
 import (
+	"fmt"
 	"sync/atomic"
 	"time"
 )
@@ -87,4 +88,22 @@ func (s *Statistics) GetDuration() time.Duration {
 // GetMaxDuration returns the maximum duration.
 func (s *Statistics) GetMaxDuration() time.Duration {
 	return time.Duration(atomic.LoadInt64(&s.maxTime))
+}
+
+func (s *Statistics) String() string {
+
+	// avoid divide by zero...
+	count := s.count
+	if count == 0 {
+		count = 1
+	}
+
+	return fmt.Sprintf("count=%d errors=%d minTime=%s maxTime=%s avgTime=%s",
+		s.count,
+		s.errors,
+		time.Duration(s.minTime).String(),
+		time.Duration(s.maxTime).String(),
+		time.Duration(s.totalTime/count).String(),
+	)
+
 }

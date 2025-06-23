@@ -1,0 +1,43 @@
+name: run_test
+version: 1.0
+comment: "Test config for run"
+find_replace:
+  - match:  MYKEYWORD
+    replace: "fooBar"
+sequence:
+  iterations:  1
+  iteration_time_limit: 2m
+  requests:
+    - name: run_request
+      once_only: false
+      thundering_herd:
+        maximum_requests: 10
+        concurrent_requests:  3
+        delay: 0ns
+      method: get
+      url: TestURL
+      extra_headers:
+        - name: myHeader
+          value: "some header value with MYKEYWORD"
+      cookies:
+        - value:  a=b
+      content:
+      content_type:
+      responses:
+        - status_code: 200
+          name: good
+          headers:
+            - name: serverHeader
+              value: "something from the server"
+          cookies:
+            - value: z=b
+          content:
+            expected: false
+            content_type:
+            max_content:
+            contains:
+              - ""
+            extract:
+              - type:
+                path:
+                match:

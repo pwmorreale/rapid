@@ -96,5 +96,30 @@ func RunScenario(_ *cobra.Command, _ []string) error {
 	r := rest.New(sc, d)
 	s := sequence.New(r)
 
-	return s.Run(sc)
+	err = s.Run(sc)
+	if err != nil {
+		return err
+	}
+
+	LogResults(sc)
+
+	return nil
+}
+
+// LogResults prints out the statistics from the run.
+func LogResults(sc *config.Scenario) {
+
+	for i := range sc.Sequence.Requests {
+		request := sc.Sequence.Requests[i]
+
+		str := request.Stats.String()
+		logger.Info(&request, nil, "%s", str)
+
+		for j := range request.Responses {
+			response := request.Responses[j]
+
+			str := request.Stats.String()
+			logger.Info(&request, response, "%s", str)
+		}
+	}
 }
