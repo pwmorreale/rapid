@@ -9,6 +9,20 @@ tls_configuration:
   client_key_path:
   ca_cert_path: 
   insecure_skip_verify:
+prometheus:
+  push_url:
+  tls_configuration:
+    client_cert_path:
+    client_key_path:
+    ca_cert_path:
+    insecure_skip_verify:
+  historgram_buckets:
+    minimum_duration:
+    maximum_duration:
+    count:
+  headers:
+    - name:
+      value:
 sequence:
   iterations: 
   iteration_time_limit:
