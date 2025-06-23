@@ -107,7 +107,7 @@ func (s *Context) ExecuteRequest(ctx context.Context, iteration int, request *co
 	if workerPoolSize == 0 {
 		workerPoolSize++
 	}
-	wp := workerpool.New(request.ThunderingHerd.Size)
+	wp := workerpool.New(workerPoolSize)
 
 	start := time.Now()
 
