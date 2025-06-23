@@ -175,7 +175,7 @@ func TestRequestToTestServer(t *testing.T) {
 					{Name: "MyHeader", Value: "myvalue"},
 				},
 				Responses: []*config.Response{
-					&config.Response{
+					{
 						StatusCode: http.StatusOK,
 						Headers: []config.HeaderData{
 							{Name: "MyHeader", Value: "myvalue"},
@@ -195,7 +195,7 @@ func TestRequestToTestServer(t *testing.T) {
 					{Name: "MyHeader", Value: "myvalue"},
 				},
 				Responses: []*config.Response{
-					&config.Response{
+					{
 						StatusCode: http.StatusOK,
 						Headers: []config.HeaderData{
 							{Name: "MyHeader", Value: "myvalue"},
