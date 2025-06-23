@@ -113,21 +113,7 @@ func (r *Context) verifyCookies(httpResponse *http.Response, response *config.Re
 	return nil
 }
 
-func (r *Context) verifyContentAndExtract(httpResponse *http.Response, response *config.Response) error {
-
-	nrBytes, contentBytes, err := readContent(httpResponse, response)
-	if err != nil {
-		return err
-	}
-
-	// Check for no expected content...
-	if !response.Content.Expected {
-		if nrBytes > 0 {
-			return fmt.Errorf("no content expected yet read: %d response bytes", nrBytes)
-		}
-		return nil
-	}
-
+func (r *Context) verifyExpectedContentType(contentBytes []byte, httpResponse *http.Response, response *config.Response) error {
 	contentType, _, err := mime.ParseMediaType(httpResponse.Header.Get("Content-Type"))
 	if err != nil {
 		return err
@@ -142,30 +128,19 @@ func (r *Context) verifyContentAndExtract(httpResponse *http.Response, response 
 		return fmt.Errorf("content-type: %s != %s", contentType, response.Content.MediaType)
 	}
 
-	switch {
-	case (httpResponse.ContentLength == 0 && nrBytes != 0):
-		return fmt.Errorf("mismatched Content-Length header (%d) and actual content (at least %d bytes)", httpResponse.ContentLength, nrBytes)
-	case (httpResponse.ContentLength > 0 && nrBytes == 0):
-		return fmt.Errorf("mismatched Content-Length header (%d) and actual content (at least %d bytes)", httpResponse.ContentLength, nrBytes)
-	}
-
 	// Verify contents vs. Content-Type
 	mediaType := mimetype.Detect(contentBytes)
 	if !mediaType.Is(contentType) {
 		return fmt.Errorf("mismatched content/types:  Content_Type: %s, detected content as: %s", contentType, mediaType)
 	}
 
-	for i := range response.Content.Contains {
-		ok, err := regexp.Match(response.Content.Contains[i], contentBytes)
-		if err != nil {
-			return err
-		}
-		if !ok {
-			return fmt.Errorf("content sequence not found: %s", response.Content.Contains[i])
-		}
-	}
+	return nil
+}
+
+func (r *Context) extractContent(contentBytes []byte, response *config.Response) error {
 
 	var v string
+	var err error
 
 	for i := range response.Content.Extract {
 		e := &response.Content.Extract[i]
@@ -192,6 +167,67 @@ func (r *Context) verifyContentAndExtract(httpResponse *http.Response, response 
 	}
 
 	return nil
+}
+
+func (r *Context) verifyContains(contentBytes []byte, response *config.Response) error {
+
+	for i := range response.Content.Contains {
+		ok, err := regexp.Match(response.Content.Contains[i], contentBytes)
+		if err != nil {
+			return err
+		}
+		if !ok {
+			return fmt.Errorf("content sequence not found: %s", response.Content.Contains[i])
+		}
+	}
+
+	return nil
+}
+
+func (r *Context) verifyContentLength(httpLength int64, contentLength int64) error {
+
+	// N.B.  We may not know the exact response body length, so only check what we can.
+	switch {
+	case (httpLength == 0 && contentLength != 0):
+		return fmt.Errorf("mismatched Content-Length header (%d) and actual content (at least %d bytes)", httpLength, contentLength)
+	case (httpLength > 0 && contentLength == 0):
+		return fmt.Errorf("mismatched Content-Length header (%d) and actual content (at least %d bytes)", httpLength, contentLength)
+	}
+
+	return nil
+}
+
+func (r *Context) verifyContentAndExtract(httpResponse *http.Response, response *config.Response) error {
+
+	nrBytes, contentBytes, err := readContent(httpResponse, response)
+	if err != nil {
+		return err
+	}
+
+	// Check for no expected content...
+	if !response.Content.Expected {
+		if nrBytes > 0 {
+			return fmt.Errorf("no content expected yet read: %d response bytes", nrBytes)
+		}
+		return nil
+	}
+
+	err = r.verifyContentLength(httpResponse.ContentLength, int64(nrBytes))
+	if err != nil {
+		return err
+	}
+
+	err = r.verifyExpectedContentType(contentBytes, httpResponse, response)
+	if err != nil {
+		return err
+	}
+
+	err = r.verifyContains(contentBytes, response)
+	if err != nil {
+		return err
+	}
+
+	return r.extractContent(contentBytes, response)
 }
 
 func lookupResponse(statusCode int, r []*config.Response) *config.Response {

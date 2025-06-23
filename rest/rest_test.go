@@ -345,3 +345,14 @@ func TestFindResponse(t *testing.T) {
 	assert.Equal(t, 501, request.UnknownResponses[0].StatusCode)
 
 }
+
+func TestContentLength(t *testing.T) {
+
+	r, _, _, err := initTestService(t)
+	assert.NotNil(t, r)
+	assert.Nil(t, err)
+
+	err = r.verifyContentLength(80, 0)
+	assert.NotNil(t, err)
+	assert.Contains(t, err.Error(), "mismatched Content-Length header")
+}
