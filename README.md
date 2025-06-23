@@ -1,9 +1,5 @@
 # REST API Testing and Diagnostic (RAPID) tool
 
-## *RAPID is under construction and is incomplete at this time.*
-
-
-
 Rapid is a tool used to both verify conformance of your REST server against your API spec, as well as measure load and/or performance behavior.  Rapid also makes it possible for you to test policies such as circuit-breaking, rate-limiting, load-balancing, etc. 
 
 Rapid works entirely through a YAML configuration file.   The configuration is called a *scenario* and consists of a sequence of one of more http/https requests along with their possible responses.  Sequences can contain iteration counts or execute in a loop for a specific period of time.  You can also easily configure multiple concurrent requests to load your infrastructure.
@@ -53,6 +49,8 @@ You can also check a scenario configuration to find common typos/etc by using th
 % rapid verify -s ./scenario.yaml
 ```
 
+There are also several options for controlling log messages.  See the help for the above commands.
+
 ## Features
 
 Rapid provides several features:
@@ -73,6 +71,23 @@ Rapid allows you to create *thundering herd* configurations that allow you to sp
 
 ### Prometheus metrics
 When configured, rapid can collect prometheus metrics and at completion push them to a [Prometheus PushGateway](https://prometheus.io/docs/instrumenting/pushing/).  The metrics collected follow the [RED](https://grafana.com/blog/2018/08/02/the-red-method-how-to-instrument-your-services/) (Requests, Errors, Durations) paradigm with Prometheus counters for requests and erros counts and a historgram for request durations.
+
+## Statistics and metrics
+
+Rapid will print out log messages at normal termination containing counts and timings for both requests and responses received. A typical output might look like this:
+
+```bash
+INF count=10 errors=0 minTime=2.833782ms maxTime=102.053378ms avgTime=56.589378ms request.name=run_request request.method=get
+INF count=10 errors=0 minTime=2.833782ms maxTime=102.053378ms avgTime=56.589378ms request.name=run_request request.method=get response.name=good response.status=200
+```
+The above shows that rapid executed 10 requests, and received 10 '200' responses.  And the responses contained the expected, configured response data.
+
+Note that in addition to network errors, any discrepency to the configuration is counted as an error.  This means that if the server response returns a cookie that is not a part of the response configuration, the request is counted as an error. 
+
+If configured, the prometheus metrics operate in the same manner.  Requests are demarcated by their name, method, and response names.  Prometheus metrics are only captured if configured. 
+
+## Contributing
+Contributions, bug reports, suggestions are welcome.  Please note that pull requests must pass both [staticcheck](https://github.com/dominikh/go-tools), and [revive](https://github.com/mgechev/revive) linting. Please create an issue. 
 
 ## Configuration
 A scenario is the basic unit that describes a test case for RAPID.  A scenario is wholly contained within a single YAML file.  Scenarios consist of a *sequence* of one or more *requests* and their expected *responses*.
