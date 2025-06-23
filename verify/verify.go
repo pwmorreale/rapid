@@ -93,7 +93,7 @@ func CheckResponseContent(request *config.Request, response *config.Response) {
 	}
 
 	if !response.Content.Expected && response.Content.MediaType != "" {
-		logger.Warn(request, response, "response content_type specifed, but no content.expected is false")
+		logger.Warn(request, response, "response content_type specified, but no content.expected is false")
 	}
 
 	if response.Content.MediaType != "" {

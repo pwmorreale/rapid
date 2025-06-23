@@ -2,7 +2,7 @@
 //  Copyright © 2025 Peter W. Morreale. All Rights Reserved.
 //
 
-// Package data contins data substituion routines.
+// Package data contins data substitution routines.
 package data
 
 import (

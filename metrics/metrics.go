@@ -21,7 +21,7 @@ import (
 const (
 	namespace = "rapid"
 
-	// NoResponseName is for error metrics that ocurr prior to receiving a response
+	// NoResponseName is for error metrics that occur prior to receiving a response
 	NoResponseName = "n/a"
 )
 
