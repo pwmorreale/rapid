@@ -112,6 +112,7 @@ func (s *Context) ExecuteRequest(ctx context.Context, iteration int, request *co
 	start := time.Now()
 
 	i := 0
+
 Loop:
 	for {
 		if wp.WaitingQueueSize() > 0 {
@@ -131,7 +132,7 @@ Loop:
 			if time.Since(start) >= request.ThunderingHerd.TimeLimit {
 				break
 			}
-		} else if i > request.ThunderingHerd.Max {
+		} else if i >= request.ThunderingHerd.Max {
 			break
 		}
 
@@ -143,6 +144,6 @@ Loop:
 	}
 
 	// Wait for everybody to complete.
-	wp.Stop()
+	wp.StopWait()
 
 }
