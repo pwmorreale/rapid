@@ -1,6 +1,6 @@
-# REST API Testing and Diagnostic (RAPID) tool
+# REST API  Diagnostic (RAPID) tool [![Go Report Card](https://goreportcard.com/badge/github.com/pwmorreale/rapid)](https://goreportcard.com/report/github.com/pwmorreale/rapid)
 
-Rapid is a tool used to both verify conformance of your REST server against your API spec, as well as measure load and/or performance behavior.  Rapid also makes it possible for you to test policies such as circuit-breaking, rate-limiting, load-balancing, etc. 
+Rapid is a REST API testing tool used to both verify conformance of your REST server against your API spec, as well as measure load and/or performance behavior.  Rapid also makes it possible for you to test policies such as circuit-breaking, rate-limiting, load-balancing, etc. 
 
 Rapid works entirely through a YAML configuration file.   The configuration is called a *scenario* and consists of a sequence of one of more http/https requests along with their possible responses.  Sequences can contain iteration counts or execute in a loop for a specific period of time.  You can also easily configure multiple concurrent requests to load your infrastructure.
 
