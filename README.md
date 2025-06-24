@@ -1,4 +1,5 @@
-# REST API  Diagnostic (RAPID) tool [![Go Report Card](https://goreportcard.com/badge/github.com/pwmorreale/rapid)](https://goreportcard.com/report/github.com/pwmorreale/rapid) [![Tests & Lint](https://github.com/pwmorreale/rapid/actions/workflows/makefile.yml/badge.svg)](https://github.com/pwmorreale/rapid/actions/workflows/makefile.yml) [![CodeQL Advanced](https://github.com/pwmorreale/rapid/actions/workflows/codeql.yml/badge.svg)](https://github.com/pwmorreale/rapid/actions/workflows/codeql.yml)
+# REST API  Diagnostic (RAPID) tool 
+[![Go Report Card](https://goreportcard.com/badge/github.com/pwmorreale/rapid)](https://goreportcard.com/report/github.com/pwmorreale/rapid) [![Tests & Lint](https://github.com/pwmorreale/rapid/actions/workflows/makefile.yml/badge.svg)](https://github.com/pwmorreale/rapid/actions/workflows/makefile.yml) [![CodeQL Advanced](https://github.com/pwmorreale/rapid/actions/workflows/codeql.yml/badge.svg)](https://github.com/pwmorreale/rapid/actions/workflows/codeql.yml)
 
 Rapid is a REST API testing tool used to both verify conformance of your REST server against your API spec, as well as measure load and/or performance behavior.  Rapid also makes it possible for you to test policies such as circuit-breaking, rate-limiting, load-balancing, etc. 
 
@@ -12,7 +13,7 @@ In addition, Rapid allows you to dynamically extract data from previous response
 To install:
 
 ```bash
-% go install github.com/pwmorreale/rapid@latest
+go install github.com/pwmorreale/rapid@latest
 ```
 ## Build
 Rapid uses a Makefile for building.  The Makefile references three other tools: [staticcheck](https://github.com/dominikh/go-tools), [counterfeiter](https://github.com/maxbrunsfeld/counterfeiter) and [revive](https://github.com/mgechev/revive).  
