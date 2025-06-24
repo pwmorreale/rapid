@@ -1,4 +1,4 @@
-# REST API  Diagnostic (RAPID) tool [![Go Report Card](https://goreportcard.com/badge/github.com/pwmorreale/rapid)](https://goreportcard.com/report/github.com/pwmorreale/rapid)
+# REST API  Diagnostic (RAPID) tool [![Go Report Card](https://goreportcard.com/badge/github.com/pwmorreale/rapid)](https://goreportcard.com/report/github.com/pwmorreale/rapid) [![Tests & Lint](https://github.com/pwmorreale/rapid/actions/workflows/makefile.yml/badge.svg)](https://github.com/pwmorreale/rapid/actions/workflows/makefile.yml) [![CodeQL Advanced](https://github.com/pwmorreale/rapid/actions/workflows/codeql.yml/badge.svg)](https://github.com/pwmorreale/rapid/actions/workflows/codeql.yml)
 
 Rapid is a REST API testing tool used to both verify conformance of your REST server against your API spec, as well as measure load and/or performance behavior.  Rapid also makes it possible for you to test policies such as circuit-breaking, rate-limiting, load-balancing, etc. 
 
