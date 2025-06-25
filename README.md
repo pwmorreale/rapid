@@ -18,7 +18,7 @@ go install github.com/pwmorreale/rapid@latest
 ## Build
 Rapid uses a Makefile for building.  The Makefile references three other tools: [staticcheck](https://github.com/dominikh/go-tools), [counterfeiter](https://github.com/maxbrunsfeld/counterfeiter) and [revive](https://github.com/mgechev/revive).  
 
-THe executable will be located in the *target* directory.
+The executable will be located in the *target* directory.
 
 The Makefile targets are:
 
@@ -71,7 +71,7 @@ This allows for example, extraction of a security token from an authorization re
 Rapid allows you to create *thundering herd* configurations that allow you to specify a number of concurrent requests for a specific duration of time, or a maximum number of requests.  For example, you could configure Rapid to execute 1000 requests concurrently for 5 minutes, or 20 concurrent requests until 500 requests have completed.  This can be useful to test circuit breaking, rate limiting, and other infrastructure behaviors.
 
 ### Prometheus metrics
-When configured, rapid can collect prometheus metrics and at completion push them to a [Prometheus PushGateway](https://prometheus.io/docs/instrumenting/pushing/).  The metrics collected follow the [RED](https://grafana.com/blog/2018/08/02/the-red-method-how-to-instrument-your-services/) (Requests, Errors, Durations) paradigm with Prometheus counters for requests and erros counts and a historgram for request durations.
+When configured, rapid can collect prometheus metrics and at completion push them to a [Prometheus PushGateway](https://prometheus.io/docs/instrumenting/pushing/).  The metrics collected follow the [RED](https://grafana.com/blog/2018/08/02/the-red-method-how-to-instrument-your-services/) (Requests, Errors, Durations) paradigm with Prometheus counters for requests and errors counts and a histogram for request durations.
 
 ## Statistics and metrics
 
@@ -83,7 +83,7 @@ INF count=10 errors=0 minTime=2.833782ms maxTime=102.053378ms avgTime=56.589378m
 ```
 The above shows that rapid executed 10 requests, and received 10 '200' responses.  And the responses contained the expected, configured response data.
 
-Note that in addition to network errors, any discrepency to the configuration is counted as an error.  This means that if the server response returns a cookie that is not a part of the response configuration, the request is counted as an error. 
+Note that in addition to network errors, any discrepancy to the configuration is counted as an error.  This means that if the server response returns a cookie that is not a part of the response configuration, the request is counted as an error. 
 
 If configured, the prometheus metrics operate in the same manner.  Requests are demarcated by their name, method, and response names.  Prometheus metrics are only captured if configured. 
 
@@ -179,7 +179,7 @@ comment:
 ### Find&Replace Configuration
 Find&Replace allows you to define fields for replacement during execution of the scenario.  Headers (names and values), cookies, and URLs  are passed through this module for expansion prior to being referenced.  
 
-Use https://golang.org/s/re2syntax for the *match* regular expression.  **Note you must take care to avoid any collisions between the match string and data within the field being modified**  Rapid will indescriminately replace all successful matches within the field.
+Use https://golang.org/s/re2syntax for the *match* regular expression.  **Note you must take care to avoid any collisions between the match string and data within the field being modified**  Rapid will indiscriminately replace all successful matches within the field.
 
 Also see the *extract* configuration below.
 
@@ -218,7 +218,7 @@ tls_configuration:
 |insecure_skip_verify| If set to *true*, then the client will not attempt to verify the server certificate. |false| boolean |
 
 ### Prometheus Configuration
-You can configure Rapid to collect and send metrics to your Prometheus server (eg: Push).   Rapid follws the [RED](https://grafana.com/blog/2018/08/02/the-red-method-how-to-instrument-your-services/) (Requests, Errors, Durations) paradigm with two counters for requests and errors, and a histogram of request durations.  
+You can configure Rapid to collect and send metrics to your Prometheus server (eg: Push).   Rapid follows the [RED](https://grafana.com/blog/2018/08/02/the-red-method-how-to-instrument-your-services/) (Requests, Errors, Durations) paradigm with two counters for requests and errors, and a histogram of request durations.  
 
 To avoid prometheus metrics gathering, omit the configuration entirely.
 
@@ -264,7 +264,7 @@ headers:
 |headers| See next section|||
 
 #### Headers
-Any additional headers required by your Promesheus server.
+Any additional headers required by your Prometheus server.
 
 ```yaml
 headers:
@@ -380,7 +380,7 @@ cookies:
 |value | The cookie string|| string |
 
 ### Response Configuration
-The *responses* section of *request* configuration is an array of the possible responses to this request. Here you configure the expected data associated with a particular response.  Rapid will compare the actual response against what is expected and report any discrepencies.
+The *responses* section of *request* configuration is an array of the possible responses to this request. Here you configure the expected data associated with a particular response.  Rapid will compare the actual response against what is expected and report any discrepancies.
 
 ```yaml
 responses:
@@ -410,7 +410,7 @@ responses:
 |headers | See next section|| array |
 
 #### Headers
-These are headers expected to be set by the server in the reponse.  Rapid will perform exact, case sensitive matches and report any discrepencies.
+These are headers expected to be set by the server in the response.  Rapid will perform exact, case sensitive matches and report any discrepancies.
 
 ```yaml
 headers:
@@ -456,7 +456,7 @@ content:
 #### Extract
 Use this configuration to extract data from the response body and insert it into the **Find&Replace** module for future use in headers/URLs/bodies/etc. 
 
-Rapid supports extraction from three different types of data:  text, JSON, or XML.  Note that the type you specify in the cnfiguration below is independent of the MIME type present in the *Content-Type* header.  Thus you can mix and match extraction types from the same response body.
+Rapid supports extraction from three different types of data:  text, JSON, or XML.  Note that the type you specify in the configuration below is independent of the MIME type present in the *Content-Type* header.  Thus you can mix and match extraction types from the same response body.
 
 ```yaml
   extract:
