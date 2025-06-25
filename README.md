@@ -1,11 +1,11 @@
-# REST API  Diagnostic (RAPID) tool 
+# REST API  Diagnostic (RAPID) tool
 [![Go Report Card](https://goreportcard.com/badge/github.com/pwmorreale/rapid)](https://goreportcard.com/report/github.com/pwmorreale/rapid) [![Tests & Lint](https://github.com/pwmorreale/rapid/actions/workflows/makefile.yml/badge.svg)](https://github.com/pwmorreale/rapid/actions/workflows/makefile.yml) [![CodeQL Advanced](https://github.com/pwmorreale/rapid/actions/workflows/codeql.yml/badge.svg)](https://github.com/pwmorreale/rapid/actions/workflows/codeql.yml)
 
-Rapid is a REST API testing tool used to both verify conformance of your REST server against your API spec, as well as measure load and/or performance behavior.  Rapid also makes it possible for you to test policies such as circuit-breaking, rate-limiting, load-balancing, etc. 
+Rapid is a REST API testing tool used to both verify conformance of your REST server against your API spec, as well as measure load and/or performance behavior.  Rapid also makes it possible for you to test policies such as circuit-breaking, rate-limiting, load-balancing, etc.
 
 Rapid works entirely through a YAML configuration file.   The configuration is called a *scenario* and consists of a sequence of one of more http/https requests along with their possible responses.  Sequences can contain iteration counts or execute in a loop for a specific period of time.  You can also easily configure multiple concurrent requests to load your infrastructure.
 
-You define content, headers, and cookies for both requests and the responses.  Rapid compares the actual response data with the expected response configuration and informs you of any discrepancies.  
+You define content, headers, and cookies for both requests and the responses.  Rapid compares the actual response data with the expected response configuration and informs you of any discrepancies.
 
 In addition, Rapid allows you to dynamically extract data from previous responses and insert that data into future requests.  This allows you to create dynamic paths through your service infrastructure.
 
@@ -16,7 +16,7 @@ To install:
 go install github.com/pwmorreale/rapid@latest
 ```
 ## Build
-Rapid uses a Makefile for building.  The Makefile references three other tools: [staticcheck](https://github.com/dominikh/go-tools), [counterfeiter](https://github.com/maxbrunsfeld/counterfeiter) and [revive](https://github.com/mgechev/revive).  
+Rapid uses a Makefile for building.  The Makefile references three other tools: [staticcheck](https://github.com/dominikh/go-tools), [counterfeiter](https://github.com/maxbrunsfeld/counterfeiter) and [revive](https://github.com/mgechev/revive).
 
 The executable will be located in the *target* directory.
 
@@ -60,14 +60,14 @@ Rapid provides several features:
 You can define an iteration count and iteration time limit.  Each iteration will loop through all configured requests in order and each iteration must complete within the specified time limit.
 
 ### *Find&Replace*
-Find&replace allows you to predefine a set of regex terms and their associated replacement strings.  When a regex matches in a header value, cookie, or the URL, the replacement term is inserted in its place.  This allows you to define a term once, and have it referenced throughout the entire configuration.
+Find&replace allows you to predefine a set of regex terms and their associated replacement strings.  When a regex matches in a header value, cookie, content, or the URL, the replacement term is inserted in its place.  This allows you to define a term once, and have it referenced throughout the entire configuration.
 
 ### *Data Extraction*
 Rapid also allows you to extract data from response payloads for use in future requests.  You can search through JSON, XML, or text responses and have the data saved to the **find&replace** module.
 
 This allows for example, extraction of a security token from an authorization response body for use in **Authorization** headers in future requests.  Another possibility would be to use returned response data to modify the URL of a future request in the sequence.
 
-### *Thundering Herd* 
+### *Thundering Herd*
 Rapid allows you to create *thundering herd* configurations that allow you to specify a number of concurrent requests for a specific duration of time, or a maximum number of requests.  For example, you could configure Rapid to execute 1000 requests concurrently for 5 minutes, or 20 concurrent requests until 500 requests have completed.  This can be useful to test circuit breaking, rate limiting, and other infrastructure behaviors.
 
 ### Prometheus metrics
@@ -83,12 +83,12 @@ INF count=10 errors=0 minTime=2.833782ms maxTime=102.053378ms avgTime=56.589378m
 ```
 The above shows that rapid executed 10 requests, and received 10 '200' responses.  And the responses contained the expected, configured response data.
 
-Note that in addition to network errors, any discrepancy to the configuration is counted as an error.  This means that if the server response returns a cookie that is not a part of the response configuration, the request is counted as an error. 
+Note that in addition to network errors, any discrepancy to the configuration is counted as an error.  This means that if the server response returns a cookie that is not a part of the response configuration, the request is counted as an error.
 
-If configured, the prometheus metrics operate in the same manner.  Requests are demarcated by their name, method, and response names.  Prometheus metrics are only captured if configured. 
+If configured, the prometheus metrics operate in the same manner.  Requests are demarcated by their name, method, and response names.  Prometheus metrics are only captured if configured.
 
 ## Contributing
-Contributions, bug reports, suggestions are welcome.  Please note that pull requests must pass both [staticcheck](https://github.com/dominikh/go-tools), and [revive](https://github.com/mgechev/revive) linting. Please create an issue. 
+Contributions, bug reports, suggestions are welcome.  Please note that pull requests must pass both [staticcheck](https://github.com/dominikh/go-tools), and [revive](https://github.com/mgechev/revive) linting. Please create an issue.
 
 ## Configuration
 A scenario is the basic unit that describes a test case for RAPID.  A scenario is wholly contained within a single YAML file.  Scenarios consist of a *sequence* of one or more *requests* and their expected *responses*.
@@ -177,7 +177,7 @@ comment:
 | comment | Optional comment || string |
 
 ### Find&Replace Configuration
-Find&Replace allows you to define fields for replacement during execution of the scenario.  Headers (names and values), cookies, and URLs  are passed through this module for expansion prior to being referenced.  
+Find&Replace allows you to define fields for replacement during execution of the scenario.  Headers values, cookies, content, and URLs are passed through this module for expansion prior to being referenced.
 
 Use https://golang.org/s/re2syntax for the *match* regular expression.  **Note you must take care to avoid any collisions between the match string and data within the field being modified**  Rapid will indiscriminately replace all successful matches within the field.
 
@@ -195,7 +195,7 @@ find_replace:
 |replace | Replacement value for a successful match || string |
 
 ### TLS Configuration
-This section allows you to specify the certificates used for TLS connections.  This configuration is used for all requests in the configuration. 
+This section allows you to specify the certificates used for TLS connections.  This configuration is used for all requests in the configuration.
 If this configuration is omitted, then TLS on the client will not be enabled.
 
 If you specify a CA certificate, it will be used to verify the identify of the server certificate during the TLS handshake and the system certificates will be ignored.
@@ -218,7 +218,7 @@ tls_configuration:
 |insecure_skip_verify| If set to *true*, then the client will not attempt to verify the server certificate. |false| boolean |
 
 ### Prometheus Configuration
-You can configure Rapid to collect and send metrics to your Prometheus server (eg: Push).   Rapid follows the [RED](https://grafana.com/blog/2018/08/02/the-red-method-how-to-instrument-your-services/) (Requests, Errors, Durations) paradigm with two counters for requests and errors, and a histogram of request durations.  
+You can configure Rapid to collect and send metrics to your Prometheus server (eg: Push).   Rapid follows the [RED](https://grafana.com/blog/2018/08/02/the-red-method-how-to-instrument-your-services/) (Requests, Errors, Durations) paradigm with two counters for requests and errors, and a histogram of request durations.
 
 To avoid prometheus metrics gathering, omit the configuration entirely.
 
@@ -240,7 +240,7 @@ prometheus:
 ```
 
 |Field | Notes| Default| Type|
-|-------|---|---|--| 
+|-------|---|---|--|
 |push_url | URL to your Prometheus PushGateway server. If omitted, Rapid will not gather metrics. | |string |
 | tls_configuration| Identical to [TLS](#TLS_Configuration) above, however these certificates are only specific to your Prometheus Pushgateway server.  Omit for non-TLS connections. || |string|
 |histogram_buckets| Configuration for the histogram.|||
@@ -279,7 +279,7 @@ headers:
 
 
 ### Sequence Configuration
-The *sequence* section defines iterations of the *requests*. 
+The *sequence* section defines iterations of the *requests*.
 ```yaml
 sequence:
   iterations:
@@ -336,7 +336,7 @@ The *thundering_herd* configuration allows you to control concurrent execution o
 
 If this configuration is omitted, then exactly one instance of the request will be executed for each iteration.  Also be aware that regardless of this configuration for any of the requests in the array, the iteration time limit will be enforced.
 
-Note that Rapid always creates a separate client for each request.  This means that, by design, rapid will use a separate system socket for each transaction with the implied server.  Consequently, the actual number of concurrent requests that can be created can be limited by the platform used to execute Rapid.  The intent here is to mimic real world application where a HTTP server is handling multiple concurrent requests from multiple separate clients.  
+Note that Rapid always creates a separate client for each request.  This means that, by design, rapid will use a separate system socket for each transaction with the implied server.  Consequently, the actual number of concurrent requests that can be created can be limited by the platform used to execute Rapid.  The intent here is to mimic real world application where a HTTP server is handling multiple concurrent requests from multiple separate clients.
 
 ```yaml
 thundering_herd:
@@ -436,7 +436,7 @@ cookies:
 |value | The expected cookie|| string |
 
 #### Content
-This section allows you to verify content returned from the server.   
+This section allows you to verify content returned from the server.
 ```yaml
 content:
   expected:
@@ -454,7 +454,7 @@ content:
 |contains | An array of [regular expressions](https://golang.org/s/re2syntax) used to verify the content. || string |
 
 #### Extract
-Use this configuration to extract data from the response body and insert it into the **Find&Replace** module for future use in headers/URLs/bodies/etc. 
+Use this configuration to extract data from the response body and insert it into the **Find&Replace** module for future use in headers/URLs/bodies/etc.
 
 Rapid supports extraction from three different types of data:  text, JSON, or XML.  Note that the type you specify in the configuration below is independent of the MIME type present in the *Content-Type* header.  Thus you can mix and match extraction types from the same response body.
 
