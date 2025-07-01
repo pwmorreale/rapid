@@ -115,7 +115,8 @@ func (s *Context) ExecuteRequest(ctx context.Context, iteration int, request *co
 
 Loop:
 	for {
-		if wp.WaitingQueueSize() > 0 {
+
+		for wp.WaitingQueueSize() > 0 {
 			time.Sleep(time.Millisecond * 10)
 		}
 
