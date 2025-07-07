@@ -19,9 +19,10 @@ var logTimestamp bool
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "rapid",
-	Short: "REST API diagnostic tool",
-	Long:  `Rapid can be used to verify conformance of your REST APIS to their design specs.  You can also use it to measure performance and/or throughput of your REST servers.`,
+	Use:     "rapid",
+	Short:   "REST API diagnostic tool",
+	Long:    `Rapid can be used to verify conformance of your REST APIS to their design specs.  You can also use it to measure performance and/or throughput of your REST servers.`,
+	Version: "v0.1.0",
 }
 
 // Execute is called by main.
