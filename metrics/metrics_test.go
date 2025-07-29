@@ -47,7 +47,7 @@ func TestMetrics(t *testing.T) {
 	defer ts.Close()
 
 	c := config.New()
-	sc, err := c.ParseFile("../test/configs/test_scenario.yaml")
+	sc, err := c.ParseFile("../testdata/configs/test_scenario.yaml")
 	assert.NotNil(t, sc)
 	assert.Nil(t, err)
 
@@ -123,12 +123,12 @@ func TestTLSMetrics(t *testing.T) {
 	defer ts.Close()
 
 	c := config.New()
-	sc, err := c.ParseFile("../test/configs/test_scenario.yaml")
+	sc, err := c.ParseFile("../testdata/configs/test_scenario.yaml")
 	assert.NotNil(t, sc)
 	assert.Nil(t, err)
 
-	sc.Prom.TLS.CertFilePath = "../test/certs/dev.crt"
-	sc.Prom.TLS.KeyFilePath = "../test/certs/dev.key"
+	sc.Prom.TLS.CertFilePath = "../testdata/certs/dev.crt"
+	sc.Prom.TLS.KeyFilePath = "../testdata/certs/dev.key"
 	sc.Prom.TLS.InsecureSkipVerify = true
 	sc.Prom.Headers = append(sc.Prom.Headers, config.HeaderData{Name: "foo", Value: "bar"})
 	sc.Prom.JobName = "test"
@@ -173,7 +173,7 @@ func TestTLSMetrics(t *testing.T) {
 func TestNoPrometheus(t *testing.T) {
 
 	c := config.New()
-	sc, err := c.ParseFile("../test/configs/test_scenario.yaml")
+	sc, err := c.ParseFile("../testdata/configs/test_scenario.yaml")
 	assert.NotNil(t, sc)
 	assert.Nil(t, err)
 

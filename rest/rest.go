@@ -23,7 +23,7 @@ import (
 
 // Rest  defines the interface for managing requests and responses
 //
-//go:generate go tool counterfeiter -o ../test/mocks/fake_rest.go . Rest
+//go:generate go tool counterfeiter -o ../testdata/mocks/fake_rest.go . Rest
 type Rest interface {
 	Execute(context.Context, int, *config.Request)
 }

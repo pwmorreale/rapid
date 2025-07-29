@@ -91,7 +91,7 @@ func makeResponseFromResponse(response *config.Response, content []byte) *http.R
 
 func initTestService(t *testing.T) (*Context, *config.Scenario, data.Data, error) {
 	c := config.New()
-	sc, err := c.ParseFile("../test/configs/test_scenario.yaml")
+	sc, err := c.ParseFile("../testdata/configs/test_scenario.yaml")
 	assert.Nil(t, err)
 
 	d := data.New()

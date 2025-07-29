@@ -17,7 +17,7 @@ import (
 
 // Sequence defines interfaces for executing scenarios
 //
-//go:generate go tool counterfeiter -o ../test/mocks/fake_sequence.go . Sequence
+//go:generate go tool counterfeiter -o ../testdata/mocks/fake_sequence.go . Sequence
 type Sequence interface {
 	Run(*config.Scenario) error
 }

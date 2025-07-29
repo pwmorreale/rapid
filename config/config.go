@@ -25,7 +25,7 @@ const (
 
 // Configuration defines the interface for managing the scenario
 //
-//go:generate go tool counterfeiter -o ../test/mocks/fake_config.go . Configuration
+//go:generate go tool counterfeiter -o ../testdata/mocks/fake_config.go . Configuration
 type Configuration interface {
 	ParseFile(f string) (*Scenario, error)
 }

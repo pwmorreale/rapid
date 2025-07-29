@@ -23,7 +23,7 @@ const (
 
 func createTempScenario(t *testing.T, url string) *os.File {
 
-	blob, err := os.ReadFile("../test/configs/run-test.yaml")
+	blob, err := os.ReadFile("../testdata/configs/run-test.yaml")
 	assert.Nil(t, err)
 
 	// Replace the URL keyword...
