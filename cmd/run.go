@@ -10,11 +10,13 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"syscall"
 
 	"github.com/pwmorreale/rapid/config"
 	"github.com/pwmorreale/rapid/data"
 	"github.com/pwmorreale/rapid/logger"
+	"github.com/pwmorreale/rapid/report"
 	"github.com/pwmorreale/rapid/rest"
 	"github.com/pwmorreale/rapid/sequence"
 	"github.com/spf13/cobra"
@@ -29,8 +31,11 @@ var runCmd = &cobra.Command{
 	RunE: RunScenario,
 }
 
+var reportFile string
+
 func init() {
 	rootCmd.AddCommand(runCmd)
+	runCmd.Flags().StringVar(&reportFile, "report", "", `Write structured report to file (format from extension: .json or .xml)`)
 }
 
 func initLogger() (*os.File, error) {
@@ -122,11 +127,28 @@ func RunScenario(_ *cobra.Command, _ []string) error {
 
 	LogResults(sc)
 
+	if reportFile != "" {
+		if err := writeReport(reportFile, sc); err != nil {
+			return err
+		}
+	}
+
 	if totalErrors(sc) > 0 {
 		return fmt.Errorf("scenario completed with errors")
 	}
 
 	return nil
+}
+
+func writeReport(path string, sc *config.Scenario) error {
+	switch filepath.Ext(path) {
+	case ".json":
+		return report.WriteJSON(path, sc)
+	case ".xml":
+		return report.WriteJUnit(path, sc)
+	default:
+		return fmt.Errorf("unsupported report format %q (use .json or .xml)", filepath.Ext(path))
+	}
 }
 
 func totalErrors(sc *config.Scenario) int64 {
