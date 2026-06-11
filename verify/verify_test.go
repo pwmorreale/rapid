@@ -83,7 +83,7 @@ func TestCheck(t *testing.T) {
 	err := verify.Check("../testdata/configs/verify_test.yaml")
 	assert.Nil(t, err)
 
-	assert.Equal(t, 13, logger.ErrorCount())
+	assert.Equal(t, 8, logger.ErrorCount())
 	assert.Equal(t, 4, logger.WarnCount())
 	assert.Equal(t, 11, logger.InfoCount())
 	assert.Equal(t, 9, logger.DebugCount())

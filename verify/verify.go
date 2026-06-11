@@ -45,7 +45,7 @@ func CheckCookies(request *config.Request, response *config.Response, cookies []
 func CheckHeaders(request *config.Request, response *config.Response, headers []config.HeaderData) {
 
 	for i := range headers {
-		if headers[i].Value != "" || headers[i].Name == "" {
+		if headers[i].Value != "" && headers[i].Name == "" {
 			logger.Error(request, response, "missing header name, but have value: %s", headers[i].Value)
 		}
 	}
