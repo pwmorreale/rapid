@@ -7,6 +7,7 @@ package cmd
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
@@ -121,7 +122,19 @@ func RunScenario(_ *cobra.Command, _ []string) error {
 
 	LogResults(sc)
 
+	if totalErrors(sc) > 0 {
+		return fmt.Errorf("scenario completed with errors")
+	}
+
 	return nil
+}
+
+func totalErrors(sc *config.Scenario) int64 {
+	var total int64
+	for i := range sc.Sequence.Requests {
+		total += sc.Sequence.Requests[i].Stats.GetErrors()
+	}
+	return total
 }
 
 // LogResults prints out the statistics from the run.
