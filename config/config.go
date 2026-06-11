@@ -16,7 +16,8 @@ import (
 
 // Various constants...
 const (
-	DefaultContentLimit = 4096
+	DefaultContentLimit  = 4096
+	DefaultRequestTimeout = 30 * time.Second
 
 	TypeRegex = "regex"
 
@@ -51,13 +52,14 @@ type TLSConfig struct {
 
 // Scenario defines the entire configuration.
 type Scenario struct {
-	Name         string        `mapstructure:"name"`
-	Version      string        `mapstructure:"version"`
-	Comment      string        `mapstructure:"comment"`
-	Sequence     Sequence      `mapstructure:"sequence"`
-	Replacements []ReplaceData `mapstructure:"find_replace"`
-	TLS          TLSConfig     `mapstructure:"tls_configuration"`
-	Prom         PromConfig    `mapstructure:"prometheus_configuration"`
+	Name           string        `mapstructure:"name"`
+	Version        string        `mapstructure:"version"`
+	Comment        string        `mapstructure:"comment"`
+	RequestTimeout time.Duration `mapstructure:"request_timeout"`
+	Sequence       Sequence      `mapstructure:"sequence"`
+	Replacements   []ReplaceData `mapstructure:"find_replace"`
+	TLS            TLSConfig     `mapstructure:"tls_configuration"`
+	Prom           PromConfig    `mapstructure:"prometheus_configuration"`
 }
 
 // BucketConfig defines parameters for the prometheus historgram buckets.
@@ -187,6 +189,10 @@ func (c *Context) ParseFile(flnm string) (*Scenario, error) {
 	c.id = uuid.New().String()
 
 	setDefaultContentMaxSize(&s)
+
+	if s.RequestTimeout == 0 {
+		s.RequestTimeout = DefaultRequestTimeout
+	}
 
 	return &s, nil
 }
