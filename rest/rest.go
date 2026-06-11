@@ -167,7 +167,6 @@ func (r *Context) createClient() (*http.Client, error) {
 		DisableKeepAlives:   true, // Always, one request per connection.
 		TLSClientConfig:     tlsConfig,
 		TLSHandshakeTimeout: 10 * time.Second,
-		ForceAttemptHTTP2:   true,
 	}
 
 	return client, nil

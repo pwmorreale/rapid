@@ -145,12 +145,10 @@ func (p *Context) createClient() (*http.Client, error) {
 	// Get the TLC config if present...
 	tls, err := p.createTLS()
 
-	// Probably should expose these in config...
 	client.Transport = &http.Transport{
-		DisableKeepAlives:   true, // Always, one request per connection.
-		TLSClientConfig:     tls,  // May be nil...
+		DisableKeepAlives:   true,
+		TLSClientConfig:     tls, // May be nil...
 		TLSHandshakeTimeout: 10 * time.Second,
-		ForceAttemptHTTP2:   true,
 	}
 
 	return client, err
