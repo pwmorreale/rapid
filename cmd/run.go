@@ -103,6 +103,10 @@ func RunScenario(_ *cobra.Command, _ []string) error {
 		return err
 	}
 
+	if sc.Name != "" {
+		logger.Info(nil, nil, "scenario: %s version: %s %s", sc.Name, sc.Version, sc.Comment)
+	}
+
 	r := rest.New(sc, d)
 	s := sequence.New(r)
 
