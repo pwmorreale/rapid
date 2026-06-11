@@ -14,6 +14,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/pwmorreale/rapid/config"
@@ -26,7 +27,7 @@ import (
 //
 //go:generate go tool counterfeiter -o ../testdata/mocks/fake_rest.go . Rest
 type Rest interface {
-	Execute(context.Context, int, *config.Request)
+	Execute(context.Context, int, *config.Request, *sync.Map) bool
 	Push() error
 }
 
@@ -200,13 +201,23 @@ func (r *Context) Push() error {
 }
 
 // Execute creates and executes the request then validates the response.
-func (r *Context) Execute(ctx context.Context, iteration int, request *config.Request) {
+// Returns true if an error occurred. When seenErrors is non-nil, duplicate
+// error messages are suppressed from logging (but still counted in stats).
+func (r *Context) Execute(ctx context.Context, iteration int, request *config.Request, seenErrors *sync.Map) bool {
 
 	start := time.Now()
 
 	response, err := r.Gestalt(ctx, request)
 	if err != nil {
-		logger.Error(request, nil, "%v", err)
+		errMsg := err.Error()
+		duplicate := false
+		if seenErrors != nil {
+			_, duplicate = seenErrors.LoadOrStore(errMsg, true)
+		}
+
+		if !duplicate {
+			logger.Error(request, nil, "%v", err)
+		}
 
 		if response == nil {
 			r.metrics.Errors(iteration, request.Name, metrics.NoResponseName)
@@ -215,7 +226,7 @@ func (r *Context) Execute(ctx context.Context, iteration int, request *config.Re
 			r.metrics.Errors(iteration, request.Name, response.Name)
 			response.Stats.Error(start)
 		}
-		return
+		return true
 	}
 
 	status := strconv.Itoa(response.StatusCode)
@@ -224,4 +235,5 @@ func (r *Context) Execute(ctx context.Context, iteration int, request *config.Re
 	r.metrics.Requests(iteration, request.Name, response.Name, status)
 	request.Stats.Success(start)
 	response.Stats.Success(start)
+	return false
 }

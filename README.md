@@ -266,8 +266,8 @@ Rapid uses Prometheus' [ExponentialBucketsRange](https://pkg.go.dev/github.com/p
 |-------|---|---|---|
 |iterations | Number of times to loop through all requests. Must be at least 1 to execute. |0| integer |
 |iteration_time_limit | Maximum time per iteration. Duration: *s*, *m*, *h*. Zero means no limit. | 0 | duration |
-|abort_on_error | Currently unimplemented | false| boolean |
-|ignore_duplicate_errors | Currently unimplemented | false | boolean |
+|abort_on_error | Stop execution immediately when any request encounters an error | false| boolean |
+|ignore_duplicate_errors | During thundering herd execution, only log each unique error message once (errors are still counted in stats) | false | boolean |
 |requests | The array of request definitions || array |
 
 ### Request

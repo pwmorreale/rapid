@@ -7,6 +7,8 @@ package sequence
 
 import (
 	"context"
+	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/gammazero/workerpool"
@@ -48,14 +50,18 @@ func (s *Context) Run(ctx context.Context, sc *config.Scenario) error {
 			return ctx.Err()
 		default:
 		}
-		s.ExecuteIteration(ctx, sc, i)
+		hadError := s.ExecuteIteration(ctx, sc, i)
+		if hadError && sc.Sequence.AbortOnError {
+			logger.Warn(nil, nil, "aborting on error at iteration %d", i)
+			return nil
+		}
 	}
 
 	return nil
 }
 
-// ExecuteIteration executes a single iteration
-func (s *Context) ExecuteIteration(parent context.Context, sc *config.Scenario, iteration int) {
+// ExecuteIteration executes a single iteration. Returns true if any request had an error.
+func (s *Context) ExecuteIteration(parent context.Context, sc *config.Scenario, iteration int) bool {
 
 	var ctx context.Context
 	var cancel context.CancelFunc
@@ -69,22 +75,29 @@ func (s *Context) ExecuteIteration(parent context.Context, sc *config.Scenario, 
 
 	start := time.Now()
 
-	s.ExecuteSequence(ctx, iteration, sc)
+	hadError := s.ExecuteSequence(ctx, iteration, sc)
 
 	select {
 	case <-ctx.Done():
 		sc.Sequence.Stats.Error(start)
 		logger.Error(nil, nil, "sequence %v on iteration: %d", ctx.Err(), iteration)
-		return
+		return true
 	default:
 	}
 
-	sc.Sequence.Stats.Success(start)
+	if hadError {
+		sc.Sequence.Stats.Error(start)
+	} else {
+		sc.Sequence.Stats.Success(start)
+	}
 
+	return hadError
 }
 
-// ExecuteSequence runs the sequence of requests
-func (s *Context) ExecuteSequence(ctx context.Context, iteration int, sc *config.Scenario) {
+// ExecuteSequence runs the sequence of requests. Returns true if any request had an error.
+func (s *Context) ExecuteSequence(ctx context.Context, iteration int, sc *config.Scenario) bool {
+
+	hadError := false
 
 Loop:
 	for i := range sc.Sequence.Requests {
@@ -99,21 +112,28 @@ Loop:
 		request := &sc.Sequence.Requests[i]
 
 		logger.Info(request, nil, "execution started")
-		s.ExecuteRequest(ctx, iteration, request)
+		requestHadError := s.ExecuteRequest(ctx, iteration, request, sc.Sequence.IgnoreDups)
 		logger.Info(request, nil, "execution complete")
 
+		if requestHadError {
+			hadError = true
+			if sc.Sequence.AbortOnError {
+				break Loop
+			}
+		}
 	}
 
+	return hadError
 }
 
-// ExecuteRequest ezxecutes a request
-func (s *Context) ExecuteRequest(ctx context.Context, iteration int, request *config.Request) {
+// ExecuteRequest executes a request. Returns true if any execution had an error.
+func (s *Context) ExecuteRequest(ctx context.Context, iteration int, request *config.Request, ignoreDups bool) bool {
 
 	// Is this a once only request?
 	if request.OnceOnly {
 		if request.Executed {
 			logger.Info(request, nil, "once_only request already executed, ignoring")
-			return
+			return false
 		}
 		request.Executed = true
 
@@ -125,6 +145,12 @@ func (s *Context) ExecuteRequest(ctx context.Context, iteration int, request *co
 		workerPoolSize++
 	}
 	wp := workerpool.New(workerPoolSize)
+
+	var hadError atomic.Bool
+	var seenErrors *sync.Map
+	if ignoreDups {
+		seenErrors = &sync.Map{}
+	}
 
 	start := time.Now()
 
@@ -138,7 +164,10 @@ Loop:
 		}
 
 		wp.Submit(func() {
-			s.rest.Execute(ctx, iteration, request)
+			errored := s.rest.Execute(ctx, iteration, request, seenErrors)
+			if errored {
+				hadError.Store(true)
+			}
 		})
 
 		// Inter-request delay
@@ -164,4 +193,5 @@ Loop:
 	// Wait for everybody to complete.
 	wp.StopWait()
 
+	return hadError.Load()
 }
