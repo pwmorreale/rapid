@@ -37,6 +37,11 @@ func New(r rest.Rest) *Context {
 // Run executes the sequence.
 func (s *Context) Run(ctx context.Context, sc *config.Scenario) error {
 
+	if sc.Sequence.Iterations == 0 {
+		logger.Warn(nil, nil, "iterations is 0, nothing to execute")
+		return nil
+	}
+
 	for i := 0; i < sc.Sequence.Iterations; i++ {
 		select {
 		case <-ctx.Done():
