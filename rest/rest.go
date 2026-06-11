@@ -153,19 +153,20 @@ func (r *Context) createClient() (*http.Client, error) {
 		return client, nil
 	}
 
-	// Get the TLC config if present...
-	tls, err := r.CreateTLSConfig(r.sc.TLS.CertFilePath, r.sc.TLS.KeyFilePath,
+	tlsConfig, err := r.CreateTLSConfig(r.sc.TLS.CertFilePath, r.sc.TLS.KeyFilePath,
 		r.sc.TLS.CACertFilePath, r.sc.TLS.InsecureSkipVerify)
+	if err != nil {
+		return nil, err
+	}
 
-	// Probably should expose these in config...
 	client.Transport = &http.Transport{
 		DisableKeepAlives:   true, // Always, one request per connection.
-		TLSClientConfig:     tls,  // May be nil...
+		TLSClientConfig:     tlsConfig,
 		TLSHandshakeTimeout: 10 * time.Second,
 		ForceAttemptHTTP2:   true,
 	}
 
-	return client, err
+	return client, nil
 }
 
 // Gestalt creates and executes the request then validates the response.
