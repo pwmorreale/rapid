@@ -97,7 +97,7 @@ func CheckResponseContent(request *config.Request, response *config.Response) {
 	}
 
 	if response.Content.MediaType != "" {
-		mime := mimetype.Lookup(request.ContentType)
+		mime := mimetype.Lookup(response.Content.MediaType)
 		if mime == nil {
 			logger.Error(request, response, "invalid content_type: %s not a recognized mime type", response.Content.MediaType)
 		}
