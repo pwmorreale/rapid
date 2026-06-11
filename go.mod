@@ -6,7 +6,6 @@ require (
 	github.com/antchfx/xmlquery v1.4.4
 	github.com/gabriel-vasile/mimetype v1.4.9
 	github.com/gammazero/workerpool v1.1.3
-	github.com/google/uuid v1.6.0
 	github.com/lmittmann/tint v1.1.2
 	github.com/prometheus/client_golang v1.22.0
 	github.com/prometheus/common v0.65.0

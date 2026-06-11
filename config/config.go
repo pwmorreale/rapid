@@ -9,7 +9,6 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/pwmorreale/rapid/stats"
 	"github.com/spf13/viper"
 )
@@ -32,9 +31,7 @@ type Configuration interface {
 }
 
 // Context defines a scenario context.
-type Context struct {
-	id string
-}
+type Context struct{}
 
 // ReplaceData defines keyword/value pairs for text substitutions.
 type ReplaceData struct {
@@ -185,8 +182,6 @@ func (c *Context) ParseFile(flnm string) (*Scenario, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	c.id = uuid.New().String()
 
 	setDefaultContentMaxSize(&s)
 
