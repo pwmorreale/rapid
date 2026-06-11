@@ -17,11 +17,18 @@ jobs:
     - name: Setup Go
       uses: actions/setup-go@v5
       with:
-        go-version: '1.24.2'
+        go-version: 'stable'
 
-    - name: Install Dependencies
+    - name: Cache Go tools
+      uses: actions/cache@v4
+      with:
+        path: ~/go/bin
+        key: ${{ runner.os }}-go-tools-${{ hashFiles('go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-tools-
+
+    - name: Install Tools
       run: |
-        go get ./...
         go install honnef.co/go/tools/cmd/staticcheck@latest
         go install github.com/mgechev/revive@latest
 
@@ -29,10 +36,22 @@ jobs:
       run: make
 
     - name: Run staticcheck
-      run: make staticcheck    
+      run: make staticcheck
 
     - name: Lint
       run: make lint
 
     - name: Tests
       run: make test
+
+    - name: Race Detector
+      run: make race
+
+    - name: Coverage
+      run: go test -coverprofile=coverage.out ./...
+
+    - name: Upload Coverage
+      uses: actions/upload-artifact@v4
+      with:
+        name: coverage
+        path: coverage.out
