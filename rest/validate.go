@@ -11,7 +11,7 @@ import (
 	"io"
 	"mime"
 	"net/http"
-	"regexp"
+	"strings"
 	"sync"
 
 	"github.com/gabriel-vasile/mimetype"
@@ -34,26 +34,14 @@ func cookieExists(expected string, all []string) bool {
 	return false
 }
 
-func readContent(httpResponse *http.Response, response *config.Response) (int, []byte, error) {
+func readBody(httpResponse *http.Response, maxSize int64) ([]byte, error) {
 
-	// Default if not specified
-	maxSize := int64(4096)
-	if response.Content.MaxSize != 0 {
-		maxSize = int64(response.Content.MaxSize)
+	if maxSize == 0 {
+		maxSize = int64(config.DefaultContentLimit)
 	}
 
-	size := httpResponse.ContentLength
-	if size < 0 || size > maxSize {
-		size = maxSize
-	}
-
-	buf := make([]byte, size)
-	n, err := httpResponse.Body.Read(buf)
-	if err != nil && err != io.EOF {
-		return 0, nil, err
-	}
-
-	return n, buf[:n], nil
+	r := io.LimitReader(httpResponse.Body, maxSize)
+	return io.ReadAll(r)
 }
 
 func verifyHeaderValues(httpHeaders http.Header, expectedHeader *config.HeaderData) error {
@@ -113,6 +101,18 @@ func (r *Context) verifyCookies(httpResponse *http.Response, response *config.Re
 	return nil
 }
 
+func isTextBased(mediaType string) bool {
+	if strings.HasPrefix(mediaType, "text/") {
+		return true
+	}
+	switch mediaType {
+	case "application/json", "application/xml", "application/javascript",
+		"application/xhtml+xml", "application/rss+xml", "application/atom+xml":
+		return true
+	}
+	return strings.HasSuffix(mediaType, "+json") || strings.HasSuffix(mediaType, "+xml")
+}
+
 func (r *Context) verifyExpectedContentType(contentBytes []byte, httpResponse *http.Response, response *config.Response) error {
 	contentType, _, err := mime.ParseMediaType(httpResponse.Header.Get("Content-Type"))
 	if err != nil {
@@ -128,10 +128,16 @@ func (r *Context) verifyExpectedContentType(contentBytes []byte, httpResponse *h
 		return fmt.Errorf("content-type: %s != %s", contentType, response.Content.MediaType)
 	}
 
-	// Verify contents vs. Content-Type
-	mediaType := mimetype.Detect(contentBytes)
-	if !mediaType.Is(contentType) {
-		return fmt.Errorf("mismatched content/types:  Content_Type: %s, detected content as: %s", contentType, mediaType)
+	// Verify the actual bytes match the declared Content-Type.
+	// mimetype.Detect often returns text/plain for small text-based payloads
+	// (JSON, XML, etc.) so skip the sniff when both the detected and expected
+	// types are text-based — the contains/extract checks validate structure.
+	detected := mimetype.Detect(contentBytes)
+	if !detected.Is(contentType) {
+		if isTextBased(detected.String()) && isTextBased(contentType) {
+			return nil
+		}
+		return fmt.Errorf("mismatched content/types: Content-Type: %s, detected content as: %s", contentType, detected)
 	}
 
 	return nil
@@ -154,6 +160,8 @@ func (r *Context) extractContent(contentBytes []byte, response *config.Response)
 			v, err = r.datum.ExtractXML(e.Path, rb)
 		case "text":
 			v, err = r.datum.ExtractRegex(e.Path, rb)
+		default:
+			return fmt.Errorf("unknown extract type: %q (must be json, xml, or text)", e.Type)
 		}
 
 		if err != nil {
@@ -171,13 +179,9 @@ func (r *Context) extractContent(contentBytes []byte, response *config.Response)
 
 func (r *Context) verifyContains(contentBytes []byte, response *config.Response) error {
 
-	for i := range response.Content.Contains {
-		ok, err := regexp.Match(response.Content.Contains[i], contentBytes)
-		if err != nil {
-			return err
-		}
-		if !ok {
-			return fmt.Errorf("content sequence not found: %s", response.Content.Contains[i])
+	for _, re := range response.Content.ContainsCompiled {
+		if !re.Match(contentBytes) {
+			return fmt.Errorf("content sequence not found: %s", re.String())
 		}
 	}
 
@@ -186,23 +190,25 @@ func (r *Context) verifyContains(contentBytes []byte, response *config.Response)
 
 func (r *Context) verifyContentLength(httpLength int64, contentLength int64) error {
 
-	// N.B.  We may not know the exact response body length, so only check what we can.
+	// httpLength is -1 when the server doesn't send Content-Length (chunked, etc.)
+	// Only validate when the server explicitly declared a length.
+	if httpLength < 0 {
+		return nil
+	}
+
 	switch {
-	case (httpLength == 0 && contentLength != 0):
+	case httpLength == 0 && contentLength != 0:
 		return fmt.Errorf("mismatched Content-Length header (%d) and actual content (at least %d bytes)", httpLength, contentLength)
-	case (httpLength > 0 && contentLength == 0):
+	case httpLength > 0 && contentLength == 0:
 		return fmt.Errorf("mismatched Content-Length header (%d) and actual content (at least %d bytes)", httpLength, contentLength)
 	}
 
 	return nil
 }
 
-func (r *Context) verifyContentAndExtract(httpResponse *http.Response, response *config.Response) error {
+func (r *Context) verifyContent(contentBytes []byte, httpResponse *http.Response, response *config.Response) error {
 
-	nrBytes, contentBytes, err := readContent(httpResponse, response)
-	if err != nil {
-		return err
-	}
+	nrBytes := len(contentBytes)
 
 	// Check for no expected content...
 	if !response.Content.Expected {
@@ -212,7 +218,7 @@ func (r *Context) verifyContentAndExtract(httpResponse *http.Response, response 
 		return nil
 	}
 
-	err = r.verifyContentLength(httpResponse.ContentLength, int64(nrBytes))
+	err := r.verifyContentLength(httpResponse.ContentLength, int64(nrBytes))
 	if err != nil {
 		return err
 	}
@@ -222,53 +228,40 @@ func (r *Context) verifyContentAndExtract(httpResponse *http.Response, response 
 		return err
 	}
 
-	err = r.verifyContains(contentBytes, response)
-	if err != nil {
-		return err
-	}
-
-	return r.extractContent(contentBytes, response)
+	return r.verifyContains(contentBytes, response)
 }
 
-func lookupResponse(statusCode int, r []*config.Response) *config.Response {
+func lookupResponses(statusCode int, r []*config.Response) []*config.Response {
 
+	var matches []*config.Response
 	for i := range r {
 		if statusCode == r[i].StatusCode {
-			return r[i]
+			matches = append(matches, r[i])
 		}
 	}
 
-	return nil
+	return matches
 }
 
-func (r *Context) findResponse(httpResponse *http.Response, request *config.Request) *config.Response {
-
-	resp := lookupResponse(httpResponse.StatusCode, request.Responses)
-	if resp != nil {
-		return resp
-	}
-
-	// Not found on the configured array, so find/add to the unkowns array.
+func (r *Context) findOrCreateUnknown(httpResponse *http.Response, request *config.Request) *config.Response {
 
 	unknownResponseMutex.Lock()
 	defer unknownResponseMutex.Unlock()
 
-	resp = lookupResponse(httpResponse.StatusCode, request.UnknownResponses)
-	if resp != nil {
-		return resp
+	matches := lookupResponses(httpResponse.StatusCode, request.UnknownResponses)
+	if len(matches) > 0 {
+		return matches[0]
 	}
 
-	resp = new(config.Response)
-
+	resp := new(config.Response)
 	request.UnknownResponses = append(request.UnknownResponses, resp)
-
 	resp.Name = config.DefaultResponseName
 	resp.StatusCode = httpResponse.StatusCode
 
 	return resp
 }
 
-func (r *Context) verifyResponse(httpResponse *http.Response, response *config.Response) error {
+func (r *Context) verifyResponse(contentBytes []byte, httpResponse *http.Response, response *config.Response) error {
 
 	err := r.verifyHeaders(httpResponse, response)
 	if err != nil {
@@ -280,12 +273,41 @@ func (r *Context) verifyResponse(httpResponse *http.Response, response *config.R
 		return err
 	}
 
-	return r.verifyContentAndExtract(httpResponse, response)
+	return r.verifyContent(contentBytes, httpResponse, response)
 }
 
 func (r *Context) validateResponse(httpResponse *http.Response, request *config.Request) (*config.Response, error) {
 
-	response := r.findResponse(httpResponse, request)
-	err := r.verifyResponse(httpResponse, response)
-	return response, err
+	// Determine max content size from configured responses.
+	var maxSize int64
+	for _, resp := range request.Responses {
+		if int64(resp.Content.MaxSize) > maxSize {
+			maxSize = int64(resp.Content.MaxSize)
+		}
+	}
+
+	contentBytes, err := readBody(httpResponse, maxSize)
+	if err != nil {
+		return nil, err
+	}
+
+	matches := lookupResponses(httpResponse.StatusCode, request.Responses)
+
+	// No configured response for this status code.
+	if len(matches) == 0 {
+		resp := r.findOrCreateUnknown(httpResponse, request)
+		return resp, r.verifyResponse(contentBytes, httpResponse, resp)
+	}
+
+	// Try each matching response; succeed on the first that passes.
+	var lastErr error
+	for _, resp := range matches {
+		err := r.verifyResponse(contentBytes, httpResponse, resp)
+		if err == nil {
+			return resp, r.extractContent(contentBytes, resp)
+		}
+		lastErr = err
+	}
+
+	return matches[0], lastErr
 }

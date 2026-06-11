@@ -6,8 +6,10 @@
 package verify
 
 import (
+	"fmt"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strings"
 
 	"github.com/gabriel-vasile/mimetype"
@@ -45,7 +47,7 @@ func CheckCookies(request *config.Request, response *config.Response, cookies []
 func CheckHeaders(request *config.Request, response *config.Response, headers []config.HeaderData) {
 
 	for i := range headers {
-		if headers[i].Value != "" || headers[i].Name == "" {
+		if headers[i].Value != "" && headers[i].Name == "" {
 			logger.Error(request, response, "missing header name, but have value: %s", headers[i].Value)
 		}
 	}
@@ -97,7 +99,7 @@ func CheckResponseContent(request *config.Request, response *config.Response) {
 	}
 
 	if response.Content.MediaType != "" {
-		mime := mimetype.Lookup(request.ContentType)
+		mime := mimetype.Lookup(response.Content.MediaType)
 		if mime == nil {
 			logger.Error(request, response, "invalid content_type: %s not a recognized mime type", response.Content.MediaType)
 		}
@@ -141,10 +143,10 @@ func CheckURL(request *config.Request) {
 	u, err := url.ParseRequestURI(request.URL)
 	if err != nil {
 		logger.Error(request, nil, "URL error: %v", err)
+		return
 	}
 
 	if u.Scheme == "https" {
-		// Validate TLS config....
 		logger.Info(request, nil, "validating TLS config")
 	}
 }
@@ -194,6 +196,13 @@ func CheckReplacements(r []config.ReplaceData) {
 		if r[i].Regex == "" && r[i].Value != "" {
 			logger.Error(nil, nil, "missing keyword for value: %s", r[i].Value)
 		}
+
+		if r[i].Regex != "" {
+			_, err := regexp.Compile(r[i].Regex)
+			if err != nil {
+				logger.Error(nil, nil, "invalid regex %q: %v", r[i].Regex, err)
+			}
+		}
 	}
 }
 
@@ -231,6 +240,10 @@ func Check(scenarioFile string) error {
 			CheckResponse(request, request.Responses[n])
 		}
 		logger.Info(request, nil, "request check complete")
+	}
+
+	if logger.ErrorCount() > 0 {
+		return fmt.Errorf("verify found %d error(s)", logger.ErrorCount())
 	}
 
 	return nil

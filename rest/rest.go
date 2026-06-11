@@ -9,10 +9,14 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"fmt"
+	"io"
 	"net/http"
+	"net/http/httputil"
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/pwmorreale/rapid/config"
@@ -25,7 +29,8 @@ import (
 //
 //go:generate go tool counterfeiter -o ../testdata/mocks/fake_rest.go . Rest
 type Rest interface {
-	Execute(context.Context, int, *config.Request)
+	Execute(context.Context, int, *config.Request, *sync.Map) bool
+	Push() error
 }
 
 // Context defines a scenario context.
@@ -33,17 +38,19 @@ type Context struct {
 	datum   data.Data
 	sc      *config.Scenario
 	metrics metrics.Metrics
+	dump    io.Writer
 
 	// For unit tests to set a mock roundtripper...
 	mockRoundTripper http.RoundTripper
 }
 
 // New creates a new instance.
-func New(sc *config.Scenario, d data.Data) *Context {
+func New(sc *config.Scenario, d data.Data, dump io.Writer) *Context {
 	return &Context{
 		datum:   d,
 		sc:      sc,
 		metrics: metrics.New(sc),
+		dump:    dump,
 	}
 }
 
@@ -70,7 +77,9 @@ func (r *Context) CreateTLSConfig(certPath, keyPath, caPath string, enableInsecu
 			return nil, err
 		}
 		caCertPool = x509.NewCertPool()
-		caCertPool.AppendCertsFromPEM(caCert)
+		if !caCertPool.AppendCertsFromPEM(caCert) {
+			return nil, fmt.Errorf("no valid certificates found in CA file: %s", caPath)
+		}
 	}
 
 	// Configure TLS
@@ -114,14 +123,13 @@ func (r *Context) createRequest(ctx context.Context, request *config.Request) (*
 	url := r.datum.Replace(request.URL)
 
 	rdr := r.getContentReader(request)
-	req, err := http.NewRequestWithContext(ctx, request.Method, url, rdr)
+	req, err := http.NewRequestWithContext(ctx, strings.ToUpper(request.Method), url, rdr)
+	if err != nil {
+		return nil, err
+	}
 
 	if request.ContentType != "" {
 		req.Header.Add("Content-Type", request.ContentType)
-	}
-
-	if err != nil {
-		return nil, err
 	}
 
 	// Add extra headers...
@@ -143,7 +151,9 @@ func (r *Context) createRequest(ctx context.Context, request *config.Request) (*
 
 func (r *Context) createClient() (*http.Client, error) {
 
-	client := &http.Client{}
+	client := &http.Client{
+		Timeout: r.sc.RequestTimeout,
+	}
 
 	// If we are testing, then use the mock round tripper...
 	if r.mockRoundTripper != nil {
@@ -151,51 +161,140 @@ func (r *Context) createClient() (*http.Client, error) {
 		return client, nil
 	}
 
-	// Get the TLC config if present...
-	tls, err := r.CreateTLSConfig(r.sc.TLS.CertFilePath, r.sc.TLS.KeyFilePath,
+	tlsConfig, err := r.CreateTLSConfig(r.sc.TLS.CertFilePath, r.sc.TLS.KeyFilePath,
 		r.sc.TLS.CACertFilePath, r.sc.TLS.InsecureSkipVerify)
-
-	// Probably should expose these in config...
-	client.Transport = &http.Transport{
-		DisableKeepAlives:   true, // Always, one request per connection.
-		TLSClientConfig:     tls,  // May be nil...
-		TLSHandshakeTimeout: 10 * time.Second,
-		ForceAttemptHTTP2:   true,
+	if err != nil {
+		return nil, err
 	}
 
-	return client, err
+	client.Transport = &http.Transport{
+		DisableKeepAlives:   true, // Always, one request per connection.
+		TLSClientConfig:     tlsConfig,
+		TLSHandshakeTimeout: 10 * time.Second,
+	}
+
+	return client, nil
 }
 
 // Gestalt creates and executes the request then validates the response.
 func (r *Context) Gestalt(ctx context.Context, request *config.Request) (*config.Response, error) {
-
-	req, err := r.createRequest(ctx, request)
-	if err != nil {
-		return nil, err
-	}
 
 	client, err := r.createClient()
 	if err != nil {
 		return nil, err
 	}
 
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil, err
+	maxAttempts := request.Retry.MaxAttempts
+	if maxAttempts <= 1 {
+		maxAttempts = 1
 	}
+
+	var resp *http.Response
+	for attempt := 1; attempt <= maxAttempts; attempt++ {
+		req, err := r.createRequest(ctx, request)
+		if err != nil {
+			return nil, err
+		}
+
+		r.dumpRequest(request, req)
+
+		resp, err = client.Do(req)
+		if err != nil {
+			if attempt == maxAttempts {
+				return nil, err
+			}
+			logger.Debug(request, nil, "retry %d/%d after connection error: %v", attempt, maxAttempts, err)
+		} else if len(request.Retry.StatusCodes) > 0 && shouldRetry(resp.StatusCode, request.Retry.StatusCodes) && attempt < maxAttempts {
+			r.dumpResponse(request, resp)
+			resp.Body.Close()
+			logger.Debug(request, nil, "retry %d/%d after status %d", attempt, maxAttempts, resp.StatusCode)
+		} else {
+			break
+		}
+
+		delay := retryDelay(attempt, request.Retry.Delay, request.Retry.MaxDelay)
+		if delay > 0 {
+			select {
+			case <-ctx.Done():
+				return nil, ctx.Err()
+			case <-time.After(delay):
+			}
+		}
+	}
+
+	r.dumpResponse(request, resp)
 	defer resp.Body.Close()
 
 	return r.validateResponse(resp, request)
 }
 
+func (r *Context) dumpRequest(request *config.Request, req *http.Request) {
+	if r.dump == nil {
+		return
+	}
+	dump, err := httputil.DumpRequestOut(req, true)
+	if err != nil {
+		fmt.Fprintf(r.dump, ">>> REQUEST [%s] dump error: %v\n", request.Name, err)
+		return
+	}
+	fmt.Fprintf(r.dump, ">>> REQUEST [%s] >>>\n%s\n", request.Name, string(dump))
+}
+
+func (r *Context) dumpResponse(request *config.Request, resp *http.Response) {
+	if r.dump == nil {
+		return
+	}
+	dump, err := httputil.DumpResponse(resp, true)
+	if err != nil {
+		fmt.Fprintf(r.dump, "<<< RESPONSE [%s] dump error: %v\n", request.Name, err)
+		return
+	}
+	fmt.Fprintf(r.dump, "<<< RESPONSE [%s] <<<\n%s\n", request.Name, string(dump))
+}
+
+// Push sends collected metrics to the Prometheus push gateway.
+func (r *Context) Push() error {
+	return r.metrics.Push()
+}
+
+func shouldRetry(statusCode int, retryCodes []int) bool {
+	for _, code := range retryCodes {
+		if statusCode == code {
+			return true
+		}
+	}
+	return false
+}
+
+func retryDelay(attempt int, baseDelay, maxDelay time.Duration) time.Duration {
+	d := baseDelay
+	for i := 1; i < attempt; i++ {
+		d *= 2
+	}
+	if maxDelay > 0 && d > maxDelay {
+		d = maxDelay
+	}
+	return d
+}
+
 // Execute creates and executes the request then validates the response.
-func (r *Context) Execute(ctx context.Context, iteration int, request *config.Request) {
+// Returns true if an error occurred. When seenErrors is non-nil, duplicate
+// error messages are suppressed from logging (but still counted in stats).
+func (r *Context) Execute(ctx context.Context, iteration int, request *config.Request, seenErrors *sync.Map) bool {
 
 	start := time.Now()
 
 	response, err := r.Gestalt(ctx, request)
 	if err != nil {
-		logger.Error(request, nil, "%v", err)
+		errMsg := err.Error()
+		duplicate := false
+		if seenErrors != nil {
+			_, duplicate = seenErrors.LoadOrStore(errMsg, true)
+		}
+
+		if !duplicate {
+			logger.Error(request, nil, "%v", err)
+		}
 
 		if response == nil {
 			r.metrics.Errors(iteration, request.Name, metrics.NoResponseName)
@@ -204,7 +303,7 @@ func (r *Context) Execute(ctx context.Context, iteration int, request *config.Re
 			r.metrics.Errors(iteration, request.Name, response.Name)
 			response.Stats.Error(start)
 		}
-		return
+		return true
 	}
 
 	status := strconv.Itoa(response.StatusCode)
@@ -212,4 +311,6 @@ func (r *Context) Execute(ctx context.Context, iteration int, request *config.Re
 	r.metrics.Durations(start, iteration, request.Name, request.Method, response.Name, status)
 	r.metrics.Requests(iteration, request.Name, response.Name, status)
 	request.Stats.Success(start)
+	response.Stats.Success(start)
+	return false
 }

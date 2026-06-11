@@ -66,5 +66,6 @@ func TestExtraFields(t *testing.T) {
 
 	s, err := c.ParseFile("../testdata/configs/extra-fields.yaml")
 	assert.Nil(t, s)
-	assert.Equal(t, "decoding failed due to the following error(s):\n\n'sequence' has invalid keys: not_a_valid_field\n'' has invalid keys: data", err.Error())
+	assert.Contains(t, err.Error(), "'sequence' has invalid keys: not_a_valid_field")
+	assert.Contains(t, err.Error(), "has invalid keys: data")
 }

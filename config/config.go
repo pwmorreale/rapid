@@ -7,16 +7,17 @@ package config
 
 import (
 	"log/slog"
+	"regexp"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/pwmorreale/rapid/stats"
 	"github.com/spf13/viper"
 )
 
 // Various constants...
 const (
-	DefaultContentLimit = 4096
+	DefaultContentLimit  = 4096
+	DefaultRequestTimeout = 30 * time.Second
 
 	TypeRegex = "regex"
 
@@ -31,9 +32,7 @@ type Configuration interface {
 }
 
 // Context defines a scenario context.
-type Context struct {
-	id string
-}
+type Context struct{}
 
 // ReplaceData defines keyword/value pairs for text substitutions.
 type ReplaceData struct {
@@ -51,13 +50,14 @@ type TLSConfig struct {
 
 // Scenario defines the entire configuration.
 type Scenario struct {
-	Name         string        `mapstructure:"name"`
-	Version      string        `mapstructure:"version"`
-	Comment      string        `mapstructure:"comment"`
-	Sequence     Sequence      `mapstructure:"sequence"`
-	Replacements []ReplaceData `mapstructure:"find_replace"`
-	TLS          TLSConfig     `mapstructure:"tls_configuration"`
-	Prom         PromConfig    `mapstructure:"prometheus_configuration"`
+	Name           string        `mapstructure:"name"`
+	Version        string        `mapstructure:"version"`
+	Comment        string        `mapstructure:"comment"`
+	RequestTimeout time.Duration `mapstructure:"request_timeout"`
+	Sequence       Sequence      `mapstructure:"sequence"`
+	Replacements   []ReplaceData `mapstructure:"find_replace"`
+	TLS            TLSConfig     `mapstructure:"tls_configuration"`
+	Prom           PromConfig    `mapstructure:"prometheus_configuration"`
 }
 
 // BucketConfig defines parameters for the prometheus historgram buckets.
@@ -99,13 +99,14 @@ type HeaderData struct {
 	Value string `mapstructure:"value"`
 }
 
-// ContentData cdefines expected response data.
+// ContentData defines expected response data.
 type ContentData struct {
-	Expected  bool          `mapstructure:"expected"`
-	MediaType string        `mapstructure:"content_type"`
-	MaxSize   int           `mapstructure:"max_content"`
-	Contains  []string      `mapstructure:"contains"`
-	Extract   []ExtractData `mapstructure:"extract"`
+	Expected        bool             `mapstructure:"expected"`
+	MediaType       string           `mapstructure:"content_type"`
+	MaxSize         int              `mapstructure:"max_content"`
+	Contains        []string         `mapstructure:"contains"`
+	ContainsCompiled []*regexp.Regexp
+	Extract         []ExtractData    `mapstructure:"extract"`
 }
 
 // CookieData defines a cookie string
@@ -123,6 +124,14 @@ type Response struct {
 	Stats      stats.Statistics
 }
 
+// RetryConfig defines retry behavior for a request.
+type RetryConfig struct {
+	MaxAttempts int           `mapstructure:"max_attempts"`
+	Delay       time.Duration `mapstructure:"delay"`
+	MaxDelay    time.Duration `mapstructure:"max_delay"`
+	StatusCodes []int         `mapstructure:"status_codes"`
+}
+
 // Stampede defines a thundering herd configuration
 type Stampede struct {
 	Max       int           `mapstructure:"maximum_requests"`
@@ -135,6 +144,7 @@ type Stampede struct {
 type Request struct {
 	Name             string       `mapstructure:"name"`
 	OnceOnly         bool         `mapstructure:"once_only"`
+	Retry            RetryConfig  `mapstructure:"retry"`
 	ThunderingHerd   Stampede     `mapstructure:"thundering_herd"`
 	Method           string       `mapstructure:"method"`
 	URL              string       `mapstructure:"url"`
@@ -153,6 +163,14 @@ type Request struct {
 // New creates a new context instance
 func New() *Context {
 	return &Context{}
+}
+
+func setDefaultStampedeMax(s *Scenario) {
+	for i := range s.Sequence.Requests {
+		if s.Sequence.Requests[i].ThunderingHerd.Max == 0 {
+			s.Sequence.Requests[i].ThunderingHerd.Max = 1
+		}
+	}
 }
 
 func setDefaultContentMaxSize(s *Scenario) {
@@ -184,11 +202,37 @@ func (c *Context) ParseFile(flnm string) (*Scenario, error) {
 		return nil, err
 	}
 
-	c.id = uuid.New().String()
-
 	setDefaultContentMaxSize(&s)
+	setDefaultStampedeMax(&s)
+
+	if err := compileContainsRegexes(&s); err != nil {
+		return nil, err
+	}
+
+	if s.RequestTimeout == 0 {
+		s.RequestTimeout = DefaultRequestTimeout
+	}
 
 	return &s, nil
+}
+
+func compileContainsRegexes(s *Scenario) error {
+	for i := range s.Sequence.Requests {
+		for n := range s.Sequence.Requests[i].Responses {
+			content := &s.Sequence.Requests[i].Responses[n].Content
+			for _, pattern := range content.Contains {
+				if pattern == "" {
+					continue
+				}
+				re, err := regexp.Compile(pattern)
+				if err != nil {
+					return err
+				}
+				content.ContainsCompiled = append(content.ContainsCompiled, re)
+			}
+		}
+	}
+	return nil
 }
 
 // LogValue is used by the slog logger to record elements of the http request.

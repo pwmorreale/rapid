@@ -103,7 +103,7 @@ func initTestService(t *testing.T) (*Context, *config.Scenario, data.Data, error
 
 	}
 
-	r := New(sc, d)
+	r := New(sc, d, nil)
 
 	return r, sc, d, nil
 }
@@ -138,7 +138,7 @@ func TestExecute(t *testing.T) {
 
 	ctx := context.Background()
 
-	r.Execute(ctx, 1, &sc.Sequence.Requests[0])
+	r.Execute(ctx, 1, &sc.Sequence.Requests[0], nil)
 }
 func TestCreateRequest(t *testing.T) {
 
@@ -288,7 +288,7 @@ func TestVerifyNoContent(t *testing.T) {
 	configResponse := sc.Sequence.Requests[0].Responses[1]
 
 	// No content...
-	err = r.verifyContentAndExtract(response, configResponse)
+	err = r.verifyContent([]byte{}, response, configResponse)
 	assert.Nil(t, err)
 
 }
@@ -303,7 +303,10 @@ func TestVerifyJSONContent(t *testing.T) {
 	response := makeResponse(200, "application/json", []byte(json), -1, nil, nil)
 	configResponse := sc.Sequence.Requests[0].Responses[0]
 
-	err = r.verifyContentAndExtract(response, configResponse)
+	err = r.verifyContent([]byte(json), response, configResponse)
+	assert.Nil(t, err)
+
+	err = r.extractContent([]byte(json), configResponse)
 	assert.Nil(t, err)
 
 	assert.Equal(t, "doo", d.Lookup("foo"))
@@ -319,13 +322,16 @@ func TestVerifyXMLContent(t *testing.T) {
 	response := makeResponse(200, "text/xml", []byte(xml), int64(len(xml)), nil, nil)
 	configResponse := sc.Sequence.Requests[0].Responses[2]
 
-	err = r.verifyContentAndExtract(response, configResponse)
+	err = r.verifyContent([]byte(xml), response, configResponse)
+	assert.Nil(t, err)
+
+	err = r.extractContent([]byte(xml), configResponse)
 	assert.Nil(t, err)
 
 	assert.Equal(t, "Bob Ross", d.Lookup("who"))
 }
 
-func TestFindResponse(t *testing.T) {
+func TestFindOrCreateUnknown(t *testing.T) {
 
 	r, sc, _, err := initTestService(t)
 	assert.NotNil(t, r)
@@ -338,7 +344,7 @@ func TestFindResponse(t *testing.T) {
 	request := &sc.Sequence.Requests[1]
 	assert.Empty(t, request.UnknownResponses)
 
-	resp := r.findResponse(httpResponse, request)
+	resp := r.findOrCreateUnknown(httpResponse, request)
 	assert.NotNil(t, resp)
 
 	assert.Equal(t, 1, len(request.UnknownResponses))
@@ -355,4 +361,163 @@ func TestContentLength(t *testing.T) {
 	err = r.verifyContentLength(80, 0)
 	assert.NotNil(t, err)
 	assert.Contains(t, err.Error(), "mismatched Content-Length header")
+}
+
+func TestRetryOnStatusCode(t *testing.T) {
+
+	initLogger(io.Discard)
+
+	callCount := 0
+	transport := &countingTransport{
+		handler: func() *http.Response {
+			callCount++
+			if callCount < 3 {
+				return makeResponse(503, "", []byte{}, 0, nil, nil)
+			}
+			return makeResponse(200, "", []byte{}, 0, nil, nil)
+		},
+	}
+
+	sc := &config.Scenario{}
+	d := data.New()
+	r := New(sc, d, nil)
+	r.mockRoundTripper = transport
+
+	request := &config.Request{
+		Method: "GET",
+		URL:    "http://example.com/test",
+		Retry: config.RetryConfig{
+			MaxAttempts: 5,
+			StatusCodes: []int{503, 429},
+		},
+		Responses: []*config.Response{
+			{Name: "ok", StatusCode: 200},
+		},
+	}
+
+	ctx := context.Background()
+	resp, err := r.Gestalt(ctx, request)
+	assert.Nil(t, err)
+	assert.NotNil(t, resp)
+	assert.Equal(t, 200, resp.StatusCode)
+	assert.Equal(t, 3, callCount)
+}
+
+func TestRetryExhausted(t *testing.T) {
+
+	initLogger(io.Discard)
+
+	transport := &countingTransport{
+		handler: func() *http.Response {
+			return makeResponse(503, "", []byte{}, 0, nil, nil)
+		},
+	}
+
+	sc := &config.Scenario{}
+	d := data.New()
+	r := New(sc, d, nil)
+	r.mockRoundTripper = transport
+
+	request := &config.Request{
+		Method: "GET",
+		URL:    "http://example.com/test",
+		Retry: config.RetryConfig{
+			MaxAttempts: 3,
+			StatusCodes: []int{503},
+		},
+		Responses: []*config.Response{
+			{Name: "ok", StatusCode: 200},
+		},
+	}
+
+	ctx := context.Background()
+	resp, err := r.Gestalt(ctx, request)
+	// When retries are exhausted, the last response is validated normally.
+	// 503 doesn't match any configured response, so findOrCreateUnknown runs.
+	assert.Nil(t, err)
+	assert.NotNil(t, resp)
+	assert.Equal(t, config.DefaultResponseName, resp.Name)
+	assert.Equal(t, 503, resp.StatusCode)
+}
+
+func TestRetryOnConnectionError(t *testing.T) {
+
+	initLogger(io.Discard)
+
+	callCount := 0
+	transport := &countingTransport{
+		handler: func() *http.Response {
+			callCount++
+			if callCount < 2 {
+				return nil // signals error
+			}
+			return makeResponse(200, "", []byte{}, 0, nil, nil)
+		},
+	}
+
+	sc := &config.Scenario{}
+	d := data.New()
+	r := New(sc, d, nil)
+	r.mockRoundTripper = transport
+
+	request := &config.Request{
+		Method: "GET",
+		URL:    "http://example.com/test",
+		Retry: config.RetryConfig{
+			MaxAttempts: 3,
+		},
+		Responses: []*config.Response{
+			{Name: "ok", StatusCode: 200},
+		},
+	}
+
+	ctx := context.Background()
+	resp, err := r.Gestalt(ctx, request)
+	assert.Nil(t, err)
+	assert.NotNil(t, resp)
+	assert.Equal(t, 200, resp.StatusCode)
+	assert.Equal(t, 2, callCount)
+}
+
+func TestNoRetryByDefault(t *testing.T) {
+
+	initLogger(io.Discard)
+
+	callCount := 0
+	transport := &countingTransport{
+		handler: func() *http.Response {
+			callCount++
+			return makeResponse(503, "", []byte{}, 0, nil, nil)
+		},
+	}
+
+	sc := &config.Scenario{}
+	d := data.New()
+	r := New(sc, d, nil)
+	r.mockRoundTripper = transport
+
+	request := &config.Request{
+		Method: "GET",
+		URL:    "http://example.com/test",
+		Responses: []*config.Response{
+			{Name: "ok", StatusCode: 200},
+		},
+	}
+
+	ctx := context.Background()
+	r.Gestalt(ctx, request)
+	assert.Equal(t, 1, callCount)
+}
+
+// countingTransport is a mock RoundTripper that calls a handler function.
+type countingTransport struct {
+	handler func() *http.Response
+}
+
+func (t *countingTransport) RoundTrip(*http.Request) (*http.Response, error) {
+	resp := t.handler()
+	if resp == nil {
+		return nil, fmt.Errorf("connection refused")
+	}
+	return resp, nil
 }

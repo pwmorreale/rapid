@@ -8,6 +8,7 @@ package metrics
 import (
 	"crypto/tls"
 	"crypto/x509"
+	"fmt"
 	"net/http"
 	"os"
 	"strconv"
@@ -144,12 +145,10 @@ func (p *Context) createClient() (*http.Client, error) {
 	// Get the TLC config if present...
 	tls, err := p.createTLS()
 
-	// Probably should expose these in config...
 	client.Transport = &http.Transport{
-		DisableKeepAlives:   true, // Always, one request per connection.
-		TLSClientConfig:     tls,  // May be nil...
+		DisableKeepAlives:   true,
+		TLSClientConfig:     tls, // May be nil...
 		TLSHandshakeTimeout: 10 * time.Second,
-		ForceAttemptHTTP2:   true,
 	}
 
 	return client, err
@@ -170,7 +169,7 @@ func (p *Context) createTLS() (*tls.Config, error) {
 
 	// If we have a CA cert path, use it and create a private pool,
 	// otherwise the system pool will be used.
-	caCertPool := new(x509.CertPool)
+	var caCertPool *x509.CertPool
 	if p.sc.Prom.TLS.CACertFilePath != "" {
 
 		caCert, err := os.ReadFile(p.sc.Prom.TLS.CACertFilePath)
@@ -178,7 +177,9 @@ func (p *Context) createTLS() (*tls.Config, error) {
 			return nil, err
 		}
 		caCertPool = x509.NewCertPool()
-		caCertPool.AppendCertsFromPEM(caCert)
+		if !caCertPool.AppendCertsFromPEM(caCert) {
+			return nil, fmt.Errorf("no valid certificates found in CA file: %s", p.sc.Prom.TLS.CACertFilePath)
+		}
 	}
 
 	// Configure TLS

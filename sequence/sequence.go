@@ -7,6 +7,8 @@ package sequence
 
 import (
 	"context"
+	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/gammazero/workerpool"
@@ -19,7 +21,7 @@ import (
 //
 //go:generate go tool counterfeiter -o ../testdata/mocks/fake_sequence.go . Sequence
 type Sequence interface {
-	Run(*config.Scenario) error
+	Run(context.Context, *config.Scenario) error
 }
 
 // Context defines a sequence
@@ -35,39 +37,67 @@ func New(r rest.Rest) *Context {
 }
 
 // Run executes the sequence.
-func (s *Context) Run(sc *config.Scenario) error {
+func (s *Context) Run(ctx context.Context, sc *config.Scenario) error {
+
+	if sc.Sequence.Iterations == 0 {
+		logger.Warn(nil, nil, "iterations is 0, nothing to execute")
+		return nil
+	}
 
 	for i := 0; i < sc.Sequence.Iterations; i++ {
-		s.ExecuteIteration(sc, i)
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		default:
+		}
+		hadError := s.ExecuteIteration(ctx, sc, i)
+		if hadError && sc.Sequence.AbortOnError {
+			logger.Warn(nil, nil, "aborting on error at iteration %d", i)
+			return nil
+		}
 	}
 
 	return nil
 }
 
-// ExecuteIteration exeutes a single iteration
-func (s *Context) ExecuteIteration(sc *config.Scenario, iteration int) {
+// ExecuteIteration executes a single iteration. Returns true if any request had an error.
+func (s *Context) ExecuteIteration(parent context.Context, sc *config.Scenario, iteration int) bool {
 
-	ctx, cancel := context.WithTimeout(context.Background(), sc.Sequence.Limit)
+	var ctx context.Context
+	var cancel context.CancelFunc
+
+	if sc.Sequence.Limit > 0 {
+		ctx, cancel = context.WithTimeout(parent, sc.Sequence.Limit)
+	} else {
+		ctx, cancel = context.WithCancel(parent)
+	}
 	defer cancel()
 
 	start := time.Now()
 
-	s.ExecuteSequence(ctx, iteration, sc)
+	hadError := s.ExecuteSequence(ctx, iteration, sc)
 
 	select {
 	case <-ctx.Done():
 		sc.Sequence.Stats.Error(start)
 		logger.Error(nil, nil, "sequence %v on iteration: %d", ctx.Err(), iteration)
-		return
+		return true
 	default:
 	}
 
-	sc.Sequence.Stats.Success(start)
+	if hadError {
+		sc.Sequence.Stats.Error(start)
+	} else {
+		sc.Sequence.Stats.Success(start)
+	}
 
+	return hadError
 }
 
-// ExecuteSequence runs the sequence of requests
-func (s *Context) ExecuteSequence(ctx context.Context, iteration int, sc *config.Scenario) {
+// ExecuteSequence runs the sequence of requests. Returns true if any request had an error.
+func (s *Context) ExecuteSequence(ctx context.Context, iteration int, sc *config.Scenario) bool {
+
+	hadError := false
 
 Loop:
 	for i := range sc.Sequence.Requests {
@@ -82,21 +112,28 @@ Loop:
 		request := &sc.Sequence.Requests[i]
 
 		logger.Info(request, nil, "execution started")
-		s.ExecuteRequest(ctx, iteration, request)
+		requestHadError := s.ExecuteRequest(ctx, iteration, request, sc.Sequence.IgnoreDups)
 		logger.Info(request, nil, "execution complete")
 
+		if requestHadError {
+			hadError = true
+			if sc.Sequence.AbortOnError {
+				break Loop
+			}
+		}
 	}
 
+	return hadError
 }
 
-// ExecuteRequest ezxecutes a request
-func (s *Context) ExecuteRequest(ctx context.Context, iteration int, request *config.Request) {
+// ExecuteRequest executes a request. Returns true if any execution had an error.
+func (s *Context) ExecuteRequest(ctx context.Context, iteration int, request *config.Request, ignoreDups bool) bool {
 
 	// Is this a once only request?
 	if request.OnceOnly {
 		if request.Executed {
 			logger.Info(request, nil, "once_only request already executed, ignoring")
-			return
+			return false
 		}
 		request.Executed = true
 
@@ -109,6 +146,15 @@ func (s *Context) ExecuteRequest(ctx context.Context, iteration int, request *co
 	}
 	wp := workerpool.New(workerPoolSize)
 
+	var hadError atomic.Bool
+	var seenErrors *sync.Map
+	if ignoreDups {
+		seenErrors = &sync.Map{}
+	}
+
+	// Limit in-flight work (queued + running) to the pool size.
+	sem := make(chan struct{}, workerPoolSize)
+
 	start := time.Now()
 
 	i := 0
@@ -116,12 +162,13 @@ func (s *Context) ExecuteRequest(ctx context.Context, iteration int, request *co
 Loop:
 	for {
 
-		for wp.WaitingQueueSize() > 0 {
-			time.Sleep(time.Millisecond * 10)
-		}
-
+		sem <- struct{}{}
 		wp.Submit(func() {
-			s.rest.Execute(ctx, iteration, request)
+			defer func() { <-sem }()
+			errored := s.rest.Execute(ctx, iteration, request, seenErrors)
+			if errored {
+				hadError.Store(true)
+			}
 		})
 
 		// Inter-request delay
@@ -147,4 +194,5 @@ Loop:
 	// Wait for everybody to complete.
 	wp.StopWait()
 
+	return hadError.Load()
 }

@@ -10,30 +10,54 @@ import (
 )
 
 type FakeRest struct {
-	ExecuteStub        func(context.Context, int, *config.Request)
+	ExecuteStub        func(context.Context, int, *config.Request, *sync.Map) bool
 	executeMutex       sync.RWMutex
 	executeArgsForCall []struct {
 		arg1 context.Context
 		arg2 int
 		arg3 *config.Request
+		arg4 *sync.Map
+	}
+	executeReturns struct {
+		result1 bool
+	}
+	executeReturnsOnCall map[int]struct {
+		result1 bool
+	}
+	PushStub        func() error
+	pushMutex       sync.RWMutex
+	pushArgsForCall []struct {
+	}
+	pushReturns struct {
+		result1 error
+	}
+	pushReturnsOnCall map[int]struct {
+		result1 error
 	}
 	invocations      map[string][][]interface{}
 	invocationsMutex sync.RWMutex
 }
 
-func (fake *FakeRest) Execute(arg1 context.Context, arg2 int, arg3 *config.Request) {
+func (fake *FakeRest) Execute(arg1 context.Context, arg2 int, arg3 *config.Request, arg4 *sync.Map) bool {
 	fake.executeMutex.Lock()
+	ret, specificReturn := fake.executeReturnsOnCall[len(fake.executeArgsForCall)]
 	fake.executeArgsForCall = append(fake.executeArgsForCall, struct {
 		arg1 context.Context
 		arg2 int
 		arg3 *config.Request
-	}{arg1, arg2, arg3})
+		arg4 *sync.Map
+	}{arg1, arg2, arg3, arg4})
 	stub := fake.ExecuteStub
-	fake.recordInvocation("Execute", []interface{}{arg1, arg2, arg3})
+	fakeReturns := fake.executeReturns
+	fake.recordInvocation("Execute", []interface{}{arg1, arg2, arg3, arg4})
 	fake.executeMutex.Unlock()
 	if stub != nil {
-		fake.ExecuteStub(arg1, arg2, arg3)
+		return stub(arg1, arg2, arg3, arg4)
 	}
+	if specificReturn {
+		return ret.result1
+	}
+	return fakeReturns.result1
 }
 
 func (fake *FakeRest) ExecuteCallCount() int {
@@ -42,17 +66,93 @@ func (fake *FakeRest) ExecuteCallCount() int {
 	return len(fake.executeArgsForCall)
 }
 
-func (fake *FakeRest) ExecuteCalls(stub func(context.Context, int, *config.Request)) {
+func (fake *FakeRest) ExecuteCalls(stub func(context.Context, int, *config.Request, *sync.Map) bool) {
 	fake.executeMutex.Lock()
 	defer fake.executeMutex.Unlock()
 	fake.ExecuteStub = stub
 }
 
-func (fake *FakeRest) ExecuteArgsForCall(i int) (context.Context, int, *config.Request) {
+func (fake *FakeRest) ExecuteArgsForCall(i int) (context.Context, int, *config.Request, *sync.Map) {
 	fake.executeMutex.RLock()
 	defer fake.executeMutex.RUnlock()
 	argsForCall := fake.executeArgsForCall[i]
-	return argsForCall.arg1, argsForCall.arg2, argsForCall.arg3
+	return argsForCall.arg1, argsForCall.arg2, argsForCall.arg3, argsForCall.arg4
+}
+
+func (fake *FakeRest) ExecuteReturns(result1 bool) {
+	fake.executeMutex.Lock()
+	defer fake.executeMutex.Unlock()
+	fake.ExecuteStub = nil
+	fake.executeReturns = struct {
+		result1 bool
+	}{result1}
+}
+
+func (fake *FakeRest) ExecuteReturnsOnCall(i int, result1 bool) {
+	fake.executeMutex.Lock()
+	defer fake.executeMutex.Unlock()
+	fake.ExecuteStub = nil
+	if fake.executeReturnsOnCall == nil {
+		fake.executeReturnsOnCall = make(map[int]struct {
+			result1 bool
+		})
+	}
+	fake.executeReturnsOnCall[i] = struct {
+		result1 bool
+	}{result1}
+}
+
+func (fake *FakeRest) Push() error {
+	fake.pushMutex.Lock()
+	ret, specificReturn := fake.pushReturnsOnCall[len(fake.pushArgsForCall)]
+	fake.pushArgsForCall = append(fake.pushArgsForCall, struct {
+	}{})
+	stub := fake.PushStub
+	fakeReturns := fake.pushReturns
+	fake.recordInvocation("Push", []interface{}{})
+	fake.pushMutex.Unlock()
+	if stub != nil {
+		return stub()
+	}
+	if specificReturn {
+		return ret.result1
+	}
+	return fakeReturns.result1
+}
+
+func (fake *FakeRest) PushCallCount() int {
+	fake.pushMutex.RLock()
+	defer fake.pushMutex.RUnlock()
+	return len(fake.pushArgsForCall)
+}
+
+func (fake *FakeRest) PushCalls(stub func() error) {
+	fake.pushMutex.Lock()
+	defer fake.pushMutex.Unlock()
+	fake.PushStub = stub
+}
+
+func (fake *FakeRest) PushReturns(result1 error) {
+	fake.pushMutex.Lock()
+	defer fake.pushMutex.Unlock()
+	fake.PushStub = nil
+	fake.pushReturns = struct {
+		result1 error
+	}{result1}
+}
+
+func (fake *FakeRest) PushReturnsOnCall(i int, result1 error) {
+	fake.pushMutex.Lock()
+	defer fake.pushMutex.Unlock()
+	fake.PushStub = nil
+	if fake.pushReturnsOnCall == nil {
+		fake.pushReturnsOnCall = make(map[int]struct {
+			result1 error
+		})
+	}
+	fake.pushReturnsOnCall[i] = struct {
+		result1 error
+	}{result1}
 }
 
 func (fake *FakeRest) Invocations() map[string][][]interface{} {
@@ -60,6 +160,8 @@ func (fake *FakeRest) Invocations() map[string][][]interface{} {
 	defer fake.invocationsMutex.RUnlock()
 	fake.executeMutex.RLock()
 	defer fake.executeMutex.RUnlock()
+	fake.pushMutex.RLock()
+	defer fake.pushMutex.RUnlock()
 	copiedInvocations := map[string][][]interface{}{}
 	for key, value := range fake.invocations {
 		copiedInvocations[key] = value
