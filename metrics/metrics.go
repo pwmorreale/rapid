@@ -8,6 +8,7 @@ package metrics
 import (
 	"crypto/tls"
 	"crypto/x509"
+	"fmt"
 	"net/http"
 	"os"
 	"strconv"
@@ -170,7 +171,7 @@ func (p *Context) createTLS() (*tls.Config, error) {
 
 	// If we have a CA cert path, use it and create a private pool,
 	// otherwise the system pool will be used.
-	caCertPool := new(x509.CertPool)
+	var caCertPool *x509.CertPool
 	if p.sc.Prom.TLS.CACertFilePath != "" {
 
 		caCert, err := os.ReadFile(p.sc.Prom.TLS.CACertFilePath)
@@ -178,7 +179,9 @@ func (p *Context) createTLS() (*tls.Config, error) {
 			return nil, err
 		}
 		caCertPool = x509.NewCertPool()
-		caCertPool.AppendCertsFromPEM(caCert)
+		if !caCertPool.AppendCertsFromPEM(caCert) {
+			return nil, fmt.Errorf("no valid certificates found in CA file: %s", p.sc.Prom.TLS.CACertFilePath)
+		}
 	}
 
 	// Configure TLS
