@@ -6,6 +6,7 @@
 package verify
 
 import (
+	"fmt"
 	"net/http"
 	"net/url"
 	"strings"
@@ -231,6 +232,10 @@ func Check(scenarioFile string) error {
 			CheckResponse(request, request.Responses[n])
 		}
 		logger.Info(request, nil, "request check complete")
+	}
+
+	if logger.ErrorCount() > 0 {
+		return fmt.Errorf("verify found %d error(s)", logger.ErrorCount())
 	}
 
 	return nil
