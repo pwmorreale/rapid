@@ -9,6 +9,7 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"fmt"
 	"net/http"
 	"os"
 	"strconv"
@@ -71,7 +72,9 @@ func (r *Context) CreateTLSConfig(certPath, keyPath, caPath string, enableInsecu
 			return nil, err
 		}
 		caCertPool = x509.NewCertPool()
-		caCertPool.AppendCertsFromPEM(caCert)
+		if !caCertPool.AppendCertsFromPEM(caCert) {
+			return nil, fmt.Errorf("no valid certificates found in CA file: %s", caPath)
+		}
 	}
 
 	// Configure TLS
