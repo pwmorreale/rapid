@@ -219,7 +219,7 @@ func TestRun(t *testing.T) {
 	sc, err := initConfig("../testdata/configs/test_scenario.yaml")
 	assert.Nil(t, err)
 
-	err = s.Run(sc)
+	err = s.Run(context.Background(), sc)
 	assert.Nil(t, err)
 
 	// N.B. OnceOnly is set for the first request,

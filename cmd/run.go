@@ -6,7 +6,9 @@
 package cmd
 
 import (
+	"context"
 	"os"
+	"os/signal"
 
 	"github.com/pwmorreale/rapid/config"
 	"github.com/pwmorreale/rapid/data"
@@ -78,6 +80,9 @@ func initData(sc *config.Scenario) (data.Data, error) {
 // RunScenario executes the scenario.
 func RunScenario(_ *cobra.Command, _ []string) error {
 
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer stop()
+
 	file, err := initLogger()
 	if err != nil {
 		return err
@@ -100,7 +105,7 @@ func RunScenario(_ *cobra.Command, _ []string) error {
 	r := rest.New(sc, d)
 	s := sequence.New(r)
 
-	err = s.Run(sc)
+	err = s.Run(ctx, sc)
 	if err != nil {
 		return err
 	}
