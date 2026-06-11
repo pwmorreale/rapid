@@ -175,20 +175,46 @@ func (r *Context) createClient() (*http.Client, error) {
 // Gestalt creates and executes the request then validates the response.
 func (r *Context) Gestalt(ctx context.Context, request *config.Request) (*config.Response, error) {
 
-	req, err := r.createRequest(ctx, request)
-	if err != nil {
-		return nil, err
-	}
-
 	client, err := r.createClient()
 	if err != nil {
 		return nil, err
 	}
 
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil, err
+	maxAttempts := request.Retry.MaxAttempts
+	if maxAttempts <= 1 {
+		maxAttempts = 1
 	}
+
+	var resp *http.Response
+	for attempt := 1; attempt <= maxAttempts; attempt++ {
+		req, err := r.createRequest(ctx, request)
+		if err != nil {
+			return nil, err
+		}
+
+		resp, err = client.Do(req)
+		if err != nil {
+			if attempt == maxAttempts {
+				return nil, err
+			}
+			logger.Debug(request, nil, "retry %d/%d after connection error: %v", attempt, maxAttempts, err)
+		} else if len(request.Retry.StatusCodes) > 0 && shouldRetry(resp.StatusCode, request.Retry.StatusCodes) && attempt < maxAttempts {
+			resp.Body.Close()
+			logger.Debug(request, nil, "retry %d/%d after status %d", attempt, maxAttempts, resp.StatusCode)
+		} else {
+			break
+		}
+
+		delay := retryDelay(attempt, request.Retry.Delay, request.Retry.MaxDelay)
+		if delay > 0 {
+			select {
+			case <-ctx.Done():
+				return nil, ctx.Err()
+			case <-time.After(delay):
+			}
+		}
+	}
+
 	defer resp.Body.Close()
 
 	return r.validateResponse(resp, request)
@@ -197,6 +223,26 @@ func (r *Context) Gestalt(ctx context.Context, request *config.Request) (*config
 // Push sends collected metrics to the Prometheus push gateway.
 func (r *Context) Push() error {
 	return r.metrics.Push()
+}
+
+func shouldRetry(statusCode int, retryCodes []int) bool {
+	for _, code := range retryCodes {
+		if statusCode == code {
+			return true
+		}
+	}
+	return false
+}
+
+func retryDelay(attempt int, baseDelay, maxDelay time.Duration) time.Duration {
+	d := baseDelay
+	for i := 1; i < attempt; i++ {
+		d *= 2
+	}
+	if maxDelay > 0 && d > maxDelay {
+		d = maxDelay
+	}
+	return d
 }
 
 // Execute creates and executes the request then validates the response.
