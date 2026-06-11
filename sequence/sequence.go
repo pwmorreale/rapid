@@ -152,6 +152,9 @@ func (s *Context) ExecuteRequest(ctx context.Context, iteration int, request *co
 		seenErrors = &sync.Map{}
 	}
 
+	// Limit in-flight work (queued + running) to the pool size.
+	sem := make(chan struct{}, workerPoolSize)
+
 	start := time.Now()
 
 	i := 0
@@ -159,11 +162,9 @@ func (s *Context) ExecuteRequest(ctx context.Context, iteration int, request *co
 Loop:
 	for {
 
-		for wp.WaitingQueueSize() > 0 {
-			time.Sleep(time.Millisecond * 10)
-		}
-
+		sem <- struct{}{}
 		wp.Submit(func() {
+			defer func() { <-sem }()
 			errored := s.rest.Execute(ctx, iteration, request, seenErrors)
 			if errored {
 				hadError.Store(true)
