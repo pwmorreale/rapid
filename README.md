@@ -50,6 +50,8 @@ You can also check a scenario configuration to find common typos/etc by using th
 % rapid verify -s ./scenario.yaml
 ```
 
+The verify command will exit with a non-zero status if any errors are found.
+
 There are also several options for controlling log messages.  See the help for the above commands.
 
 ## Features
@@ -70,8 +72,14 @@ This allows for example, extraction of a security token from an authorization re
 ### *Thundering Herd*
 Rapid allows you to create *thundering herd* configurations that allow you to specify a number of concurrent requests for a specific duration of time, or a maximum number of requests.  For example, you could configure Rapid to execute 1000 requests concurrently for 5 minutes, or 20 concurrent requests until 500 requests have completed.  This can be useful to test circuit breaking, rate limiting, and other infrastructure behaviors.
 
+### *Multiple Response Matching*
+You can configure multiple responses with the same status code for a single request.  Rapid will try each matching response in order and succeed on the first one that fully validates.  This is useful when a server may return the same status code with different content depending on conditions (e.g., different backends behind a load balancer).
+
 ### Prometheus metrics
 When configured, rapid can collect prometheus metrics and at completion push them to a [Prometheus PushGateway](https://prometheus.io/docs/instrumenting/pushing/).  The metrics collected follow the [RED](https://grafana.com/blog/2018/08/02/the-red-method-how-to-instrument-your-services/) (Requests, Errors, Durations) paradigm with Prometheus counters for requests and errors counts and a histogram for request durations.
+
+### Graceful Cancellation
+Rapid handles SIGINT (Ctrl-C) gracefully, cancelling in-flight requests and stopping cleanly rather than terminating abruptly.
 
 ## Statistics and metrics
 
@@ -98,6 +106,7 @@ A complete list of scenario fields can be found in the docs/template file.  A li
 name:
 version:
 comment:
+request_timeout:
 find_replace:
   - match:
     replace:
@@ -106,16 +115,17 @@ tls_configuration:
   client_key_path:
   ca_cert_path:
   insecure_skip_verify:
-prometheus:
-  push_url:
+prometheus_configuration:
+  job_name:
+  push_gateway_url:
   tls_configuration:
     client_cert_path:
     client_key_path:
     ca_cert_path:
     insecure_skip_verify:
-  historgram_buckets:
-    minimum_duration:
-    maximum_duration:
+  buckets:
+    minimum_bucket_duration:
+    maximum_bucket_duration:
     count:
   headers:
     - name:
@@ -168,6 +178,7 @@ The *name*, *version* and *comment* fields are optional and if present will appe
 name:
 version:
 comment:
+request_timeout:
 ```
 
 | Field | Notes| Default |Type|
@@ -175,9 +186,10 @@ comment:
 |name | Optional name for this  scenario || string |
 |version | Optional version for the scenario, or whatever you choose | |string |
 | comment | Optional comment || string |
+| request_timeout | Timeout for individual HTTP requests. Specify an integer with a modifier of *ms* (milliseconds), *s* (seconds), *m* (minutes), or *h* (hours). | 30s | string |
 
 ### Find&Replace Configuration
-Find&Replace allows you to define fields for replacement during execution of the scenario.  Headers values, cookies, content, and URLs are passed through this module for expansion prior to being referenced.
+Find&Replace allows you to define fields for replacement during execution of the scenario.  Header values, cookies, content, and URLs are passed through this module for expansion prior to being referenced.
 
 Use https://golang.org/s/re2syntax for the *match* regular expression.  **Note you must take care to avoid any collisions between the match string and data within the field being modified**  Rapid will indiscriminately replace all successful matches within the field.
 
@@ -185,8 +197,8 @@ Also see the *extract* configuration below.
 
 ```yaml
 find_replace:
-  match:
-  replace:
+  - match:
+    replace:
 ```
 
  |Field | Notes| Default| Type|
@@ -223,16 +235,17 @@ You can configure Rapid to collect and send metrics to your Prometheus server (e
 To avoid prometheus metrics gathering, omit the configuration entirely.
 
 ```yaml
-prometheus:
-  push_url:
+prometheus_configuration:
+  job_name:
+  push_gateway_url:
   tls_configuration:
     client_cert_path:
     client_key_path:
     ca_cert_path:
     insecure_skip_verify:
-  histogram_buckets:
-    minimum_duration:
-    maximum_duration:
+  buckets:
+    minimum_bucket_duration:
+    maximum_bucket_duration:
     count:
   headers:
     - name:
@@ -241,27 +254,26 @@ prometheus:
 
 |Field | Notes| Default| Type|
 |-------|---|---|--|
-|push_url | URL to your Prometheus PushGateway server. If omitted, Rapid will not gather metrics. | |string |
-| tls_configuration| Identical to [TLS](#TLS_Configuration) above, however these certificates are only specific to your Prometheus Pushgateway server.  Omit for non-TLS connections. || |string|
-|histogram_buckets| Configuration for the histogram.|||
+|job_name | The Prometheus job name used when pushing metrics. | |string |
+|push_gateway_url | URL to your Prometheus PushGateway server. If omitted, Rapid will not gather metrics. | |string |
+| tls_configuration| Identical to [TLS](#tls-configuration) above, however these certificates are only specific to your Prometheus Pushgateway server.  Omit for non-TLS connections. || |
+|buckets| Configuration for the histogram.|||
 
 #### Histogram Buckets
 Bucket configuration for the histogram.  Rapid will use Prometheus' [ExponentialBucketsRange](https://pkg.go.dev/github.com/prometheus/client_golang/prometheus#ExponentialBucketsRange) to generate the array of buckets.
 
 ```yaml
-histogram_buckets:
-    minimum_duration:
-    maximum_duration:
-    count:
-headers:
+buckets:
+  minimum_bucket_duration:
+  maximum_bucket_duration:
+  count:
 ```
 
 | Field | Notes| Default| Type|
 |--|--|--|--|
-|minimum_duration | Minimum request duration, specify an integer with a modifier of *us* (microseconds), *ms* (milliseconds), *s* (seconds), *m* (minutes), *h* (hours). | 1ms |string |
-| maximum_duration| Same as above, however for a maximum request duration.  Must be non-zero.| 1m | string|
+|minimum_bucket_duration | Minimum request duration, specify an integer with a modifier of *us* (microseconds), *ms* (milliseconds), *s* (seconds), *m* (minutes), *h* (hours). | 1ns |string |
+| maximum_bucket_duration| Same as above, however for a maximum request duration.  Must be non-zero.| 1m | string|
 | count| Number of buckets to create.  Note that Prometheus will automatically add an +Inf bucket for outliers| 5| integer|
-|headers| See next section|||
 
 #### Headers
 Any additional headers required by your Prometheus server.
@@ -291,8 +303,8 @@ sequence:
 
 | Field | Notes| Default| Type|
 |-------|---|---|---|
-|iterations | The number of times to iterate through the array of requests.  Specify at least '1' to execute the requests. |0| integer |
-|iteration_time_limit | The maximum amount of time to allow an iteration to complete. Specify an integer with a modifier of *s* (seconds), *m* (minutes), or *h* (hours) | 0 | string |
+|iterations | The number of times to iterate through the array of requests.  Specify at least '1' to execute the requests.  A value of 0 will produce a warning and no requests will be executed. |0| integer |
+|iteration_time_limit | The maximum amount of time to allow an iteration to complete. Specify an integer with a modifier of *s* (seconds), *m* (minutes), or *h* (hours).  If omitted or zero, no time limit is enforced. | 0 | string |
 | abort_on_error | currently unimplemented | false| boolean |
 | ignore_duplicate_errors | currently unimplemented | false | boolean |
 | requests| The array of requests, see next section| | array |
@@ -326,7 +338,7 @@ The *requests* array defines the *requests*.
 |name | The name for this request.  Used in logging and reports|| string |
 |once_only | Execute this request exactly one time, regardless of the *iterations* count, and/or the subsequent *thundering_herd* configuration. |false| boolean |
 |method  | The [HTTP method](http://www.w3schools.com/TAgs/ref_httpmethods.asp).  This will be converted to upper case.|| string |
-|url | The complete URL of the request.  Include and query parameters, fragments, etc.  The URL is only passed to the **Find&Replace** module for modification.  No other modifications are made. || string |
+|url | The complete URL of the request.  Include any query parameters, fragments, etc.  The URL is passed through the **Find&Replace** module for modification.  No other modifications are made. || string |
 |content |Content for this request.  If present, the contents of this parameter becomes the body of the request. This parameter is passed through the **Find&Replace** module for modification. Note that Rapid will automatically set the *Content-Length* header. || string |
 |content_type | The [mime type](https://developer.mozilla.org/en-US/docs/Glossary/MIME_type) of the *content* parameter.  If defined, a *Content-Type* header will be added to the request with this value. || string |
 |thundering_herd | See next section||  |
@@ -351,10 +363,10 @@ thundering_herd:
 |maximum_requests |The total number of requests to execute.  Note that *maximum_requests* is ignored if *time_limit* is configured |1| integer |
 |concurrent_requests |The number of requests to execute concurrently.  Rapid will maintain this number of active requests until one of the limits is reached. |1| integer |
 |time_limit | The time limit for the herd. Specify an integer with a modifier of *s* (seconds), *m* (minutes), *h* (hours).  If this parameter is set, then *maximum_requests* is ignored.|0| string |
-|delay | Optional delay between starting each of the *concurrent_requests*. Specify an integer with a modifier of *ms* (milliseconds), *s* (minutes) or  *m* (minutes). |0| integer |
+|delay | Optional delay between starting each of the *concurrent_requests*. Specify an integer with a modifier of *ms* (milliseconds), *s* (seconds), or *m* (minutes). |0| string |
 
 #### Extra Headers
-This section allows you to specify an array of additional headers to the request.  Header names and values are passed through the **Find&Replace** module for expansion prior to being added to the request.
+This section allows you to specify an array of additional headers to the request.  Header values are passed through the **Find&Replace** module for expansion prior to being added to the request.
 
 ```yaml
 extra_headers:
@@ -381,6 +393,8 @@ cookies:
 
 ### Response Configuration
 The *responses* section of *request* configuration is an array of the possible responses to this request. Here you configure the expected data associated with a particular response.  Rapid will compare the actual response against what is expected and report any discrepancies.
+
+Multiple responses may share the same *status_code*.  In that case, Rapid will try each matching response in order and consider it a success if any one of them validates fully.  This is useful when a server may produce different valid responses for the same status code.
 
 ```yaml
 responses:
@@ -410,7 +424,7 @@ responses:
 |headers | See next section|| array |
 
 #### Headers
-These are headers expected to be set by the server in the response.  Rapid will perform exact, case sensitive matches and report any discrepancies.
+These are headers expected to be set by the server in the response.  Rapid will perform exact, case sensitive matches on the value and report any discrepancies.  Header names are matched using Go's canonical form (e.g., "content-type" matches "Content-Type").
 
 ```yaml
 headers:
@@ -420,7 +434,7 @@ headers:
 
 | Field | Notes| Default| Type|
 |-------|---|---|---|
-|name | The case-sensitive name for this header.|| string |
+|name | The header name.|| string |
 |value | The expected case-sensitive contents of this header.|| string |
 
 #### Cookies
@@ -450,13 +464,15 @@ content:
 |-------|---|---|---|
 |expected | Whether the body of the response should contain content. This can be useful to check for data leaks from the server. |false| boolean |
 |content_type | The expected [mime type](https://developer.mozilla.org/en-US/docs/Glossary/MIME_type) of the content.  If defined, the value is verified against the *Content-Type* header || string |
-|max_content | A maximum length of the expected content.  The actual content length (if it can be detected) will be compared to this value if defined |false| integer |
+|max_content | The maximum number of bytes to read from the response body for validation purposes. |4096| integer |
 |contains | An array of [regular expressions](https://golang.org/s/re2syntax) used to verify the content. || string |
 
 #### Extract
 Use this configuration to extract data from the response body and insert it into the **Find&Replace** module for future use in headers/URLs/bodies/etc.
 
 Rapid supports extraction from three different types of data:  text, JSON, or XML.  Note that the type you specify in the configuration below is independent of the MIME type present in the *Content-Type* header.  Thus you can mix and match extraction types from the same response body.
+
+Data extraction only occurs after all other response validations (headers, cookies, content) pass successfully.
 
 ```yaml
   extract:
@@ -469,4 +485,3 @@ Rapid supports extraction from three different types of data:  text, JSON, or XM
 |type | Specify 'text', 'json', or 'xml'. || string |
 |path | The path to search.  If *type* is 'text', then specify a [regular expression](https://golang.org/s/re2syntax). If *type* is 'json', then specify a [GJSON](https://github.com/tidwall/gjson) path.  If *type* is 'xml', then specify a suitable [XPATH](https://github.com/antchfx/xmlquery).   || string |
 |match | A **Find&Replace** *match* [regular expression](https://golang.org/s/re2syntax) for future modifications in headers/URLs/bodies/etc.  The extracted data will be used as the replacement text on matches to this expression.|| string |
-
