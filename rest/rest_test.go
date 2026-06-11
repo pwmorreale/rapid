@@ -103,7 +103,7 @@ func initTestService(t *testing.T) (*Context, *config.Scenario, data.Data, error
 
 	}
 
-	r := New(sc, d)
+	r := New(sc, d, nil)
 
 	return r, sc, d, nil
 }
@@ -380,7 +380,7 @@ func TestRetryOnStatusCode(t *testing.T) {
 
 	sc := &config.Scenario{}
 	d := data.New()
-	r := New(sc, d)
+	r := New(sc, d, nil)
 	r.mockRoundTripper = transport
 
 	request := &config.Request{
@@ -415,7 +415,7 @@ func TestRetryExhausted(t *testing.T) {
 
 	sc := &config.Scenario{}
 	d := data.New()
-	r := New(sc, d)
+	r := New(sc, d, nil)
 	r.mockRoundTripper = transport
 
 	request := &config.Request{
@@ -457,7 +457,7 @@ func TestRetryOnConnectionError(t *testing.T) {
 
 	sc := &config.Scenario{}
 	d := data.New()
-	r := New(sc, d)
+	r := New(sc, d, nil)
 	r.mockRoundTripper = transport
 
 	request := &config.Request{
@@ -493,7 +493,7 @@ func TestNoRetryByDefault(t *testing.T) {
 
 	sc := &config.Scenario{}
 	d := data.New()
-	r := New(sc, d)
+	r := New(sc, d, nil)
 	r.mockRoundTripper = transport
 
 	request := &config.Request{

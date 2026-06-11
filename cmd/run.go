@@ -8,6 +8,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"io"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -32,10 +33,14 @@ var runCmd = &cobra.Command{
 }
 
 var reportFile string
+var dumpFile string
 
 func init() {
 	rootCmd.AddCommand(runCmd)
 	runCmd.Flags().StringVar(&reportFile, "report", "", `Write structured report to file (format from extension: .json or .xml)`)
+
+	runCmd.Flags().StringVar(&dumpFile, "dump", "", `Dump raw HTTP request/response traffic (to stdout if no file specified)`)
+	runCmd.Flags().Lookup("dump").NoOptDefVal = "stdout"
 }
 
 func initLogger() (*os.File, error) {
@@ -113,7 +118,15 @@ func RunScenario(_ *cobra.Command, _ []string) error {
 		logger.Info(nil, nil, "scenario: %s version: %s %s", sc.Name, sc.Version, sc.Comment)
 	}
 
-	r := rest.New(sc, d)
+	dumpWriter, dumpCloser, err := initDump()
+	if err != nil {
+		return err
+	}
+	if dumpCloser != nil {
+		defer dumpCloser.Close()
+	}
+
+	r := rest.New(sc, d, dumpWriter)
 	s := sequence.New(r)
 
 	err = s.Run(ctx, sc)
@@ -149,6 +162,20 @@ func writeReport(path string, sc *config.Scenario) error {
 	default:
 		return fmt.Errorf("unsupported report format %q (use .json or .xml)", filepath.Ext(path))
 	}
+}
+
+func initDump() (io.Writer, io.Closer, error) {
+	if dumpFile == "" {
+		return nil, nil, nil
+	}
+	if dumpFile == "stdout" {
+		return os.Stdout, nil, nil
+	}
+	f, err := os.OpenFile(dumpFile, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
+	if err != nil {
+		return nil, nil, err
+	}
+	return f, f, nil
 }
 
 func totalErrors(sc *config.Scenario) int64 {

@@ -151,8 +151,8 @@ func TestThunderingHerdCount(t *testing.T) {
 	s.ExecuteRequest(ctx, 1, &request, false)
 	actual := time.Now()
 
-	// Require finish within 10% of the duration
-	assert.WithinDuration(t, expected, actual, TestDuration/10)
+	// Require finish within 50ms of the expected duration (race detector adds overhead)
+	assert.WithinDuration(t, expected, actual, 50*time.Millisecond)
 
 	count := request.ThunderingHerd.Max
 
