@@ -142,10 +142,10 @@ func CheckURL(request *config.Request) {
 	u, err := url.ParseRequestURI(request.URL)
 	if err != nil {
 		logger.Error(request, nil, "URL error: %v", err)
+		return
 	}
 
 	if u.Scheme == "https" {
-		// Validate TLS config....
 		logger.Info(request, nil, "validating TLS config")
 	}
 }
