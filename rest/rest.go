@@ -115,7 +115,7 @@ func (r *Context) createRequest(ctx context.Context, request *config.Request) (*
 	url := r.datum.Replace(request.URL)
 
 	rdr := r.getContentReader(request)
-	req, err := http.NewRequestWithContext(ctx, request.Method, url, rdr)
+	req, err := http.NewRequestWithContext(ctx, strings.ToUpper(request.Method), url, rdr)
 	if err != nil {
 		return nil, err
 	}
