@@ -30,7 +30,7 @@ func initTest(sc *config.Scenario) (*rest.Context, error) {
 
 	}
 
-	r := rest.New(sc, d)
+	r := rest.New(sc, d, nil)
 
 	return r, nil
 }

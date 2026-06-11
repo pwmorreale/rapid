@@ -10,6 +10,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httputil"
 	"os"
@@ -37,17 +38,19 @@ type Context struct {
 	datum   data.Data
 	sc      *config.Scenario
 	metrics metrics.Metrics
+	dump    io.Writer
 
 	// For unit tests to set a mock roundtripper...
 	mockRoundTripper http.RoundTripper
 }
 
 // New creates a new instance.
-func New(sc *config.Scenario, d data.Data) *Context {
+func New(sc *config.Scenario, d data.Data, dump io.Writer) *Context {
 	return &Context{
 		datum:   d,
 		sc:      sc,
 		metrics: metrics.New(sc),
+		dump:    dump,
 	}
 }
 
@@ -226,21 +229,27 @@ func (r *Context) Gestalt(ctx context.Context, request *config.Request) (*config
 }
 
 func (r *Context) dumpRequest(request *config.Request, req *http.Request) {
-	dump, err := httputil.DumpRequestOut(req, true)
-	if err != nil {
-		logger.Debug(request, nil, "dump request error: %v", err)
+	if r.dump == nil {
 		return
 	}
-	logger.Debug(request, nil, ">>> REQUEST >>>\n%s", string(dump))
+	dump, err := httputil.DumpRequestOut(req, true)
+	if err != nil {
+		fmt.Fprintf(r.dump, ">>> REQUEST [%s] dump error: %v\n", request.Name, err)
+		return
+	}
+	fmt.Fprintf(r.dump, ">>> REQUEST [%s] >>>\n%s\n", request.Name, string(dump))
 }
 
 func (r *Context) dumpResponse(request *config.Request, resp *http.Response) {
-	dump, err := httputil.DumpResponse(resp, true)
-	if err != nil {
-		logger.Debug(request, nil, "dump response error: %v", err)
+	if r.dump == nil {
 		return
 	}
-	logger.Debug(request, nil, "<<< RESPONSE <<<\n%s", string(dump))
+	dump, err := httputil.DumpResponse(resp, true)
+	if err != nil {
+		fmt.Fprintf(r.dump, "<<< RESPONSE [%s] dump error: %v\n", request.Name, err)
+		return
+	}
+	fmt.Fprintf(r.dump, "<<< RESPONSE [%s] <<<\n%s\n", request.Name, string(dump))
 }
 
 // Push sends collected metrics to the Prometheus push gateway.
