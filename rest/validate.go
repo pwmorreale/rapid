@@ -11,7 +11,6 @@ import (
 	"io"
 	"mime"
 	"net/http"
-	"regexp"
 	"sync"
 
 	"github.com/gabriel-vasile/mimetype"
@@ -161,17 +160,9 @@ func (r *Context) extractContent(contentBytes []byte, response *config.Response)
 
 func (r *Context) verifyContains(contentBytes []byte, response *config.Response) error {
 
-	for i := range response.Content.Contains {
-		pattern := response.Content.Contains[i]
-		if pattern == "" {
-			continue
-		}
-		ok, err := regexp.Match(pattern, contentBytes)
-		if err != nil {
-			return err
-		}
-		if !ok {
-			return fmt.Errorf("content sequence not found: %s", pattern)
+	for _, re := range response.Content.ContainsCompiled {
+		if !re.Match(contentBytes) {
+			return fmt.Errorf("content sequence not found: %s", re.String())
 		}
 	}
 
