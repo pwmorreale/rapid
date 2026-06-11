@@ -44,10 +44,17 @@ func (s *Context) Run(sc *config.Scenario) error {
 	return nil
 }
 
-// ExecuteIteration exeutes a single iteration
+// ExecuteIteration executes a single iteration
 func (s *Context) ExecuteIteration(sc *config.Scenario, iteration int) {
 
-	ctx, cancel := context.WithTimeout(context.Background(), sc.Sequence.Limit)
+	var ctx context.Context
+	var cancel context.CancelFunc
+
+	if sc.Sequence.Limit > 0 {
+		ctx, cancel = context.WithTimeout(context.Background(), sc.Sequence.Limit)
+	} else {
+		ctx, cancel = context.WithCancel(context.Background())
+	}
 	defer cancel()
 
 	start := time.Now()
