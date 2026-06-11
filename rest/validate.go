@@ -142,6 +142,8 @@ func (r *Context) extractContent(contentBytes []byte, response *config.Response)
 			v, err = r.datum.ExtractXML(e.Path, rb)
 		case "text":
 			v, err = r.datum.ExtractRegex(e.Path, rb)
+		default:
+			return fmt.Errorf("unknown extract type: %q (must be json, xml, or text)", e.Type)
 		}
 
 		if err != nil {
