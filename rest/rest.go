@@ -223,6 +223,7 @@ func (r *Context) Gestalt(ctx context.Context, request *config.Request) (*config
 	}
 
 	r.dumpResponse(request, resp)
+
 	defer resp.Body.Close()
 
 	return r.validateResponse(resp, request)
