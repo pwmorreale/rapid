@@ -288,7 +288,7 @@ func TestVerifyNoContent(t *testing.T) {
 	configResponse := sc.Sequence.Requests[0].Responses[1]
 
 	// No content...
-	err = r.verifyContentAndExtract([]byte{}, response, configResponse)
+	err = r.verifyContent([]byte{}, response, configResponse)
 	assert.Nil(t, err)
 
 }
@@ -303,7 +303,10 @@ func TestVerifyJSONContent(t *testing.T) {
 	response := makeResponse(200, "application/json", []byte(json), -1, nil, nil)
 	configResponse := sc.Sequence.Requests[0].Responses[0]
 
-	err = r.verifyContentAndExtract([]byte(json), response, configResponse)
+	err = r.verifyContent([]byte(json), response, configResponse)
+	assert.Nil(t, err)
+
+	err = r.extractContent([]byte(json), configResponse)
 	assert.Nil(t, err)
 
 	assert.Equal(t, "doo", d.Lookup("foo"))
@@ -319,7 +322,10 @@ func TestVerifyXMLContent(t *testing.T) {
 	response := makeResponse(200, "text/xml", []byte(xml), int64(len(xml)), nil, nil)
 	configResponse := sc.Sequence.Requests[0].Responses[2]
 
-	err = r.verifyContentAndExtract([]byte(xml), response, configResponse)
+	err = r.verifyContent([]byte(xml), response, configResponse)
+	assert.Nil(t, err)
+
+	err = r.extractContent([]byte(xml), configResponse)
 	assert.Nil(t, err)
 
 	assert.Equal(t, "Bob Ross", d.Lookup("who"))

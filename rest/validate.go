@@ -185,7 +185,7 @@ func (r *Context) verifyContentLength(httpLength int64, contentLength int64) err
 	return nil
 }
 
-func (r *Context) verifyContentAndExtract(contentBytes []byte, httpResponse *http.Response, response *config.Response) error {
+func (r *Context) verifyContent(contentBytes []byte, httpResponse *http.Response, response *config.Response) error {
 
 	nrBytes := len(contentBytes)
 
@@ -207,12 +207,7 @@ func (r *Context) verifyContentAndExtract(contentBytes []byte, httpResponse *htt
 		return err
 	}
 
-	err = r.verifyContains(contentBytes, response)
-	if err != nil {
-		return err
-	}
-
-	return r.extractContent(contentBytes, response)
+	return r.verifyContains(contentBytes, response)
 }
 
 func lookupResponses(statusCode int, r []*config.Response) []*config.Response {
@@ -257,7 +252,7 @@ func (r *Context) verifyResponse(contentBytes []byte, httpResponse *http.Respons
 		return err
 	}
 
-	return r.verifyContentAndExtract(contentBytes, httpResponse, response)
+	return r.verifyContent(contentBytes, httpResponse, response)
 }
 
 func (r *Context) validateResponse(httpResponse *http.Response, request *config.Request) (*config.Response, error) {
@@ -288,7 +283,7 @@ func (r *Context) validateResponse(httpResponse *http.Response, request *config.
 	for _, resp := range matches {
 		err := r.verifyResponse(contentBytes, httpResponse, resp)
 		if err == nil {
-			return resp, nil
+			return resp, r.extractContent(contentBytes, resp)
 		}
 		lastErr = err
 	}
