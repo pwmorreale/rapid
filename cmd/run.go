@@ -70,7 +70,7 @@ func initData(sc *config.Scenario) (data.Data, error) {
 	d := data.New()
 	for i := 0; i < len(sc.Replacements); i++ {
 		r := sc.Replacements[i]
-		err = d.AddReplacement(r.Regex, r.Value)
+		err = d.AddReplacement(r.Regex, os.ExpandEnv(r.Value))
 		if err != nil {
 			break
 		}
