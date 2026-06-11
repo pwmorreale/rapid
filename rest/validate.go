@@ -174,11 +174,16 @@ func (r *Context) verifyContains(contentBytes []byte, response *config.Response)
 
 func (r *Context) verifyContentLength(httpLength int64, contentLength int64) error {
 
-	// N.B.  We may not know the exact response body length, so only check what we can.
+	// httpLength is -1 when the server doesn't send Content-Length (chunked, etc.)
+	// Only validate when the server explicitly declared a length.
+	if httpLength < 0 {
+		return nil
+	}
+
 	switch {
-	case (httpLength == 0 && contentLength != 0):
+	case httpLength == 0 && contentLength != 0:
 		return fmt.Errorf("mismatched Content-Length header (%d) and actual content (at least %d bytes)", httpLength, contentLength)
-	case (httpLength > 0 && contentLength == 0):
+	case httpLength > 0 && contentLength == 0:
 		return fmt.Errorf("mismatched Content-Length header (%d) and actual content (at least %d bytes)", httpLength, contentLength)
 	}
 
