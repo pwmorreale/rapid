@@ -143,7 +143,9 @@ func (r *Context) createRequest(ctx context.Context, request *config.Request) (*
 
 func (r *Context) createClient() (*http.Client, error) {
 
-	client := &http.Client{}
+	client := &http.Client{
+		Timeout: r.sc.RequestTimeout,
+	}
 
 	// If we are testing, then use the mock round tripper...
 	if r.mockRoundTripper != nil {
