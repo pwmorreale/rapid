@@ -31,8 +31,6 @@ func init() {
 
 func initLogger() (*os.File, error) {
 
-	var file os.File
-
 	opts := logger.Options{
 		Writer:    os.Stdout,
 		Handler:   logFormat,
@@ -40,8 +38,10 @@ func initLogger() (*os.File, error) {
 		Timestamp: logTimestamp,
 	}
 
+	var file *os.File
 	if logFilename != "" {
-		file, err := os.OpenFile(logFilename, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
+		var err error
+		file, err = os.OpenFile(logFilename, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
 		if err != nil {
 			return nil, err
 		}
@@ -50,11 +50,13 @@ func initLogger() (*os.File, error) {
 
 	err := logger.Init(&opts)
 	if err != nil {
-		file.Close()
+		if file != nil {
+			file.Close()
+		}
 		return nil, err
 	}
 
-	return &file, nil
+	return file, nil
 }
 
 func initData(sc *config.Scenario) (data.Data, error) {
@@ -78,9 +80,11 @@ func RunScenario(_ *cobra.Command, _ []string) error {
 
 	file, err := initLogger()
 	if err != nil {
-		return nil
+		return err
 	}
-	defer (*file).Close()
+	if file != nil {
+		defer file.Close()
+	}
 
 	c := config.New()
 	sc, err := c.ParseFile(scenarioFile)
