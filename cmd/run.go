@@ -134,5 +134,12 @@ func LogResults(sc *config.Scenario) {
 			str := response.Stats.String()
 			logger.Info(request, response, "%s", str)
 		}
+
+		for j := range request.UnknownResponses {
+			response := request.UnknownResponses[j]
+
+			str := response.Stats.String()
+			logger.Warn(request, response, "%s", str)
+		}
 	}
 }

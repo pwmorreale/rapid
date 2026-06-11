@@ -33,11 +33,3 @@ sequence:
             - value: z=b
           content:
             expected: false
-            content_type:
-            max_content:
-            contains:
-              - ""
-            extract:
-              - type:
-                path:
-                match:
