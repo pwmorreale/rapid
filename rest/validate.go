@@ -11,6 +11,7 @@ import (
 	"io"
 	"mime"
 	"net/http"
+	"strings"
 	"sync"
 
 	"github.com/gabriel-vasile/mimetype"
@@ -100,6 +101,18 @@ func (r *Context) verifyCookies(httpResponse *http.Response, response *config.Re
 	return nil
 }
 
+func isTextBased(mediaType string) bool {
+	if strings.HasPrefix(mediaType, "text/") {
+		return true
+	}
+	switch mediaType {
+	case "application/json", "application/xml", "application/javascript",
+		"application/xhtml+xml", "application/rss+xml", "application/atom+xml":
+		return true
+	}
+	return strings.HasSuffix(mediaType, "+json") || strings.HasSuffix(mediaType, "+xml")
+}
+
 func (r *Context) verifyExpectedContentType(contentBytes []byte, httpResponse *http.Response, response *config.Response) error {
 	contentType, _, err := mime.ParseMediaType(httpResponse.Header.Get("Content-Type"))
 	if err != nil {
@@ -115,10 +128,16 @@ func (r *Context) verifyExpectedContentType(contentBytes []byte, httpResponse *h
 		return fmt.Errorf("content-type: %s != %s", contentType, response.Content.MediaType)
 	}
 
-	// Verify contents vs. Content-Type
-	mediaType := mimetype.Detect(contentBytes)
-	if !mediaType.Is(contentType) {
-		return fmt.Errorf("mismatched content/types:  Content_Type: %s, detected content as: %s", contentType, mediaType)
+	// Verify the actual bytes match the declared Content-Type.
+	// mimetype.Detect often returns text/plain for small text-based payloads
+	// (JSON, XML, etc.) so skip the sniff when both the detected and expected
+	// types are text-based — the contains/extract checks validate structure.
+	detected := mimetype.Detect(contentBytes)
+	if !detected.Is(contentType) {
+		if isTextBased(detected.String()) && isTextBased(contentType) {
+			return nil
+		}
+		return fmt.Errorf("mismatched content/types: Content-Type: %s, detected content as: %s", contentType, detected)
 	}
 
 	return nil
