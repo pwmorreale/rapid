@@ -8,6 +8,7 @@ package data
 import (
 	"io"
 	"regexp"
+	"sync"
 )
 
 // Data defines interfaces for executing scenarios
@@ -32,6 +33,7 @@ type Replacement struct {
 
 // Context defines a sequence
 type Context struct {
+	mu  sync.RWMutex
 	all []Replacement
 }
 
@@ -54,7 +56,9 @@ func (d *Context) AddReplacement(name string, value string) error {
 	r.regx = re
 	r.value = value
 
+	d.mu.Lock()
 	d.all = append(d.all, r)
+	d.mu.Unlock()
 
 	return nil
 }
@@ -62,14 +66,20 @@ func (d *Context) AddReplacement(name string, value string) error {
 // Replace replaces any matches and returns a new string
 func (d *Context) Replace(s string) string {
 
+	d.mu.RLock()
+	defer d.mu.RUnlock()
+
 	for i := range d.all {
 		s = d.all[i].regx.ReplaceAllLiteralString(s, d.all[i].value)
 	}
 	return s
 }
 
-// Lookup returns the reaplcement text (value) for a name
+// Lookup returns the replacement text (value) for a name
 func (d *Context) Lookup(n string) string {
+	d.mu.RLock()
+	defer d.mu.RUnlock()
+
 	for i := range d.all {
 		if n == d.all[i].name {
 			return d.all[i].value
@@ -80,5 +90,7 @@ func (d *Context) Lookup(n string) string {
 
 // Len returns the number of replacement elements.
 func (d *Context) Len() int {
+	d.mu.RLock()
+	defer d.mu.RUnlock()
 	return len(d.all)
 }
