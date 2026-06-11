@@ -220,4 +220,5 @@ func (r *Context) Execute(ctx context.Context, iteration int, request *config.Re
 	r.metrics.Durations(start, iteration, request.Name, request.Method, response.Name, status)
 	r.metrics.Requests(iteration, request.Name, response.Name, status)
 	request.Stats.Success(start)
+	response.Stats.Success(start)
 }
