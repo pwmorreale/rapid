@@ -9,6 +9,7 @@ import (
 	"context"
 	"os"
 	"os/signal"
+	"syscall"
 
 	"github.com/pwmorreale/rapid/config"
 	"github.com/pwmorreale/rapid/data"
@@ -80,7 +81,7 @@ func initData(sc *config.Scenario) (data.Data, error) {
 // RunScenario executes the scenario.
 func RunScenario(_ *cobra.Command, _ []string) error {
 
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
 	file, err := initLogger()
