@@ -156,6 +156,14 @@ func New() *Context {
 	return &Context{}
 }
 
+func setDefaultStampedeMax(s *Scenario) {
+	for i := range s.Sequence.Requests {
+		if s.Sequence.Requests[i].ThunderingHerd.Max == 0 {
+			s.Sequence.Requests[i].ThunderingHerd.Max = 1
+		}
+	}
+}
+
 func setDefaultContentMaxSize(s *Scenario) {
 
 	for i := range s.Sequence.Requests {
@@ -186,6 +194,7 @@ func (c *Context) ParseFile(flnm string) (*Scenario, error) {
 	}
 
 	setDefaultContentMaxSize(&s)
+	setDefaultStampedeMax(&s)
 
 	if err := compileContainsRegexes(&s); err != nil {
 		return nil, err
