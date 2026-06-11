@@ -34,20 +34,14 @@ func cookieExists(expected string, all []string) bool {
 	return false
 }
 
-func readContent(httpResponse *http.Response, response *config.Response) (int, []byte, error) {
+func readBody(httpResponse *http.Response, maxSize int64) ([]byte, error) {
 
-	maxSize := int64(config.DefaultContentLimit)
-	if response.Content.MaxSize != 0 {
-		maxSize = int64(response.Content.MaxSize)
+	if maxSize == 0 {
+		maxSize = int64(config.DefaultContentLimit)
 	}
 
 	r := io.LimitReader(httpResponse.Body, maxSize)
-	buf, err := io.ReadAll(r)
-	if err != nil {
-		return 0, nil, err
-	}
-
-	return len(buf), buf, nil
+	return io.ReadAll(r)
 }
 
 func verifyHeaderValues(httpHeaders http.Header, expectedHeader *config.HeaderData) error {
@@ -191,12 +185,9 @@ func (r *Context) verifyContentLength(httpLength int64, contentLength int64) err
 	return nil
 }
 
-func (r *Context) verifyContentAndExtract(httpResponse *http.Response, response *config.Response) error {
+func (r *Context) verifyContentAndExtract(contentBytes []byte, httpResponse *http.Response, response *config.Response) error {
 
-	nrBytes, contentBytes, err := readContent(httpResponse, response)
-	if err != nil {
-		return err
-	}
+	nrBytes := len(contentBytes)
 
 	// Check for no expected content...
 	if !response.Content.Expected {
@@ -206,7 +197,7 @@ func (r *Context) verifyContentAndExtract(httpResponse *http.Response, response 
 		return nil
 	}
 
-	err = r.verifyContentLength(httpResponse.ContentLength, int64(nrBytes))
+	err := r.verifyContentLength(httpResponse.ContentLength, int64(nrBytes))
 	if err != nil {
 		return err
 	}
@@ -224,45 +215,37 @@ func (r *Context) verifyContentAndExtract(httpResponse *http.Response, response 
 	return r.extractContent(contentBytes, response)
 }
 
-func lookupResponse(statusCode int, r []*config.Response) *config.Response {
+func lookupResponses(statusCode int, r []*config.Response) []*config.Response {
 
+	var matches []*config.Response
 	for i := range r {
 		if statusCode == r[i].StatusCode {
-			return r[i]
+			matches = append(matches, r[i])
 		}
 	}
 
-	return nil
+	return matches
 }
 
-func (r *Context) findResponse(httpResponse *http.Response, request *config.Request) *config.Response {
-
-	resp := lookupResponse(httpResponse.StatusCode, request.Responses)
-	if resp != nil {
-		return resp
-	}
-
-	// Not found on the configured array, so find/add to the unkowns array.
+func (r *Context) findOrCreateUnknown(httpResponse *http.Response, request *config.Request) *config.Response {
 
 	unknownResponseMutex.Lock()
 	defer unknownResponseMutex.Unlock()
 
-	resp = lookupResponse(httpResponse.StatusCode, request.UnknownResponses)
-	if resp != nil {
-		return resp
+	matches := lookupResponses(httpResponse.StatusCode, request.UnknownResponses)
+	if len(matches) > 0 {
+		return matches[0]
 	}
 
-	resp = new(config.Response)
-
+	resp := new(config.Response)
 	request.UnknownResponses = append(request.UnknownResponses, resp)
-
 	resp.Name = config.DefaultResponseName
 	resp.StatusCode = httpResponse.StatusCode
 
 	return resp
 }
 
-func (r *Context) verifyResponse(httpResponse *http.Response, response *config.Response) error {
+func (r *Context) verifyResponse(contentBytes []byte, httpResponse *http.Response, response *config.Response) error {
 
 	err := r.verifyHeaders(httpResponse, response)
 	if err != nil {
@@ -274,12 +257,41 @@ func (r *Context) verifyResponse(httpResponse *http.Response, response *config.R
 		return err
 	}
 
-	return r.verifyContentAndExtract(httpResponse, response)
+	return r.verifyContentAndExtract(contentBytes, httpResponse, response)
 }
 
 func (r *Context) validateResponse(httpResponse *http.Response, request *config.Request) (*config.Response, error) {
 
-	response := r.findResponse(httpResponse, request)
-	err := r.verifyResponse(httpResponse, response)
-	return response, err
+	// Determine max content size from configured responses.
+	var maxSize int64
+	for _, resp := range request.Responses {
+		if int64(resp.Content.MaxSize) > maxSize {
+			maxSize = int64(resp.Content.MaxSize)
+		}
+	}
+
+	contentBytes, err := readBody(httpResponse, maxSize)
+	if err != nil {
+		return nil, err
+	}
+
+	matches := lookupResponses(httpResponse.StatusCode, request.Responses)
+
+	// No configured response for this status code.
+	if len(matches) == 0 {
+		resp := r.findOrCreateUnknown(httpResponse, request)
+		return resp, r.verifyResponse(contentBytes, httpResponse, resp)
+	}
+
+	// Try each matching response; succeed on the first that passes.
+	var lastErr error
+	for _, resp := range matches {
+		err := r.verifyResponse(contentBytes, httpResponse, resp)
+		if err == nil {
+			return resp, nil
+		}
+		lastErr = err
+	}
+
+	return matches[0], lastErr
 }

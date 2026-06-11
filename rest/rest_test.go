@@ -288,7 +288,7 @@ func TestVerifyNoContent(t *testing.T) {
 	configResponse := sc.Sequence.Requests[0].Responses[1]
 
 	// No content...
-	err = r.verifyContentAndExtract(response, configResponse)
+	err = r.verifyContentAndExtract([]byte{}, response, configResponse)
 	assert.Nil(t, err)
 
 }
@@ -303,7 +303,7 @@ func TestVerifyJSONContent(t *testing.T) {
 	response := makeResponse(200, "application/json", []byte(json), -1, nil, nil)
 	configResponse := sc.Sequence.Requests[0].Responses[0]
 
-	err = r.verifyContentAndExtract(response, configResponse)
+	err = r.verifyContentAndExtract([]byte(json), response, configResponse)
 	assert.Nil(t, err)
 
 	assert.Equal(t, "doo", d.Lookup("foo"))
@@ -319,13 +319,13 @@ func TestVerifyXMLContent(t *testing.T) {
 	response := makeResponse(200, "text/xml", []byte(xml), int64(len(xml)), nil, nil)
 	configResponse := sc.Sequence.Requests[0].Responses[2]
 
-	err = r.verifyContentAndExtract(response, configResponse)
+	err = r.verifyContentAndExtract([]byte(xml), response, configResponse)
 	assert.Nil(t, err)
 
 	assert.Equal(t, "Bob Ross", d.Lookup("who"))
 }
 
-func TestFindResponse(t *testing.T) {
+func TestFindOrCreateUnknown(t *testing.T) {
 
 	r, sc, _, err := initTestService(t)
 	assert.NotNil(t, r)
@@ -338,7 +338,7 @@ func TestFindResponse(t *testing.T) {
 	request := &sc.Sequence.Requests[1]
 	assert.Empty(t, request.UnknownResponses)
 
-	resp := r.findResponse(httpResponse, request)
+	resp := r.findOrCreateUnknown(httpResponse, request)
 	assert.NotNil(t, resp)
 
 	assert.Equal(t, 1, len(request.UnknownResponses))
