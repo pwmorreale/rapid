@@ -11,6 +11,7 @@ import (
 	"crypto/x509"
 	"fmt"
 	"net/http"
+	"net/http/httputil"
 	"os"
 	"strconv"
 	"strings"
@@ -192,6 +193,8 @@ func (r *Context) Gestalt(ctx context.Context, request *config.Request) (*config
 			return nil, err
 		}
 
+		r.dumpRequest(request, req)
+
 		resp, err = client.Do(req)
 		if err != nil {
 			if attempt == maxAttempts {
@@ -199,6 +202,7 @@ func (r *Context) Gestalt(ctx context.Context, request *config.Request) (*config
 			}
 			logger.Debug(request, nil, "retry %d/%d after connection error: %v", attempt, maxAttempts, err)
 		} else if len(request.Retry.StatusCodes) > 0 && shouldRetry(resp.StatusCode, request.Retry.StatusCodes) && attempt < maxAttempts {
+			r.dumpResponse(request, resp)
 			resp.Body.Close()
 			logger.Debug(request, nil, "retry %d/%d after status %d", attempt, maxAttempts, resp.StatusCode)
 		} else {
@@ -215,9 +219,28 @@ func (r *Context) Gestalt(ctx context.Context, request *config.Request) (*config
 		}
 	}
 
+	r.dumpResponse(request, resp)
 	defer resp.Body.Close()
 
 	return r.validateResponse(resp, request)
+}
+
+func (r *Context) dumpRequest(request *config.Request, req *http.Request) {
+	dump, err := httputil.DumpRequestOut(req, true)
+	if err != nil {
+		logger.Debug(request, nil, "dump request error: %v", err)
+		return
+	}
+	logger.Debug(request, nil, ">>> REQUEST >>>\n%s", string(dump))
+}
+
+func (r *Context) dumpResponse(request *config.Request, resp *http.Response) {
+	dump, err := httputil.DumpResponse(resp, true)
+	if err != nil {
+		logger.Debug(request, nil, "dump response error: %v", err)
+		return
+	}
+	logger.Debug(request, nil, "<<< RESPONSE <<<\n%s", string(dump))
 }
 
 // Push sends collected metrics to the Prometheus push gateway.
