@@ -3,16 +3,16 @@ module github.com/pwmorreale/rapid
 go 1.25.0
 
 require (
-	github.com/antchfx/xmlquery v1.5.1
-	github.com/gabriel-vasile/mimetype v1.4.13
-	github.com/gammazero/workerpool v1.2.1
-	github.com/lmittmann/tint v1.1.3
-	github.com/prometheus/client_golang v1.23.2
-	github.com/prometheus/common v0.68.1
-	github.com/spf13/cobra v1.10.2
-	github.com/spf13/viper v1.21.0
-	github.com/stretchr/testify v1.11.1
-	github.com/tidwall/gjson v1.19.0
+	github.com/antchfx/xmlquery v1.4.4
+	github.com/gabriel-vasile/mimetype v1.4.9
+	github.com/gammazero/workerpool v1.1.3
+	github.com/lmittmann/tint v1.1.2
+	github.com/prometheus/client_golang v1.22.0
+	github.com/prometheus/common v0.65.0
+	github.com/spf13/cobra v1.9.1
+	github.com/spf13/viper v1.20.1
+	github.com/stretchr/testify v1.10.0
+	github.com/tidwall/gjson v1.18.0
 )
 
 require (
