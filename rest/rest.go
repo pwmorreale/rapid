@@ -115,13 +115,12 @@ func (r *Context) createRequest(ctx context.Context, request *config.Request) (*
 
 	rdr := r.getContentReader(request)
 	req, err := http.NewRequestWithContext(ctx, request.Method, url, rdr)
+	if err != nil {
+		return nil, err
+	}
 
 	if request.ContentType != "" {
 		req.Header.Add("Content-Type", request.ContentType)
-	}
-
-	if err != nil {
-		return nil, err
 	}
 
 	// Add extra headers...
