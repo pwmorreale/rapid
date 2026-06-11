@@ -162,12 +162,16 @@ func (r *Context) extractContent(contentBytes []byte, response *config.Response)
 func (r *Context) verifyContains(contentBytes []byte, response *config.Response) error {
 
 	for i := range response.Content.Contains {
-		ok, err := regexp.Match(response.Content.Contains[i], contentBytes)
+		pattern := response.Content.Contains[i]
+		if pattern == "" {
+			continue
+		}
+		ok, err := regexp.Match(pattern, contentBytes)
 		if err != nil {
 			return err
 		}
 		if !ok {
-			return fmt.Errorf("content sequence not found: %s", response.Content.Contains[i])
+			return fmt.Errorf("content sequence not found: %s", pattern)
 		}
 	}
 
