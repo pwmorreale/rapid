@@ -283,7 +283,21 @@ Rapid uses Prometheus' [ExponentialBucketsRange](https://pkg.go.dev/github.com/p
 |thundering_herd | Concurrent execution configuration (see below) ||  |
 |extra_headers | Additional headers (see below) || array |
 |cookies | Cookies to send (see below) || array |
+|retry | Retry configuration for transient failures (see below) || |
 |responses | Expected responses (see below) || array |
+
+#### Retry
+
+Controls automatic retry of HTTP requests on connection errors or specific status codes.  Retries use exponential backoff.  Omit entirely to disable retries.
+
+| Field | Notes| Default| Type|
+|-------|---|---|---|
+|max_attempts | Total attempts including the initial request. Must be >= 2 to enable retries. |1| integer |
+|delay | Initial delay before the first retry. Duration: *ms*, *s*, *m*. |0| duration |
+|max_delay | Maximum delay cap for exponential backoff |0| duration |
+|status_codes | HTTP status codes that trigger a retry (e.g., 429, 503) || array of integers |
+
+Only connection failures and responses with a matching status code are retried.  Validation errors (wrong headers, content mismatches) are never retried.
 
 #### Thundering Herd
 

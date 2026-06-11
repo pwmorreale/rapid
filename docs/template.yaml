@@ -37,6 +37,12 @@ sequence:
       url:
       content:
       content_type:
+      retry:
+        max_attempts:
+        delay:
+        max_delay:
+        status_codes:
+          -
       thundering_herd:
         maximum_requests:
         concurrent_requests:

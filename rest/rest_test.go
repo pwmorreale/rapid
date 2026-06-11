@@ -362,3 +362,162 @@ func TestContentLength(t *testing.T) {
 	assert.NotNil(t, err)
 	assert.Contains(t, err.Error(), "mismatched Content-Length header")
 }
+
+func TestRetryOnStatusCode(t *testing.T) {
+
+	initLogger(io.Discard)
+
+	callCount := 0
+	transport := &countingTransport{
+		handler: func() *http.Response {
+			callCount++
+			if callCount < 3 {
+				return makeResponse(503, "", []byte{}, 0, nil, nil)
+			}
+			return makeResponse(200, "", []byte{}, 0, nil, nil)
+		},
+	}
+
+	sc := &config.Scenario{}
+	d := data.New()
+	r := New(sc, d)
+	r.mockRoundTripper = transport
+
+	request := &config.Request{
+		Method: "GET",
+		URL:    "http://example.com/test",
+		Retry: config.RetryConfig{
+			MaxAttempts: 5,
+			StatusCodes: []int{503, 429},
+		},
+		Responses: []*config.Response{
+			{Name: "ok", StatusCode: 200},
+		},
+	}
+
+	ctx := context.Background()
+	resp, err := r.Gestalt(ctx, request)
+	assert.Nil(t, err)
+	assert.NotNil(t, resp)
+	assert.Equal(t, 200, resp.StatusCode)
+	assert.Equal(t, 3, callCount)
+}
+
+func TestRetryExhausted(t *testing.T) {
+
+	initLogger(io.Discard)
+
+	transport := &countingTransport{
+		handler: func() *http.Response {
+			return makeResponse(503, "", []byte{}, 0, nil, nil)
+		},
+	}
+
+	sc := &config.Scenario{}
+	d := data.New()
+	r := New(sc, d)
+	r.mockRoundTripper = transport
+
+	request := &config.Request{
+		Method: "GET",
+		URL:    "http://example.com/test",
+		Retry: config.RetryConfig{
+			MaxAttempts: 3,
+			StatusCodes: []int{503},
+		},
+		Responses: []*config.Response{
+			{Name: "ok", StatusCode: 200},
+		},
+	}
+
+	ctx := context.Background()
+	resp, err := r.Gestalt(ctx, request)
+	// When retries are exhausted, the last response is validated normally.
+	// 503 doesn't match any configured response, so findOrCreateUnknown runs.
+	assert.Nil(t, err)
+	assert.NotNil(t, resp)
+	assert.Equal(t, config.DefaultResponseName, resp.Name)
+	assert.Equal(t, 503, resp.StatusCode)
+}
+
+func TestRetryOnConnectionError(t *testing.T) {
+
+	initLogger(io.Discard)
+
+	callCount := 0
+	transport := &countingTransport{
+		handler: func() *http.Response {
+			callCount++
+			if callCount < 2 {
+				return nil // signals error
+			}
+			return makeResponse(200, "", []byte{}, 0, nil, nil)
+		},
+	}
+
+	sc := &config.Scenario{}
+	d := data.New()
+	r := New(sc, d)
+	r.mockRoundTripper = transport
+
+	request := &config.Request{
+		Method: "GET",
+		URL:    "http://example.com/test",
+		Retry: config.RetryConfig{
+			MaxAttempts: 3,
+		},
+		Responses: []*config.Response{
+			{Name: "ok", StatusCode: 200},
+		},
+	}
+
+	ctx := context.Background()
+	resp, err := r.Gestalt(ctx, request)
+	assert.Nil(t, err)
+	assert.NotNil(t, resp)
+	assert.Equal(t, 200, resp.StatusCode)
+	assert.Equal(t, 2, callCount)
+}
+
+func TestNoRetryByDefault(t *testing.T) {
+
+	initLogger(io.Discard)
+
+	callCount := 0
+	transport := &countingTransport{
+		handler: func() *http.Response {
+			callCount++
+			return makeResponse(503, "", []byte{}, 0, nil, nil)
+		},
+	}
+
+	sc := &config.Scenario{}
+	d := data.New()
+	r := New(sc, d)
+	r.mockRoundTripper = transport
+
+	request := &config.Request{
+		Method: "GET",
+		URL:    "http://example.com/test",
+		Responses: []*config.Response{
+			{Name: "ok", StatusCode: 200},
+		},
+	}
+
+	ctx := context.Background()
+	r.Gestalt(ctx, request)
+	assert.Equal(t, 1, callCount)
+}
+
+// countingTransport is a mock RoundTripper that calls a handler function.
+type countingTransport struct {
+	handler func() *http.Response
+}
+
+func (t *countingTransport) RoundTrip(*http.Request) (*http.Response, error) {
+	resp := t.handler()
+	if resp == nil {
+		return nil, fmt.Errorf("connection refused")
+	}
+	return resp, nil
+}

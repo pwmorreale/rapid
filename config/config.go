@@ -124,6 +124,14 @@ type Response struct {
 	Stats      stats.Statistics
 }
 
+// RetryConfig defines retry behavior for a request.
+type RetryConfig struct {
+	MaxAttempts int           `mapstructure:"max_attempts"`
+	Delay       time.Duration `mapstructure:"delay"`
+	MaxDelay    time.Duration `mapstructure:"max_delay"`
+	StatusCodes []int         `mapstructure:"status_codes"`
+}
+
 // Stampede defines a thundering herd configuration
 type Stampede struct {
 	Max       int           `mapstructure:"maximum_requests"`
@@ -136,6 +144,7 @@ type Stampede struct {
 type Request struct {
 	Name             string       `mapstructure:"name"`
 	OnceOnly         bool         `mapstructure:"once_only"`
+	Retry            RetryConfig  `mapstructure:"retry"`
 	ThunderingHerd   Stampede     `mapstructure:"thundering_herd"`
 	Method           string       `mapstructure:"method"`
 	URL              string       `mapstructure:"url"`
