@@ -123,16 +123,16 @@ func RunScenario(_ *cobra.Command, _ []string) error {
 func LogResults(sc *config.Scenario) {
 
 	for i := range sc.Sequence.Requests {
-		request := sc.Sequence.Requests[i]
+		request := &sc.Sequence.Requests[i]
 
 		str := request.Stats.String()
-		logger.Info(&request, nil, "%s", str)
+		logger.Info(request, nil, "%s", str)
 
 		for j := range request.Responses {
 			response := request.Responses[j]
 
 			str := response.Stats.String()
-			logger.Info(&request, response, "%s", str)
+			logger.Info(request, response, "%s", str)
 		}
 	}
 }
