@@ -19,7 +19,7 @@ import (
 //
 //go:generate go tool counterfeiter -o ../testdata/mocks/fake_sequence.go . Sequence
 type Sequence interface {
-	Run(*config.Scenario) error
+	Run(context.Context, *config.Scenario) error
 }
 
 // Context defines a sequence
@@ -35,25 +35,30 @@ func New(r rest.Rest) *Context {
 }
 
 // Run executes the sequence.
-func (s *Context) Run(sc *config.Scenario) error {
+func (s *Context) Run(ctx context.Context, sc *config.Scenario) error {
 
 	for i := 0; i < sc.Sequence.Iterations; i++ {
-		s.ExecuteIteration(sc, i)
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		default:
+		}
+		s.ExecuteIteration(ctx, sc, i)
 	}
 
 	return nil
 }
 
 // ExecuteIteration executes a single iteration
-func (s *Context) ExecuteIteration(sc *config.Scenario, iteration int) {
+func (s *Context) ExecuteIteration(parent context.Context, sc *config.Scenario, iteration int) {
 
 	var ctx context.Context
 	var cancel context.CancelFunc
 
 	if sc.Sequence.Limit > 0 {
-		ctx, cancel = context.WithTimeout(context.Background(), sc.Sequence.Limit)
+		ctx, cancel = context.WithTimeout(parent, sc.Sequence.Limit)
 	} else {
-		ctx, cancel = context.WithCancel(context.Background())
+		ctx, cancel = context.WithCancel(parent)
 	}
 	defer cancel()
 
