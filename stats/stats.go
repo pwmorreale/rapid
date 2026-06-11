@@ -92,18 +92,24 @@ func (s *Statistics) GetMaxDuration() time.Duration {
 
 func (s *Statistics) String() string {
 
+	count := atomic.LoadInt64(&s.count)
+	errors := atomic.LoadInt64(&s.errors)
+	minTime := atomic.LoadInt64(&s.minTime)
+	maxTime := atomic.LoadInt64(&s.maxTime)
+	totalTime := atomic.LoadInt64(&s.totalTime)
+
 	// avoid divide by zero...
-	count := s.count
-	if count == 0 {
-		count = 1
+	divisor := count
+	if divisor == 0 {
+		divisor = 1
 	}
 
 	return fmt.Sprintf("count=%d errors=%d minTime=%s maxTime=%s avgTime=%s",
-		s.count,
-		s.errors,
-		time.Duration(s.minTime).String(),
-		time.Duration(s.maxTime).String(),
-		time.Duration(s.totalTime/count).String(),
+		count,
+		errors,
+		time.Duration(minTime).String(),
+		time.Duration(maxTime).String(),
+		time.Duration(totalTime/divisor).String(),
 	)
 
 }
