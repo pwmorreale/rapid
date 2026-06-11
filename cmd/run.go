@@ -110,6 +110,10 @@ func RunScenario(_ *cobra.Command, _ []string) error {
 		return err
 	}
 
+	if err := r.Push(); err != nil {
+		return err
+	}
+
 	LogResults(sc)
 
 	return nil

@@ -26,6 +26,7 @@ import (
 //go:generate go tool counterfeiter -o ../testdata/mocks/fake_rest.go . Rest
 type Rest interface {
 	Execute(context.Context, int, *config.Request)
+	Push() error
 }
 
 // Context defines a scenario context.
@@ -185,6 +186,11 @@ func (r *Context) Gestalt(ctx context.Context, request *config.Request) (*config
 	defer resp.Body.Close()
 
 	return r.validateResponse(resp, request)
+}
+
+// Push sends collected metrics to the Prometheus push gateway.
+func (r *Context) Push() error {
+	return r.metrics.Push()
 }
 
 // Execute creates and executes the request then validates the response.
