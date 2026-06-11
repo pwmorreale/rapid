@@ -122,7 +122,7 @@ func LogResults(sc *config.Scenario) {
 		for j := range request.Responses {
 			response := request.Responses[j]
 
-			str := request.Stats.String()
+			str := response.Stats.String()
 			logger.Info(&request, response, "%s", str)
 		}
 	}
