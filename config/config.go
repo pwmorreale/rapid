@@ -7,6 +7,7 @@ package config
 
 import (
 	"log/slog"
+	"regexp"
 	"time"
 
 	"github.com/pwmorreale/rapid/stats"
@@ -98,13 +99,14 @@ type HeaderData struct {
 	Value string `mapstructure:"value"`
 }
 
-// ContentData cdefines expected response data.
+// ContentData defines expected response data.
 type ContentData struct {
-	Expected  bool          `mapstructure:"expected"`
-	MediaType string        `mapstructure:"content_type"`
-	MaxSize   int           `mapstructure:"max_content"`
-	Contains  []string      `mapstructure:"contains"`
-	Extract   []ExtractData `mapstructure:"extract"`
+	Expected        bool             `mapstructure:"expected"`
+	MediaType       string           `mapstructure:"content_type"`
+	MaxSize         int              `mapstructure:"max_content"`
+	Contains        []string         `mapstructure:"contains"`
+	ContainsCompiled []*regexp.Regexp
+	Extract         []ExtractData    `mapstructure:"extract"`
 }
 
 // CookieData defines a cookie string
@@ -185,11 +187,34 @@ func (c *Context) ParseFile(flnm string) (*Scenario, error) {
 
 	setDefaultContentMaxSize(&s)
 
+	if err := compileContainsRegexes(&s); err != nil {
+		return nil, err
+	}
+
 	if s.RequestTimeout == 0 {
 		s.RequestTimeout = DefaultRequestTimeout
 	}
 
 	return &s, nil
+}
+
+func compileContainsRegexes(s *Scenario) error {
+	for i := range s.Sequence.Requests {
+		for n := range s.Sequence.Requests[i].Responses {
+			content := &s.Sequence.Requests[i].Responses[n].Content
+			for _, pattern := range content.Contains {
+				if pattern == "" {
+					continue
+				}
+				re, err := regexp.Compile(pattern)
+				if err != nil {
+					return err
+				}
+				content.ContainsCompiled = append(content.ContainsCompiled, re)
+			}
+		}
+	}
+	return nil
 }
 
 // LogValue is used by the slog logger to record elements of the http request.
