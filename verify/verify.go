@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strings"
 
 	"github.com/gabriel-vasile/mimetype"
@@ -194,6 +195,13 @@ func CheckReplacements(r []config.ReplaceData) {
 
 		if r[i].Regex == "" && r[i].Value != "" {
 			logger.Error(nil, nil, "missing keyword for value: %s", r[i].Value)
+		}
+
+		if r[i].Regex != "" {
+			_, err := regexp.Compile(r[i].Regex)
+			if err != nil {
+				logger.Error(nil, nil, "invalid regex %q: %v", r[i].Regex, err)
+			}
 		}
 	}
 }
