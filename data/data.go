@@ -42,24 +42,26 @@ func New() *Context {
 	return &Context{}
 }
 
-// AddReplacement creates a new regex replacement.
+// AddReplacement creates or updates a regex replacement.
 func (d *Context) AddReplacement(name string, value string) error {
-
-	r := Replacement{}
 
 	re, err := regexp.Compile(name)
 	if err != nil {
 		return err
 	}
 
-	r.name = name
-	r.regx = re
-	r.value = value
-
 	d.mu.Lock()
-	d.all = append(d.all, r)
-	d.mu.Unlock()
+	defer d.mu.Unlock()
 
+	for i := range d.all {
+		if d.all[i].name == name {
+			d.all[i].regx = re
+			d.all[i].value = value
+			return nil
+		}
+	}
+
+	d.all = append(d.all, Replacement{name: name, regx: re, value: value})
 	return nil
 }
 
