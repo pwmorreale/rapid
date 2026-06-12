@@ -162,7 +162,11 @@ func (s *Context) ExecuteRequest(ctx context.Context, iteration int, request *co
 Loop:
 	for {
 
-		sem <- struct{}{}
+		select {
+		case sem <- struct{}{}:
+		case <-ctx.Done():
+			break Loop
+		}
 		wp.Submit(func() {
 			defer func() { <-sem }()
 			errored := s.rest.Execute(ctx, iteration, request, seenErrors)
@@ -172,7 +176,13 @@ Loop:
 		})
 
 		// Inter-request delay
-		time.Sleep(request.ThunderingHerd.Delay)
+		if request.ThunderingHerd.Delay > 0 {
+			select {
+			case <-time.After(request.ThunderingHerd.Delay):
+			case <-ctx.Done():
+				break Loop
+			}
+		}
 
 		i++
 
