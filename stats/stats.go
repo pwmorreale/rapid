@@ -99,7 +99,7 @@ func (s *Statistics) String() string {
 	totalTime := atomic.LoadInt64(&s.totalTime)
 
 	// avoid divide by zero...
-	divisor := count
+	divisor := count + errors
 	if divisor == 0 {
 		divisor = 1
 	}
