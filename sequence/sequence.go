@@ -166,7 +166,7 @@ Loop:
 		case sem <- struct{}{}:
 		case <-ctx.Done():
 			break Loop
-		}
+    }
 		wp.Submit(func() {
 			defer func() { <-sem }()
 			errored := s.rest.Execute(ctx, iteration, request, seenErrors)
