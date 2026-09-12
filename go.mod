@@ -1,6 +1,6 @@
 module github.com/pwmorreale/rapid
 
-go 1.25.0
+go 1.27.0
 
 require (
 	github.com/antchfx/xmlquery v1.5.1
