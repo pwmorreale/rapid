@@ -44,7 +44,7 @@ jobs:
       matrix:
         include:
         - language: actions
-          build-mode: none
+          build-mode: auto
         - language: go
           build-mode: manual
         # CodeQL supports the following values keywords for 'language': 'actions', 'c-cpp', 'csharp', 'go', 'java-kotlin', 'javascript-typescript', 'python', 'ruby', 'swift'
@@ -65,7 +65,7 @@ jobs:
       if: matrix.language == 'go'
       uses: actions/setup-go@v4
       with:
-        go-version: '1.21'
+        go-version: '1.27'
 
     - name: Prepare and build (for Go manual build-mode)
       if: matrix.language == 'go' && matrix.build-mode == 'manual'
